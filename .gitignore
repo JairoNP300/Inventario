@@ -1,0 +1,12 @@
+node_modules
+dist
+.env
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+.vscode
+.DS_Store
+# package-lock.json removed from ignore to speed up Render builds
+# package-lock.json
+

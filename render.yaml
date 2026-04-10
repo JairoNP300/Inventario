@@ -1,0 +1,20 @@
+services:
+  # Web Service
+  - type: web
+    name: ventas-e-inventario
+    env: node
+    plan: free
+    buildCommand: "npm install && npm run build"
+    startCommand: "npm start"
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        value: ${DATABASE_URL}
+    healthCheckPath: /api
+
+databases:
+  # PostgreSQL Database
+  - name: ventas-inventario-db
+    databaseName: ventas_inventario
+    user: ventas_user

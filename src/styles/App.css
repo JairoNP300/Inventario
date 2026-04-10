@@ -1,0 +1,411 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+  /* Slate Graphite Palette (Oscuro pero NO negro) */
+  --bg-main: #0f172a;        /* Deep Slate 900 */
+  --bg-surface: #1e293b;     /* Slate 800 */
+  --glass-surface: rgba(30, 41, 59, 0.65); /* Translúcido para efecto glass */
+  
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  
+  --accent: #38bdf8;         /* Cyan/Sky Blue brillante */
+  --accent-glow: rgba(56, 189, 248, 0.4);
+  --secondary: #a78bfa;      /* Soft Violet */
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+
+  --border-light: rgba(255, 255, 255, 0.08);
+  --border-focus: rgba(56, 189, 248, 0.5);
+  
+  --glass-blur: blur(20px);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0; padding: 0;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  transition: background-color 0.4s ease, border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+::selection {
+  background: var(--accent);
+  color: #0f172a;
+}
+
+/* --- Fondo Dinámico Animado --- */
+body {
+  background-color: var(--bg-main);
+  background-image: 
+    radial-gradient(circle at 15% 50%, rgba(56, 189, 248, 0.06), transparent 50%),
+    radial-gradient(circle at 85% 30%, rgba(167, 139, 250, 0.08), transparent 50%);
+  color: var(--text-main);
+  min-height: 100vh;
+  padding: 3rem;
+  overflow-x: hidden;
+  animation: bgBreathing 15s infinite alternate ease-in-out;
+}
+
+@keyframes bgBreathing {
+  0% { background-position: 0% 0%; }
+  100% { background-position: 100% 100%; }
+}
+
+.app-container {
+  max-width: 1450px;
+  margin: 0 auto;
+}
+
+/* --- Tipografía Premium --- */
+header {
+  margin-bottom: 4rem;
+  position: relative;
+  text-align: center;
+}
+
+header h1 {
+  font-size: 3.2rem;
+  font-weight: 800;
+  letter-spacing: -1.5px;
+  background: linear-gradient(135deg, #ffffff 0%, #94a3b8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: slideFadeIn 0.8s ease-out forwards;
+}
+
+.subtitle {
+  color: var(--accent);
+  font-weight: 800;
+  letter-spacing: 5px;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  margin-bottom: 12px;
+  display: block;
+  opacity: 0;
+  animation: slideFadeIn 0.8s ease-out 0.2s forwards;
+}
+
+/* --- Navegación Flotante Dinámica --- */
+.nav-tabs {
+  display: flex;
+  background: var(--glass-surface);
+  backdrop-filter: var(--glass-blur);
+  padding: 8px;
+  border-radius: 100px;
+  border: 1px solid var(--border-light);
+  margin-bottom: 5rem;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  gap: 10px;
+  position: relative;
+  z-index: 10;
+  animation: scaleIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.nav-tabs button {
+  flex: 1;
+  padding: 16px 24px;
+  border-radius: 100px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.nav-tabs button:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.nav-tabs button.active {
+  background: linear-gradient(135deg, var(--accent) 0%, #0284c7 100%);
+  color: #fff;
+  transform: scale(1.05);
+  box-shadow: 0 15px 30px var(--accent-glow);
+  text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* --- Banner Global (Grid de Alta Precisión) --- */
+.global-status-banner {
+  background: var(--glass-surface);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border-light);
+  border-radius: 24px;
+  margin-bottom: 5rem;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr) 1.2fr auto;
+  align-items: center;
+  overflow: hidden;
+  position: relative;
+  animation: slideFadeIn 0.8s ease-out 0.3s forwards;
+}
+
+/* Efecto de luz reflectiva en el borde superior */
+.global-status-banner::before, .form-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+}
+
+.status-item {
+  padding: 2.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+  text-align: center;
+}
+
+.status-item:hover {
+  background: rgba(255, 255, 255, 0.02);
+  transform: translateY(-2px);
+}
+
+/* Divisores verticales delicados */
+.status-item:not(:last-child)::after {
+  content: ''; position: absolute; right: 0; top: 25%; height: 50%; width: 1px;
+  background: linear-gradient(to bottom, transparent, var(--border-light), transparent);
+}
+
+.status-label {
+  font-size: 0.65rem; font-weight: 800; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 3px;
+}
+
+.status-value {
+  font-size: 2rem; font-weight: 900; color: #fff;
+  text-shadow: 0 0 20px rgba(255,255,255,0.1);
+}
+
+.status-item.global { background: rgba(56, 189, 248, 0.05); }
+.status-item.global .status-value { 
+  color: var(--accent); 
+  text-shadow: 0 0 20px var(--accent-glow);
+}
+
+/* --- Tarjetas Principales --- */
+.form-card {
+  background: var(--glass-surface);
+  backdrop-filter: var(--glass-blur);
+  padding: 4rem;
+  border-radius: 32px;
+  margin-bottom: 4rem;
+  border: 1px solid var(--border-light);
+  display: flex; flex-direction: column; gap: 3rem;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+  animation: slideFadeIn 0.8s ease-out 0.4s forwards;
+}
+
+.form-card:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+}
+
+/* --- Layout & Utilities de Formularios (Grid System) --- */
+.form-row {
+  display: grid;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  width: 100%;
+}
+
+.form-row.two-col { grid-template-columns: repeat(2, 1fr); }
+.form-row.three-col { grid-template-columns: repeat(3, 1fr); }
+.form-row.four-col { grid-template-columns: repeat(4, 1fr); }
+
+@media (max-width: 900px) {
+  .form-row.four-col, .form-row.three-col { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 600px) {
+  .form-row.two-col, .form-row.three-col, .form-row.four-col { grid-template-columns: 1fr; }
+}
+
+/* Modificamos el form group para que ocupe menos verticalmente */
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  color: var(--text-muted); 
+  font-size: 0.75rem; 
+  font-weight: 800; 
+  text-transform: uppercase; 
+  margin-bottom: 8px; /* Menos espacio entre label e input */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.form-group input, .form-group select {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.2) !important;
+  color: #fff !important;
+  border: 1px solid var(--border-light);
+  padding: 1rem 1.2rem; /* Ligeramente más compacto */
+  border-radius: 12px;
+  font-size: 1rem;
+  color-scheme: dark;
+}
+
+.form-group input:focus, .form-group select:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: rgba(0, 0, 0, 0.3) !important;
+  box-shadow: 0 0 0 3px var(--accent-glow);
+  transform: translateY(-2px);
+}
+
+/* --- Botones --- */
+.btn-primary { 
+  background: linear-gradient(135deg, var(--accent) 0%, #0284c7 100%); 
+  color: #fff !important; 
+  padding: 1.2rem; 
+  border-radius: 16px; 
+  border: none; 
+  font-weight: 800; 
+  cursor: pointer; 
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  box-shadow: 0 10px 25px var(--accent-glow);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary::after {
+  content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transform: skewX(-20deg);
+  transition: 0.5s;
+}
+
+.btn-primary:not(:disabled):hover::after {
+  left: 150%;
+}
+
+.btn-primary:not(:disabled):hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 20px 35px var(--accent-glow);
+}
+
+.btn-primary:disabled {
+  background: #334155; opacity: 0.5; cursor: not-allowed; box-shadow: none;
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, var(--danger) 0%, #b91c1c 100%);
+  color: #fff; border: none; padding: 1.2rem; border-radius: 16px; font-weight: 800; cursor: pointer;
+  box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
+}
+
+/* --- Tablas (Precisión y Animación) --- */
+.grid-table-container {
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--border-light);
+  background: rgba(0, 0, 0, 0.15);
+  box-shadow: inset 0 2px 15px rgba(0,0,0,0.2);
+}
+
+table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+
+th {
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-muted);
+  font-size: 0.70rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 2px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-light);
+  padding: 1.2rem 1rem;
+}
+
+td {
+  padding: 1.2rem 1rem;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  font-size: 0.95rem; color: var(--text-main);
+  vertical-align: middle; word-break: break-word;
+}
+
+tr {
+  transition: all 0.3s ease;
+}
+
+tr:hover {
+  background: rgba(56, 189, 248, 0.05); /* Cyan hover highlight */
+}
+
+tr:hover td {
+  transform: translateX(4px); /* Micro-movimiento en hover del row */
+}
+
+/* Precision Row Widths */
+.col-cod { width: 90px; }
+.col-date { width: 130px; }
+.col-qty { width: 140px; text-align: right; }
+.col-actions { width: 120px; text-align: center; }
+.col-carne { width: auto; }
+
+/* Animación de entrada para Rows (fade-in en cascada virtual) */
+.fade-in { animation: fadeInUp 0.5s ease-out forwards; }
+
+/* --- Animaciones Keyframes --- */
+@keyframes slideFadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translate3d(0, 10px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@media print { 
+  :root {
+    --text-main: #000 !important;
+    --text-muted: #333 !important;
+    --accent: #000 !important;
+    --glass-surface: transparent !important;
+  }
+
+  /* Ocultar elementos globales de la Interfaz Web */
+  .no-print, 
+  header, 
+  .nav-tabs, 
+  .global-status-banner { 
+    display: none !important; 
+  } 
+
+  /* Forzar diseño de hoja limpia en blanco y negro para la impresora */
+  body {
+    background: white !important;
+    color: black !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    animation: none !important; /* Detener la malla animada respirable */
+  }
+
+  .app-container {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+  }
+
+  /* Asegurar que el contenedor de la factura agarre el 100% de la hoja */
+  .invoice-container {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+}
