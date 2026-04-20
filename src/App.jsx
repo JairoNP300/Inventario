@@ -1620,9 +1620,6 @@ const App = () => {
 
   return (
     <div className="app-container">
-      <div style={{ background: '#a855f7', color: 'white', textAlign: 'center', padding: '12px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '2px', position: 'sticky', top: 0, zIndex: 99999, fontSize: '0.8rem', boxShadow: '0 4px 20px rgba(168, 85, 247, 0.4)' }}>
-        🚀 VERSIÓN 1.1.1 - ESPERANDO CONEXIÓN POSTGRESQL
-      </div>
       <header>
         <div className="subtitle">Carnes del Paraguay</div>
         <h1>Logística & Control de Inventario</h1>
@@ -1696,8 +1693,8 @@ const App = () => {
         </AnimatePresence>
       </main>
 
-      <footer style={{ textAlign: 'center', padding: '30px', color: 'var(--text-muted)', fontSize: '0.7rem', borderTop: '1px solid var(--border)', marginTop: '2rem' }}>
-        🚀 Sistema de Inventario Lomas - v2.0 | Estado: <span style={{ color: 'var(--success)', fontWeight: 800 }}>ACTUALIZADO</span> (20 Abr - 13:06)
+      <footer>
+        <p>&copy; 2026 Carnes del Paraguay - Sistema de Logística Propio</p>
       </footer>
     </div>
   );
