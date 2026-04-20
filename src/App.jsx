@@ -253,8 +253,8 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
               <tr>
                 <th className="col-date">Fecha</th>
                 <th className="col-carne">Producto</th>
-                <th className="col-qty">Kg</th>
-                <th className="col-qty">Lbs</th>
+                <th className="col-qty">Entrada (Lbs)</th>
+                <th className="col-qty">Salida (Lbs)</th>
                 <th className="col-qty">Merma</th>
                 <th className="col-actions">Acciones</th>
               </tr>
@@ -264,9 +264,9 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
                 <tr key={log.id} className="fade-in">
                   <td className="col-date" style={{ color: 'var(--text-muted)' }}>{new Date(log.date).toLocaleDateString()}</td>
                   <td className="col-carne" style={{ fontWeight: 700, color: 'var(--text-main)' }}>{log.product_name}</td>
-                  <td className="col-qty" style={{ color: 'var(--accent)' }}>{log.initial_weight} <small>Kg</small></td>
-                  <td className="col-qty" style={{ color: 'var(--secondary)', fontWeight: 800 }}>{log.cut_weight} <small>Lbs</small></td>
-                  <td className="col-qty" style={{ color: 'var(--danger)', fontWeight: 700 }}>-{log.waste} <small>Lbs</small></td>
+                  <td className="col-qty" style={{ color: 'var(--accent)' }}>{log.initial_weight} <small>lbs</small></td>
+                  <td className="col-qty" style={{ color: 'var(--secondary)', fontWeight: 800 }}>{log.cut_weight} <small>lbs</small></td>
+                  <td className="col-qty" style={{ color: 'var(--danger)', fontWeight: 700 }}>-{log.waste} <small>lbs</small></td>
                   <td className="col-actions">
                     <div style={{ display:'flex', gap:'8px', justifyContent: 'center' }}>
                       <motion.button 
