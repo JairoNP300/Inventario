@@ -1620,8 +1620,8 @@ const App = () => {
 
   return (
     <div className="app-container">
-      <div style={{ background: '#ef4444', color: 'white', textAlign: 'center', padding: '12px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '2px', position: 'sticky', top: 0, zIndex: 99999, fontSize: '0.8rem', boxShadow: '0 4px 20px rgba(239, 68, 68, 0.4)' }}>
-        ⚠️ VERSIÓN INTEGRADA 100% (MODO NUBE) - ACTIVA AHORA
+      <div style={{ background: '#0ea5e9', color: 'white', textAlign: 'center', padding: '12px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '2px', position: 'sticky', top: 0, zIndex: 99999, fontSize: '0.8rem', boxShadow: '0 4px 20px rgba(14, 165, 233, 0.4)' }}>
+        🚀 VERSIÓN 1.0.2 - INTEGRACIÓN DE BASE DE DATOS EXITOSA
       </div>
       <header>
         <div className="subtitle">Carnes del Paraguay</div>
