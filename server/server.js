@@ -18,12 +18,19 @@ app.use(express.json());
 app.use(express.static(join(__dirname, '../dist')));
 
 // --- DATABASE CONFIGURATION ---
-const isProduction = !!process.env.DATABASE_URL;
+const isProduction = !!process.env.DATABASE_URL || !!process.env.RENDER;
 let pool;
 let sqliteDb;
 
 if (isProduction) {
   console.log('🌐 Conectando a PostgreSQL (Producción)...');
+  
+  if (!process.env.DATABASE_URL) {
+    console.error('❌ CRÍTICO: La variable DATABASE_URL no está configurada en Render.');
+    console.log('El sistema no puede iniciar sin una base de datos conectada.');
+    // No salimos aquí para permitir que Render muestre este log claramente
+  }
+
   pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }
