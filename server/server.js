@@ -49,6 +49,10 @@ if (isProduction) {
 // Unified Query Helper
 async function query(sql, params = []) {
   if (isProduction) {
+    if (!pool) {
+      console.warn('⚠️ Query intentada sin conexión a base de datos (DATABASE_URL faltante).');
+      return { rows: [], lastInsertRowid: null };
+    }
     // Convert ? to $1, $2, etc for PostgreSQL
     let index = 1;
     const pgSqlFixed = sql.replace(/\?/g, () => `$${index++}`);

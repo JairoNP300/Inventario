@@ -1620,8 +1620,8 @@ const App = () => {
 
   return (
     <div className="app-container">
-      <div style={{ background: '#f59e0b', color: 'white', textAlign: 'center', padding: '12px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '2px', position: 'sticky', top: 0, zIndex: 99999, fontSize: '0.8rem', boxShadow: '0 4px 20px rgba(245, 158, 11, 0.4)' }}>
-        🚀 VERSIÓN 1.0.3 - ESTABILIZACIÓN DE NÚCLEO COMPLETADA
+      <div style={{ background: '#a855f7', color: 'white', textAlign: 'center', padding: '12px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '2px', position: 'sticky', top: 0, zIndex: 99999, fontSize: '0.8rem', boxShadow: '0 4px 20px rgba(168, 85, 247, 0.4)' }}>
+        🚀 VERSIÓN 1.1.1 - ESPERANDO CONEXIÓN POSTGRESQL
       </div>
       <header>
         <div className="subtitle">Carnes del Paraguay</div>
