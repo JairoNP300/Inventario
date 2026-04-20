@@ -27,14 +27,13 @@ if (isProduction) {
   
   if (!process.env.DATABASE_URL) {
     console.error('❌ CRÍTICO: La variable DATABASE_URL no está configurada en Render.');
-    console.log('El sistema no puede iniciar sin una base de datos conectada.');
-    // No salimos aquí para permitir que Render muestre este log claramente
+    console.log('Por favor, crea una base de datos PostgreSQL en Render y añade su URL en Environment.');
+  } else {
+    pool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false }
+    });
   }
-
-  pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false }
-  });
 } else {
   console.log('📂 Iniciando SQLite local...');
   try {
