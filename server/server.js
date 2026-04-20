@@ -23,16 +23,21 @@ let pool;
 let sqliteDb;
 
 if (isProduction) {
-  console.log('🌐 Conectando a PostgreSQL...');
+  console.log('🌐 Conectando a PostgreSQL (Producción)...');
   pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }
   });
 } else {
   console.log('📂 Iniciando SQLite local...');
-  const Database = (await import('better-sqlite3')).default;
-  sqliteDb = new Database('inventario_oficial.db');
-  sqliteDb.pragma('journal_mode = WAL');
+  try {
+    const Database = (await import('better-sqlite3')).default;
+    sqliteDb = new Database('inventario_oficial.db');
+    sqliteDb.pragma('journal_mode = WAL');
+  } catch (e) {
+    console.error('❌ Error cargando SQLite:', e.message);
+    process.exit(1);
+  }
 }
 
 // Unified Query Helper
