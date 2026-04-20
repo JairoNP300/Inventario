@@ -125,6 +125,16 @@ const migrateDatabase = async () => {
         sold_stock = 0
     `, [product.id]);
   }
+  // Fix existing tables (SQLite only handles one column at a time)
+  const columns = ['current_stock', 'final_stock'];
+  for (const col of columns) {
+    try {
+      await query(`ALTER TABLE inventory ADD COLUMN ${col} DECIMAL(10,2) DEFAULT 0`);
+      console.log(`Column ${col} added to inventory`);
+    } catch (e) {
+      // Column probably already exists
+    }
+  }
 
   console.log('Database migration completed successfully');
 };
@@ -707,9 +717,7 @@ app.delete('/api/dispatches/:id', async (req, res) => {
       await query('DELETE FROM dispatches WHERE id = ?', [id]);
     }
     res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.post('/api/orders', async (req, res) => {
