@@ -154,7 +154,9 @@ const initDb = async () => {
       bodega_3 DECIMAL(10,2) DEFAULT 0,
       bodega_4 DECIMAL(10,2) DEFAULT 0,
       initial_stock DECIMAL(10,2) DEFAULT 0,
-      sold_stock DECIMAL(10,2) DEFAULT 0
+      current_stock DECIMAL(10,2) DEFAULT 0,
+      sold_stock DECIMAL(10,2) DEFAULT 0,
+      final_stock DECIMAL(10,2) DEFAULT 0
     );
 
     CREATE TABLE IF NOT EXISTS movements (
