@@ -1,0 +1,28 @@
+# Dependencias
+node_modules/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Archivos temporales
+.tmp/
+.temp/
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# Archivos de build
+dist/
+build/
+
+# Variables de entorno
+.env
+.env.local
+.env.production
+
+# Base de datos local
+*.db
+*.sqlite
+*.sqlite3

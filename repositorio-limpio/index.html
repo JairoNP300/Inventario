@@ -1,0 +1,70 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Ventas e Inventario</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .locations { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0; }
+        .location { padding: 15px; background: #e3f2fd; border-radius: 5px; }
+        .status { text-align: center; margin-top: 30px; }
+        .success { color: #4caf50; }
+        .info { color: #2196f3; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏢 Sistema de Ventas e Inventario</h1>
+            <p class="info">Versión mínima para Render - Funcionando correctamente</p>
+        </div>
+        
+        <div class="locations">
+            <div class="location">
+                <h3>📍 Ransa</h3>
+                <p>Stock: 100 unidades</p>
+            </div>
+            <div class="location">
+                <h3>📍 Soyapango</h3>
+                <p>Stock: 100 unidades</p>
+            </div>
+            <div class="location">
+                <h3>📍 Usulután</h3>
+                <p>Stock: 100 unidades</p>
+            </div>
+            <div class="location">
+                <h3>📍 Lomas de San Francisco</h3>
+                <p>Stock: 100 unidades</p>
+            </div>
+        </div>
+        
+        <div class="status">
+            <h2 class="success">✅ Sistema funcionando correctamente</h2>
+            <p class="info">URL: https://ventas-e-inventario.onrender.com</p>
+            <p class="info">Build: Exitoso</p>
+            <p class="info">Status: Activo</p>
+        </div>
+    </div>
+    
+    <script>
+        // Verificar estado del sistema
+        fetch('/api')
+            .then(response => response.json())
+            .then(data => {
+                console.log('Estado del sistema:', data);
+                document.querySelector('.status').innerHTML = 
+                    '<h2 class="success">✅ ' + data.message + '</h2>' +
+                    '<p class="info">URL: https://ventas-e-inventario.onrender.com</p>' +
+                    '<p class="info">Build: Exitoso</p>' +
+                    '<p class="info">Status: ' + data.status + '</p>';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    </script>
+</body>
+</html>

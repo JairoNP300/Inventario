@@ -26,7 +26,8 @@ import {
   ShieldCheck,
   Printer,
   Save,
-  Utensils
+  Utensils,
+  Coins
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
@@ -56,8 +57,8 @@ const ProductIntelligenceCard = ({ product }) => {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '0.85rem' }}>
             <span style={{color: 'var(--text-muted)'}}>Ransa: <b style={{color: 'var(--text-main)'}}>{(product.stock_kg || 0).toFixed(1)}kg</b></span>
             <span style={{color: 'var(--text-muted)'}}>Lomas: <b style={{color: 'var(--accent)'}}>{(product.stock_b4 || 0).toFixed(1)}lbs</b></span>
-            <span style={{color: 'var(--text-muted)'}}>Soyapango: <b style={{color: 'var(--text-main)'}}>{(product.stock_b2 || 0).toFixed(1)}kg</b></span>
-            <span style={{color: 'var(--text-muted)'}}>Usulután: <b style={{color: 'var(--text-main)'}}>{(product.stock_b3 || 0).toFixed(1)}kg</b></span>
+            <span style={{color: 'var(--text-muted)'}}>Soyapango: <b style={{color: 'var(--accent)'}}>{((product.stock_b2 || 0) * 2.20462).toFixed(1)}lbs</b></span>
+            <span style={{color: 'var(--text-muted)'}}>Usulután: <b style={{color: 'var(--accent)'}}>{((product.stock_b3 || 0) * 2.20462).toFixed(1)}lbs</b></span>
           </div>
         </div>
         <div style={{ borderLeft: '1px solid var(--border-light)', paddingLeft: '25px' }}>
@@ -65,7 +66,6 @@ const ProductIntelligenceCard = ({ product }) => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '0.9rem' }}>
             <span>Libra: <b style={{color: 'var(--success)', fontWeight: 800}}>${(product.price_per_lb || 0).toFixed(2)}</b></span>
             <span>Kilogramo: <b style={{color: 'var(--success)', fontWeight: 800}}>${(product.price_per_kg || 0).toFixed(2)}</b></span>
-            <span>Caja/Box: <b style={{color: 'var(--success)', fontWeight: 800}}>${(product.price_per_box || 0).toFixed(2)}</b></span>
           </div>
         </div>
       </div>
@@ -88,8 +88,7 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
   );
 
   const handleCalcWaste = () => {
-    const initKg = parseFloat(formData.initial_weight) || 0;
-    const initLbs = initKg * 2.20462;
+    const initLbs = parseFloat(formData.initial_weight) || 0;
     const cutLbs = parseFloat(formData.cut_weight) || 0;
     setFormData(prev => ({ 
       ...prev, 
@@ -133,7 +132,7 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
     <div className="report-content">
       <div style={{ background: 'rgba(6, 182, 212, 0.1)', padding: '15px', borderRadius: '14px', marginBottom: '20px', border: '1px solid rgba(6, 182, 212, 0.3)', fontSize: '0.85rem', color: 'var(--accent)' }}>
         <Activity size={16} style={{ verticalAlign: 'middle', marginRight: '8px' }} />
-        <strong>Monitor de Conversión:</strong> Sistema de rastreo de mermas y potencial en Libras (1 Kg = 2.20462 Lbs).
+        <strong>Monitor de Producción:</strong> Seguimiento integral de mermas y rendimiento directo en Libras.
       </div>
       
       <div className="card-grid">
@@ -147,6 +146,7 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
             setFormData({ product_id: '', initial_weight: '', cut_weight: '', waste: '', storage_cost: '', transport_cost: '', labor_cost: '', other_costs: '' });
             setEditingId(null);
             onUpdate();
+            if (!editingId) window.dispatchEvent(new CustomEvent('changeTab', { detail: 'distribution' }));
           });
         }} className="form-card">
           <h3>Panel de Conversión & Proceso</h3>
@@ -163,14 +163,11 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
           <div className="form-row two-col">
             <div className="form-group">
               <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>Entrada Técnica (Kg)</span>
-                <span style={{ color: 'var(--accent)', fontSize: '0.9rem', fontWeight: 900, textShadow: '0 0 10px var(--accent-glow)' }}>
-                  = {(parseFloat(formData.initial_weight || 0) * 2.20462).toFixed(2)} LBS
-                </span>
+                <span>Entrada Técnica (Lbs)</span>
               </label>
               <input type="number" step="0.01" value={formData.initial_weight} onChange={e => {
                 const w = e.target.value;
-                setFormData(prev => ({...prev, initial_weight: w, waste: ((parseFloat(w || 0) * 2.20462) - parseFloat(prev.cut_weight || 0)).toFixed(2)}));
+                setFormData(prev => ({...prev, initial_weight: w, waste: (parseFloat(w || 0) - parseFloat(prev.cut_weight || 0)).toFixed(2)}));
               }} placeholder="0.00" required />
             </div>
             <div className="form-group">
@@ -182,7 +179,7 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
               </label>
               <input type="number" step="0.01" value={formData.cut_weight} onChange={e => {
                 const c = e.target.value;
-                setFormData(prev => ({...prev, cut_weight: c, waste: ((parseFloat(prev.initial_weight || 0) * 2.20462) - parseFloat(c || 0)).toFixed(2)}));
+                setFormData(prev => ({...prev, cut_weight: c, waste: (parseFloat(prev.initial_weight || 0) - parseFloat(c || 0)).toFixed(2)}));
               }} placeholder="0.00" required />
             </div>
           </div>
@@ -305,7 +302,7 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
 // Componente para selector de unidad
 const UnitSelector = ({ value, onChange }) => (
   <div style={{ display: 'flex', gap: '8px', background: 'rgba(15, 23, 42, 0.4)', padding: '6px', borderRadius: '12px', border: '1px solid var(--border)' }}>
-    {['Lbs', 'Kg', 'Cajas'].map(unit => (
+    {['Lbs', 'Kg'].map(unit => (
       <button
         key={unit}
         onClick={() => onChange(unit)}
@@ -331,6 +328,7 @@ const UnitSelector = ({ value, onChange }) => (
 // --- StatusReport ---
 const StatusReport = ({ products, refreshTrigger, onUpdate }) => {
   const [inventory, setInventory] = useState([]);
+  const [viewUnit, setViewUnit] = useState('Lbs');
   const [adjData, setAdjData] = useState({ product_id: '', current_stock: '', initial_stock: '', warehouse: 'Ransa' });
 
   useEffect(() => {
@@ -384,36 +382,54 @@ const StatusReport = ({ products, refreshTrigger, onUpdate }) => {
         </form>
 
         <div className="form-card" style={{ gridColumn: 'span 2' }}>
-          <h4>Balance Consolidado por Bodega</h4>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <h4 style={{ margin: 0 }}>Balance Consolidado por Bodega</h4>
+            <div style={{ width: '200px' }}>
+              <UnitSelector value={viewUnit} onChange={setViewUnit} />
+            </div>
+          </div>
           <div className="grid-table-container">
             <table>
               <thead>
                 <tr>
                   <th className="col-carne">Producto</th>
-                  <th className="col-qty">Ransa</th>
-                  <th className="col-qty">Soyapango</th>
-                  <th className="col-qty">Usulután</th>
-                  <th className="col-qty">Lomas</th>
-                  <th className="col-qty">Venta Global</th>
+                  <th className="col-qty">Ransa ({viewUnit})</th>
+                  <th className="col-qty">Soyapango ({viewUnit})</th>
+                  <th className="col-qty">Usulután ({viewUnit})</th>
+                  <th className="col-qty">Lomas ({viewUnit})</th>
+                  <th className="col-qty">Venta Global ({viewUnit})</th>
                 </tr>
               </thead>
               <tbody>
-                {inventory.map(i => (
-                  <tr key={i.name}>
-                    <td className="col-carne" style={{ fontWeight: 700, color: 'var(--text-main)' }}>{i.name}</td>
-                    <td className="col-qty" style={{ color: 'var(--accent)' }}>{i.bodega_1 || 0}</td>
-                    <td className="col-qty" style={{ color: 'var(--secondary)' }}>{i.bodega_4 || 0}</td>
-                    <td className="col-qty" style={{ color: 'var(--success)' }}>{i.bodega_2 || 0}</td>
-                    <td className="col-qty" style={{ color: 'var(--warning)' }}>{i.bodega_3 || 0}</td>
-                    <td className="col-qty" style={{ background: 'rgba(14, 165, 233, 0.05)', fontWeight: 800 }}>
-                      <span style={{ 
-                        color: (i.final_stock || 0) < 20 ? 'var(--danger)' : 'var(--accent)'
-                      }}>
-                        {i.final_stock || 0} <small>lbs</small>
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                {inventory.map(i => {
+                  const isKg = viewUnit === 'Kg';
+                  const factor = 2.20462;
+                  
+                  // B1, B2, B3 are stored as KG. B4 is stored as LBS.
+                  const b1 = isKg ? (i.bodega_1 || 0) : ((i.bodega_1 || 0) * factor);
+                  const b2 = isKg ? (i.bodega_2 || 0) : ((i.bodega_2 || 0) * factor);
+                  const b3 = isKg ? (i.bodega_3 || 0) : ((i.bodega_3 || 0) * factor);
+                  const b4 = isKg ? ((i.bodega_4 || 0) / factor) : (i.bodega_4 || 0);
+                  
+                  const total = b1 + b2 + b3 + b4;
+
+                  return (
+                    <tr key={i.name}>
+                      <td className="col-carne" style={{ fontWeight: 700, color: 'var(--text-main)' }}>{i.name}</td>
+                      <td className="col-qty" style={{ color: 'var(--accent)' }}>{b1.toFixed(1)}</td>
+                      <td className="col-qty" style={{ color: 'var(--success)' }}>{b2.toFixed(1)}</td>
+                      <td className="col-qty" style={{ color: 'var(--success)' }}>{b3.toFixed(1)}</td>
+                      <td className="col-qty" style={{ color: 'var(--secondary)' }}>{b4.toFixed(1)}</td>
+                      <td className="col-qty" style={{ background: 'rgba(14, 165, 233, 0.05)', fontWeight: 800 }}>
+                        <span style={{ 
+                          color: (isKg ? total * factor : total) < 20 ? 'var(--danger)' : 'var(--accent)'
+                        }}>
+                          {total.toFixed(1)} <small>{viewUnit.toLowerCase()}</small>
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -463,7 +479,7 @@ const InvoicingSystem = ({ products, agros, onUpdate }) => {
   const addToCart = () => {
     const p = products.find(prod => String(prod.id) === String(selectedProduct));
     if (!p || !qty || !agroId) return alert('Complete los datos: Producto, Cantidad y Ubicación');
-    let price = unit === 'Lbs' ? p.price_per_lb : (unit === 'Kg' ? p.price_per_kg : p.price_per_box);
+    let price = unit === 'Lbs' ? p.price_per_lb : p.price_per_kg;
     setCart([...cart, { id: Date.now(), product_id: p.id, agro_id: parseInt(agroId), name: p.name, qty: parseFloat(qty), unit, price: price || 0, total: parseFloat(qty) * (price || 0) }]);
     setSelectedProduct(''); setQty('');
   };
@@ -665,6 +681,7 @@ const InvoicingSystem = ({ products, agros, onUpdate }) => {
                 window.print();
                 setCart([]);
                 onUpdate();
+                window.dispatchEvent(new CustomEvent('changeTab', { detail: 'status' }));
               });
             }} 
             className="btn-primary" 
@@ -931,7 +948,6 @@ const LogisticsHub = ({ products, agros, refreshTrigger, onUpdate, forceMode, in
         let price = 0;
         if (formData.unit_type === 'Lbs') price = product.price_per_lb;
         else if (formData.unit_type === 'Kg') price = product.price_per_kg;
-        else if (formData.unit_type === 'Cajas') price = product.price_per_box;
         
         setFormData(prev => ({ ...prev, value: (parseFloat(formData.weight) * (price || 0)).toFixed(2) }));
       }
@@ -962,7 +978,12 @@ const LogisticsHub = ({ products, agros, refreshTrigger, onUpdate, forceMode, in
       setFormData({ product_id: '', origin: 'Ransa', destination: 'Lomas de San Francisco', weight: '', tag_weight: '', scale_weight: '', units_per_box: '', unit_type: 'Lbs', agro_id: '', value: '' }); 
       setEditingId(null);
       alert(editingId ? 'Cambios actualizados correctamente' : 'Guardado correctamente');
-      if (forceMode === 'unified' && !editingId) window.dispatchEvent(new CustomEvent('changeTab', { detail: 'production' }));
+      
+      // Auto-navigation logic
+      if (!editingId) {
+        if (isIncome) window.dispatchEvent(new CustomEvent('changeTab', { detail: 'production' }));
+        else window.dispatchEvent(new CustomEvent('changeTab', { detail: 'invoice' }));
+      }
     });
   };
 
@@ -1045,7 +1066,7 @@ const LogisticsHub = ({ products, agros, refreshTrigger, onUpdate, forceMode, in
               <label>Punto de Entrega (Destino)</label>
               <select value={formData.agro_id} onChange={e => setFormData({...formData, agro_id: e.target.value})} required>
                 <option value="">Seleccione Destino...</option>
-                {agros.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                {agros.filter(a => a.name !== 'Ransa').map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
               </select>
             </div>
             <div className="form-group">
@@ -1092,7 +1113,7 @@ const LogisticsHub = ({ products, agros, refreshTrigger, onUpdate, forceMode, in
             <div style={{ marginBottom: '1.5rem' }}>
               <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform:'uppercase' }}>Asignación por Destino</label>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '10px' }}>
-                {agros.map(a => {
+                {agros.filter(a => a.name !== 'Ransa').map(a => {
                   const currentVal = formData.distributions?.[a.id] || '';
                   return (
                     <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: '15px', background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '12px', border: '1px solid var(--border)' }}>
@@ -1119,8 +1140,8 @@ const LogisticsHub = ({ products, agros, refreshTrigger, onUpdate, forceMode, in
 
         <button type="submit" className="btn-primary" disabled={activeSubTab === 'mass' && (parseFloat(Object.values(formData.distributions || {}).reduce((acc, v) => acc + (parseFloat(v) || 0), 0)) > (parseFloat(formData.total_to_distribute) || 0))}>
           {activeSubTab === 'mass' ? 'Confirmar Distribución Masiva' : 
-           activeSubTab === 'unified' ? 'Confirmar Recepción & Traslado' : 
-           activeSubTab === 'dispatch' ? 'Confirmar Despacho Individual' : 'Ejecutar Paso'}
+           activeSubTab === 'unified' ? 'Recepción -> Ir a Procesos' : 
+           activeSubTab === 'dispatch' ? 'Despacho -> Ir a Factura' : 'Ejecutar Paso'}
         </button>
       </form>
 
@@ -1211,7 +1232,7 @@ const ConfigPanel = ({ products, onUpdate }) => {
       <div className="form-card grid-table-container">
         <table>
           <thead>
-            <tr><th>Cod</th><th>Producto</th><th>$/Libras</th><th>$/Kg</th><th>$/Caja</th><th>Acción</th></tr>
+            <tr><th>Cod</th><th>Producto</th><th>$/Libras</th><th>$/Kg</th><th>Acción</th></tr>
           </thead>
           <tbody>
             {products.map(p => (
@@ -1220,7 +1241,6 @@ const ConfigPanel = ({ products, onUpdate }) => {
                 <td>{editing === p.id ? <input value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} /> : p.name}</td>
                 <td>{editing === p.id ? <input type="number" step="0.01" value={formData.price_per_lb} onChange={e => setFormData({...formData, price_per_lb: e.target.value})} /> : `$${(p.price_per_lb || 0).toFixed(2)}`}</td>
                 <td>{editing === p.id ? <input type="number" step="0.01" value={formData.price_per_kg} onChange={e => setFormData({...formData, price_per_kg: e.target.value})} /> : `$${(p.price_per_kg || 0).toFixed(2)}`}</td>
-                <td>{editing === p.id ? <input type="number" step="0.01" value={formData.price_per_box} onChange={e => setFormData({...formData, price_per_box: e.target.value})} /> : `$${(p.price_per_box || 0).toFixed(2)}`}</td>
                 <td>
                   {editing === p.id ? <button onClick={handleSave}>Guardar</button> : <button onClick={() => handleEdit(p)}><Edit2 size={16} /></button>}
                 </td>
@@ -1234,28 +1254,87 @@ const ConfigPanel = ({ products, onUpdate }) => {
 };
 
 const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
-  const [formData, setFormData] = useState({
-    product_id: '',
-    gross_weight: '', gross_cost: '',
-    cooked_weight: '', cooked_cost: '',
-    waste_weight: '', waste_cost: ''
+  const [meats, setMeats] = useState([{ product_id: '', weight: '', cost: '' }]);
+  const [inputs, setInputs] = useState([{ description: '', cost: '' }]);
+  const [extraData, setExtraData] = useState({
+    event_name: '',
+    batch_purpose: '', // Contains the "10 lbs for tacos" text
+    sale_price: '',
+    leftover_value: '',
+    payment_status: 'Crédito',
+    notes: ''
   });
+
+  const addMeat = () => setMeats([...meats, { product_id: '', weight: '', cost: '' }]);
+  const addInput = () => setInputs([...inputs, { description: '', cost: '' }]);
+
+  const updateMeat = (idx, field, val) => {
+    const newMeats = [...meats];
+    newMeats[idx][field] = val;
+    
+    // Auto-calculate cost if we have product and weight
+    if (field === 'product_id' || field === 'weight') {
+      const pId = field === 'product_id' ? val : newMeats[idx].product_id;
+      const w = field === 'weight' ? val : newMeats[idx].weight;
+      const product = products.find(p => String(p.id) === String(pId));
+      if (product && w) {
+        newMeats[idx].cost = (parseFloat(w) * (product.price_per_lb || 0)).toFixed(2);
+      }
+    }
+    
+    setMeats(newMeats);
+  };
+
+  const updateInput = (idx, field, val) => {
+    const newInputs = [...inputs];
+    newInputs[idx][field] = val;
+    setInputs(newInputs);
+  };
+
+  const totalMeatCost = meats.reduce((acc, m) => acc + (parseFloat(m.cost) || 0), 0);
+  const totalInputCost = inputs.reduce((acc, i) => acc + (parseFloat(i.cost) || 0), 0);
+  const totalWeight = meats.reduce((acc, m) => acc + (parseFloat(m.weight) || 0), 0);
+  const totalCost = totalMeatCost + totalInputCost;
+  const netBalance = (parseFloat(extraData.sale_price) || 0) - totalCost + (parseFloat(extraData.leftover_value) || 0);
+
+  // Analytical extractions
+  // Regex to try and find numerical weight in purpose (e.g. "10 lbs for tacos")
+  const producedQtyMatch = extraData.batch_purpose.match(/(\d+(\.\d+)?)/);
+  const producedQty = producedQtyMatch ? parseFloat(producedQtyMatch[0]) : 0;
+  const yieldPercent = totalWeight > 0 ? (producedQty / totalWeight) * 100 : 0;
+  const unitCost = producedQty > 0 ? (totalCost / producedQty) : 0;
+  const marginPercent = (parseFloat(extraData.sale_price) || 0) > 0 ? (netBalance / parseFloat(extraData.sale_price)) * 100 : 0;
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    const data = {
+      event_name: extraData.event_name,
+      meats,
+      inputs,
+      total_cost: totalCost,
+      sale_price: extraData.sale_price,
+      leftover_value: extraData.leftover_value,
+      balance: netBalance,
+      date: new Date().toISOString()
+    };
+    
+    // We send it as a unified 'batch' to the food-costing endpoint
     fetch(`${API_BASE}/food-costing`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(formData)
+      body: JSON.stringify({
+        product_id: meats[0]?.product_id || 0,
+        gross_weight: meats.reduce((acc, m) => acc + (parseFloat(m.weight) || 0), 0),
+        gross_cost: totalCost,
+        cooked_weight: netBalance,
+        json_data: JSON.stringify(data)
+      })
     }).then(() => {
       onUpdate();
-      setFormData({
-        product_id: '',
-        gross_weight: '', gross_cost: '',
-        cooked_weight: '', cooked_cost: '',
-        waste_weight: '', waste_cost: ''
-      });
-      alert('Costeo registrado y guardado exitosamente.');
+      setMeats([{ product_id: '', weight: '', cost: '' }]);
+      setInputs([{ description: '', cost: '' }]);
+      setExtraData({ event_name: '', batch_purpose: '', sale_price: '', leftover_value: '', notes: '' });
+      alert('Contabilidad de lote guardada correctamente.');
     });
   };
 
@@ -1264,84 +1343,243 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
       <div className="card-grid">
         <form onSubmit={handleSubmit} className="form-card" style={{ gridColumn: 'span 2' }}>
           <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Utensils size={24} color="var(--accent)" /> Comida Costeo
+            <Utensils size={24} color="var(--accent)" /> Calculadora de Lotes / Eventos
           </h3>
 
-          <div className="form-group" style={{ maxWidth: '400px' }}>
-            <label>Producto Relacionado</label>
-            <select value={formData.product_id} onChange={e => setFormData({...formData, product_id: e.target.value})} required>
-              <option value="">Seleccione Producto...</option>
-              {products.map(p => <option key={p.id} value={p.id}>{p.code ? `${p.code}: ` : ''}{p.name}</option>)}
-            </select>
-          </div>
-
-          <div className="form-row three-col">
-            <div className="form-group" style={{ background: 'rgba(255,255,255,0.02)', padding: '15px', borderRadius: '12px' }}>
-              <label style={{ color: 'var(--text-main)', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>Peso Producto Bruto</label>
-              <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-                <input type="number" step="0.01" placeholder="Q (Cant)" value={formData.gross_weight} onChange={e => setFormData({...formData, gross_weight: e.target.value})} required style={{ flex: 1 }} />
-                <input type="number" step="0.01" placeholder="$ (Costo)" value={formData.gross_cost} onChange={e => setFormData({...formData, gross_cost: e.target.value})} required style={{ flex: 1 }} />
-              </div>
+          <div className="form-row two-col">
+            <div className="form-group">
+              <label>Destino de Venta (Cliente/Institución)</label>
+              <input 
+                type="text" 
+                value={extraData.event_name} 
+                onChange={e => setExtraData({...extraData, event_name: e.target.value})} 
+                placeholder="Ej: MAG, CNR, Relaciones Exteriores..." 
+                required 
+              />
             </div>
-
-            <div className="form-group" style={{ background: 'rgba(255,255,255,0.02)', padding: '15px', borderRadius: '12px' }}>
-              <label style={{ color: 'var(--accent)', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>Peso Producto Cocido</label>
-              <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-                <input type="number" step="0.01" placeholder="Q (Cant)" value={formData.cooked_weight} onChange={e => setFormData({...formData, cooked_weight: e.target.value})} required style={{ flex: 1 }} />
-                <input type="number" step="0.01" placeholder="$ (Costo)" value={formData.cooked_cost} onChange={e => setFormData({...formData, cooked_cost: e.target.value})} required style={{ flex: 1 }} />
-              </div>
-            </div>
-
-            <div className="form-group" style={{ background: 'rgba(255,255,255,0.02)', padding: '15px', borderRadius: '12px' }}>
-              <label style={{ color: 'var(--danger)', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>Desperdicio / Merma</label>
-              <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-                <input type="number" step="0.01" placeholder="Q (Cant)" value={formData.waste_weight} onChange={e => setFormData({...formData, waste_weight: e.target.value})} style={{ flex: 1 }} />
-                <input type="number" step="0.01" placeholder="$ (Costo)" value={formData.waste_cost} onChange={e => setFormData({...formData, waste_cost: e.target.value})} style={{ flex: 1 }} />
-              </div>
+            <div className="form-group">
+              <label>Cantidad Producida y Propósito del Lote</label>
+              <input 
+                type="text" 
+                value={extraData.batch_purpose} 
+                onChange={e => setExtraData({...extraData, batch_purpose: e.target.value})} 
+                placeholder="Ej: 10 libras para tacos..." 
+                required 
+              />
             </div>
           </div>
 
-          <button type="submit" className="btn-primary" style={{ marginTop: '25px', width: '100%', maxWidth: '300px' }}>Guardar Costeo de Comida</button>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginTop: '1rem' }}>
+            {/* SECTION: MEATS */}
+            <div>
+              <h4 style={{ borderBottom: '1px solid var(--border)', paddingBottom: '8px', fontSize: '1rem' }}>🛒 Materia Prima (Carnes)</h4>
+              {meats.map((m, idx) => (
+                <div key={idx} style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                  <select value={m.product_id} onChange={e => updateMeat(idx, 'product_id', e.target.value)} required style={{ flex: 2 }}>
+                    <option value="">Carne...</option>
+                    {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                  </select>
+                  <input type="number" step="0.01" placeholder="Lbs" value={m.weight} onChange={e => updateMeat(idx, 'weight', e.target.value)} style={{ flex: 1 }} />
+                  <input type="number" step="0.01" placeholder="$ Costo" value={m.cost} onChange={e => updateMeat(idx, 'cost', e.target.value)} style={{ flex: 1.5 }} />
+                </div>
+              ))}
+              <button type="button" onClick={addMeat} style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--accent)', border: '1px dashed var(--accent)', padding: '5px 10px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.8rem' }}>+ Agregar Carne</button>
+            </div>
+
+            {/* SECTION: INPUTS */}
+            <div>
+              <h4 style={{ borderBottom: '1px solid var(--border)', paddingBottom: '8px', fontSize: '1rem' }}>🥗 Insumos y Verduras</h4>
+              {inputs.map((inp, idx) => (
+                <div key={idx} style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                  <input type="text" placeholder="Tomate, Cebolla..." value={inp.description} onChange={e => updateInput(idx, 'description', e.target.value)} style={{ flex: 2 }} />
+                  <input type="number" step="0.01" placeholder="$ Costo" value={inp.cost} onChange={e => updateInput(idx, 'cost', e.target.value)} style={{ flex: 1 }} />
+                </div>
+              ))}
+              <button type="button" onClick={addInput} style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--accent)', border: '1px dashed var(--accent)', padding: '5px 10px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.8rem' }}>+ Agregar Insumo</button>
+            </div>
+          </div>
+
+          <div style={{ marginTop: '2.5rem', padding: '25px', background: 'linear-gradient(135deg, rgba(6,182,212,0.08), rgba(34,197,94,0.08))', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.12)', position: 'relative', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', top: '-20px', right: '-20px', opacity: 0.1 }}>
+              <TrendingUp size={120} color="var(--accent)" />
+            </div>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <h4 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Coins size={20} color="var(--accent)" /> 
+                Análisis de Rentabilidad
+              </h4>
+            </div>
+            
+            <div className="form-row three-col">
+              <div className="form-group">
+                <label>Precio Venta / Crédito ($)</label>
+                <input type="number" step="0.01" value={extraData.sale_price} onChange={e => setExtraData({...extraData, sale_price: e.target.value})} placeholder="0.00" style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--accent)' }} />
+              </div>
+              <div className="form-group">
+                <label>Valor de comida que sobró ($)</label>
+                <input type="number" step="0.01" value={extraData.leftover_value} onChange={e => setExtraData({...extraData, leftover_value: e.target.value})} placeholder="0.00" style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--success)' }} />
+              </div>
+              <div className="form-group" style={{ textAlign: 'center' }}>
+                <motion.div 
+                  animate={{ scale: [1, 1.05, 1] }} 
+                  transition={{ repeat: Infinity, duration: 3 }}
+                  style={{ fontSize: '2.5rem', lineHeight: 1, fontWeight: 950, color: netBalance >= 0 ? 'var(--success)' : '#ef4444', textShadow: netBalance >= 0 ? '0 0 25px rgba(34,197,94,0.4)' : '0 0 25px rgba(239,68,68,0.4)' }}
+                >
+                  ${netBalance.toFixed(2)}
+                </motion.div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '8px', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                  Margen Bruto: <b style={{ color: marginPercent > 20 ? 'var(--success)' : 'var(--warning)' }}>{marginPercent.toFixed(1)}%</b>
+                </div>
+              </div>
+            </div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1.5fr', gap: '20px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '20px', marginTop: '20px', fontSize: '0.85rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Materia Prima (Carnes):</span>
+                <b style={{ color: 'var(--text-main)' }}>${totalMeatCost.toFixed(2)}</b>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Insumos Operativos:</span>
+                <b style={{ color: 'var(--text-main)' }}>${totalInputCost.toFixed(2)}</b>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Rendimiento:</span>
+                <b style={{ color: yieldPercent > 50 ? 'var(--success)' : 'var(--warning)' }}>{yieldPercent.toFixed(1)}%</b>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'right' }}>
+                <span style={{ color: 'var(--text-muted)' }}>COSTO TOTAL DE OPERACIÓN:</span>
+                <b style={{ color: 'var(--accent)', fontSize: '1.2rem' }}>${totalCost.toFixed(2)}</b>
+                {producedQty > 0 && <span style={{ fontSize: '0.7rem' }}>Costo unitario: <b>${unitCost.toFixed(2)}/lb fina</b></span>}
+              </div>
+            </div>
+          </div>
+
+          <div className="form-group" style={{ marginTop: '2rem' }}>
+            <label style={{ color: 'var(--accent)', fontWeight: 800 }}>Observaciones y Detalles Finales del Lote</label>
+            <textarea 
+              value={extraData.notes} 
+              onChange={e => setExtraData({...extraData, notes: e.target.value})} 
+              placeholder="Escribe aquí cualquier detalle adicional, variaciones en costos o notas sobre la entrega..."
+              style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', borderRadius: '16px', padding: '15px', color: 'white', minHeight: '80px', resize: 'vertical', marginTop: '8px' }}
+            />
+          </div>
+
+          <button type="submit" className="btn-primary" style={{ marginTop: '25px', width: '100%', padding: '18px', fontSize: '1rem', background: 'linear-gradient(to right, var(--accent), var(--secondary))' }}>
+            Finalizar y Guardar Contabilidad de Lote
+          </button>
         </form>
       </div>
 
       <div className="form-card" style={{ marginTop: '2rem' }}>
-        <h3>Historial de Costeos</h3>
+        <h3>Historial de Lotes y Despachos de Comida</h3>
         <div className="grid-table-container">
           <table>
             <thead>
               <tr>
                 <th>Fecha</th>
-                <th>Producto Relacionado</th>
-                <th>Bruto (Q / $)</th>
-                <th>Cocido (Q / $)</th>
-                <th>Merma (Q / $)</th>
-                <th>🗑️</th>
+                <th>Propósito / Cantidad</th>
+                <th>Destino / Institución</th>
+                <th>Costo Op. ($)</th>
+                <th>Venta ($)</th>
+                <th>Rend. %</th>
+                <th>Utilidad ($)</th>
               </tr>
             </thead>
             <tbody>
-              {logs.map(lg => (
-                <tr key={lg.id}>
-                  <td style={{ color: 'var(--text-muted)' }}>{new Date(lg.date).toLocaleDateString()}</td>
-                  <td style={{ fontWeight: 800 }}>{lg.product_name}</td>
-                  <td>{lg.gross_weight} / ${lg.gross_cost}</td>
-                  <td style={{ color: 'var(--accent)' }}>{lg.cooked_weight} / ${lg.cooked_cost}</td>
-                  <td style={{ color: 'var(--danger)' }}>{lg.waste_weight} / ${lg.waste_cost}</td>
-                  <td>
-                    <button onClick={() => {
-                      if(confirm('¿Eliminar?')) {
-                        fetch(`${API_BASE}/food-costing/${lg.id}`, { method: 'DELETE' }).then(onUpdate);
-                      }
-                    }} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer' }}>
-                      <Trash2 size={16} />
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {logs.map(lg => {
+                let details = { event_name: 'Desconocido', batch_purpose: '-', total_cost: 0, sale_price: 0, leftover_value: 0, balance: 0 };
+                try { 
+                  if (lg.json_data) details = JSON.parse(lg.json_data);
+                  else {
+                    details.total_cost = lg.gross_cost;
+                    details.balance = lg.cooked_weight;
+                  }
+                } catch(e) {}
+
+                // Recalculate yield for history if possible
+                const histWeightMatch = details.batch_purpose?.match(/(\d+(\.\d+)?)/);
+                const hWeight = histWeightMatch ? parseFloat(histWeightMatch[0]) : 0;
+                const hRawTotal = details.meats?.reduce((acc, m) => acc + (parseFloat(m.weight) || 0), 0) || 0;
+                const hYield = hRawTotal > 0 ? (hWeight / hRawTotal) * 100 : 0;
+
+                return (
+                  <tr key={lg.id}>
+                    <td style={{ color: 'var(--text-muted)' }}>{new Date(lg.date).toLocaleDateString()}</td>
+                    <td style={{ fontWeight: 600, color: 'var(--accent)' }}>{details.batch_purpose}</td>
+                    <td style={{ fontWeight: 800 }}>{details.event_name}</td>
+                    <td>${(details.total_cost || 0).toFixed(2)}</td>
+                    <td style={{ color: 'var(--accent)' }}>${(details.sale_price || 0)}</td>
+                    <td style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{hYield > 0 ? hYield.toFixed(0) + '%' : '-'}</td>
+                    <td style={{ 
+                      fontWeight: 900, 
+                      color: (details.balance || 0) >= 0 ? 'var(--success)' : '#ef4444',
+                      background: (details.balance || 0) >= 0 ? 'rgba(34, 197, 94, 0.05)' : 'rgba(239, 68, 68, 0.05)'
+                    }}>
+                      ${(details.balance || 0).toFixed(2)}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
       </div>
+    </div>
+  );
+};
+
+// --- Process Stepper Component ---
+const ProcessStepper = ({ currentTab }) => {
+  const steps = [
+    { id: 'income', label: 'Recepción', icon: <Store size={16} /> },
+    { id: 'production', label: 'Procesamiento', icon: <Cpu size={16} /> },
+    { id: 'distribution', label: 'Despacho', icon: <Truck size={16} /> },
+    { id: 'invoice', label: 'Venta / Factura', icon: <FileText size={16} /> }
+  ];
+
+  const currentIdx = steps.findIndex(s => s.id === currentTab);
+  if (currentIdx === -1) return null;
+
+  return (
+    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '3rem', gap: '15px' }}>
+      {steps.map((step, idx) => {
+        const isCompleted = idx < currentIdx;
+        const isActive = idx === currentIdx;
+        return (
+          <React.Fragment key={step.id}>
+            <div style={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              alignItems: 'center', 
+              gap: '8px',
+              opacity: isActive || isCompleted ? 1 : 0.4,
+              transition: 'all 0.3s ease'
+            }}>
+              <div style={{ 
+                width: '40px', 
+                height: '40px', 
+                borderRadius: '50%', 
+                background: isActive ? 'var(--accent)' : (isCompleted ? 'var(--success)' : 'rgba(255,255,255,0.05)'),
+                color: isActive || isCompleted ? '#020617' : 'var(--text-muted)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: isActive ? '0 0 20px var(--accent-glow)' : 'none',
+                border: isActive ? 'none' : '1px solid var(--border)'
+              }}>
+                {isCompleted ? <CheckCircle2 size={20} /> : step.icon}
+              </div>
+              <span style={{ fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px', color: isActive ? 'var(--accent)' : 'inherit' }}>
+                {step.label}
+              </span>
+            </div>
+            {idx < steps.length - 1 && (
+              <div style={{ alignSelf: 'center', width: '50px', height: '2px', background: isCompleted ? 'var(--success)' : 'rgba(255,255,255,0.05)', marginTop: '-20px' }} />
+            )}
+          </React.Fragment>
+        );
+      })}
     </div>
   );
 };
@@ -1434,6 +1672,7 @@ const App = () => {
       </nav>
 
       <main style={{ paddingBottom: '5rem' }}>
+        <ProcessStepper currentTab={activeTab} />
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}

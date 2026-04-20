@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --open",
     "cloud": "node scripts/watch-deploy.js",
     "dev:cloud": "concurrently --kill-others \"npm run dev\" \"npm run cloud\"",
     "dev:all": "concurrently --kill-others \"npm run dev\" \"npm run start\"",

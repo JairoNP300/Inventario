@@ -72,23 +72,41 @@ async function exec(sql) {
 // --- MIGRATION ---
 const migrateDatabase = async () => {
   console.log('Running database migration...');
-  
-  // Update agros table with new locations
-  await query('DELETE FROM agros');
+
+  // Update agros table with new locations - Safely
+  try {
+    await query(`
+      DELETE FROM agros 
+      WHERE id NOT IN (SELECT COALESCE(agro_id, 0) FROM sales)
+      AND id NOT IN (SELECT COALESCE(agro_id, 0) FROM dispatches)
+    `);
+  } catch (e) {
+    console.warn('Could not clean up agros in migration:', e.message);
+  }
   const agros = [
-    [1, 'Ransa'],
-    [2, 'Soyapango'],
-    [3, 'Usulután'],
-    [4, 'Lomas de San Francisco']
+    [1, 'Soyapango - Puesto'],
+    [2, 'Usulután - Puesto'],
+    [3, 'Agro Quezaltepeque'],
+    [4, 'Agro Aguilares'],
+    [5, 'Agro Opico'],
+    [6, 'MAG (Gobierno)'],
+    [7, 'CNR (Gobierno)'],
+    [8, 'Relaciones Exteriores (Gobierno)'],
+    [9, 'Lomas de San Francisco']
   ];
-  
+
   for (const [id, name] of agros) {
-    await query('INSERT INTO agros (id, name) VALUES (?, ?)', [id, name]);
+    try {
+      await query('INSERT OR IGNORE INTO agros (id, name) VALUES (?, ?)', [id, name]);
+      await query('UPDATE agros SET name = ? WHERE id = ?', [name, id]);
+    } catch (e) {
+      console.warn(`Failed to sync agro ${name}:`, e.message);
+    }
   }
 
   // Update inventory with 100 units per bodega
   const products = await query('SELECT id FROM products');
-  
+
   for (const product of products.rows) {
     await query(`
       INSERT INTO inventory (product_id, bodega_1, bodega_2, bodega_3, bodega_4, initial_stock, current_stock, sold_stock)
@@ -103,7 +121,7 @@ const migrateDatabase = async () => {
         sold_stock = 0
     `, [product.id]);
   }
-  
+
   console.log('Database migration completed successfully');
 };
 
@@ -212,27 +230,26 @@ const initDb = async () => {
   if (!isProduction) {
     try {
       sqliteDb.prepare('ALTER TABLE products ADD COLUMN code TEXT').run();
-    } catch (e) {}
+    } catch (e) { }
     try {
       sqliteDb.prepare('ALTER TABLE products ADD COLUMN price_per_lb DECIMAL(10,2) DEFAULT 0').run();
-    } catch (e) {}
+    } catch (e) { }
     try {
       sqliteDb.prepare('ALTER TABLE products ADD COLUMN price_per_kg DECIMAL(10,2) DEFAULT 0').run();
-    } catch (e) {}
+    } catch (e) { }
     try {
       sqliteDb.prepare('ALTER TABLE products ADD COLUMN price_per_box DECIMAL(10,2) DEFAULT 0').run();
-    } catch (e) {}
+    } catch (e) { }
     try {
       sqliteDb.prepare('ALTER TABLE inventory ADD COLUMN bodega_1 DECIMAL(10,2) DEFAULT 0').run();
       sqliteDb.prepare('ALTER TABLE inventory ADD COLUMN bodega_2 DECIMAL(10,2) DEFAULT 0').run();
       sqliteDb.prepare('ALTER TABLE inventory ADD COLUMN bodega_3 DECIMAL(10,2) DEFAULT 0').run();
       sqliteDb.prepare('ALTER TABLE inventory ADD COLUMN bodega_4 DECIMAL(10,2) DEFAULT 0').run();
-    } catch (e) {}
+    } catch (e) { }
   }
 
   const products = [
     ['1618', 'Posta Negra / Nalga de Adentro', 'Cortes', 4.25, 9.37, 85.00],
-    ['1619', 'Cajas Tortuguita', 'Cortes', 4.65, 10.25, 90.00],
     ['1620', 'HUESO DE YUGO / COGOTE CON HUESO', 'Cortes', 2.00, 4.41, 40.00],
     ['1621', 'NEW YORK / BIEF ANGOSTO', 'Prime', 6.75, 14.88, 130.00],
     ['1622', 'TRIMING 80/20 especial', 'Industrial', 3.10, 6.83, 60.00],
@@ -252,7 +269,7 @@ const initDb = async () => {
       try {
         await query('INSERT OR IGNORE INTO products (code, name, category, price_per_lb, price_per_kg, price_per_box) VALUES (?, ?, ?, ?, ?, ?)', p);
         await query('UPDATE products SET price_per_lb = ?, price_per_kg = ?, price_per_box = ?, code = ? WHERE name = ?', [p[3], p[4], p[5], p[0], p[1]]);
-      } catch (e) {}
+      } catch (e) { }
     }
   }
 
@@ -268,20 +285,44 @@ const initDb = async () => {
   }
 
   const agros = [
-    'Soyapango - Puesto', 
-    'Usulután - Puesto', 
-    'MAG (Gobierno)', 'CNR (Gobierno)', 'Relaciones Exteriores (Gobierno)', 'Otros (Gobierno)',
-    'Agro Quezaltepeque', 'Agro Aguilares', 'Agro Opico'
+    'Soyapango - Puesto',
+    'Usulután - Puesto',
+    'Agro Quezaltepeque',
+    'Agro Aguilares',
+    'Agro Opico',
+    'MAG (Gobierno)',
+    'CNR (Gobierno)',
+    'Relaciones Exteriores (Gobierno)',
+    'Lomas de San Francisco'
   ];
   // Sync destinations
   for (const a of agros) {
     await query('INSERT OR IGNORE INTO agros (name) VALUES (?)', [a]);
   }
-  // Optional: Delete agros not in list to keep it 100% accurate
+  // Optional: Delete agros not in list to keep it 100% accurate, but only if they are not in use
   const agrosPlaceholders = agros.map(() => '?').join(',');
-  await query(`DELETE FROM agros WHERE name NOT IN (${agrosPlaceholders})`, agros);
-  // Explicitly remove any remaining internal-only names from this table
-  await query("DELETE FROM agros WHERE name LIKE '%Cuarto%' OR name LIKE '%Cuartos%'");
+  try {
+    await query(`
+      DELETE FROM agros 
+      WHERE name NOT IN (${agrosPlaceholders})
+      AND id NOT IN (SELECT COALESCE(agro_id, 0) FROM sales)
+      AND id NOT IN (SELECT COALESCE(agro_id, 0) FROM dispatches)
+    `, agros);
+  } catch (e) {
+    console.warn('Could not delete some agros due to dependencies:', e.message);
+  }
+
+  // Explicitly remove any remaining internal-only names from this table, if not in use
+  try {
+    await query(`
+      DELETE FROM agros 
+      WHERE (name LIKE '%Cuarto%' OR name LIKE '%Cuartos%')
+      AND id NOT IN (SELECT COALESCE(agro_id, 0) FROM sales)
+      AND id NOT IN (SELECT COALESCE(agro_id, 0) FROM dispatches)
+    `);
+  } catch (e) {
+    console.warn('Could not delete internal agros due to dependencies:', e.message);
+  }
 };
 
 initDb().catch(console.error);
@@ -319,21 +360,21 @@ app.put('/api/reports/ransa/:id', async (req, res) => {
     const { rows } = await query('SELECT * FROM ransa_requests WHERE id = ?', [id]);
     if (rows.length > 0) {
       const old = rows[0];
-      const colMap = { 
-        'Ransa': 'bodega_1', 
+      const colMap = {
+        'Ransa': 'bodega_1',
         'Lomas de San Francisco': 'bodega_4',
         'Central de abasto - Soyapango (Cuarto Frío)': 'bodega_2',
         'Central de abasto - Usulután (Cuarto Frío)': 'bodega_3'
       };
-      
+
       // 1. Revert OLD stock from OLD destination
       const oldCol = colMap[old.distribution_details] || 'bodega_1';
       await query(`UPDATE inventory SET ${oldCol} = ${oldCol} - ?, initial_stock = initial_stock - ? WHERE product_id = ?`, [old.scale_weight, old.scale_weight, old.product_id]);
-      
+
       // 2. Apply NEW stock to NEW destination
       const newCol = colMap[distribution_details] || 'bodega_1';
       await query(`UPDATE inventory SET ${newCol} = ${newCol} + ?, initial_stock = initial_stock + ? WHERE product_id = ?`, [scale_weight, scale_weight, product_id]);
-      
+
       // 3. Update Record
       await query(`
         UPDATE ransa_requests SET product_id = ?, tag_weight = ?, scale_weight = ?, units_per_box = ?, unit_type = ?, distribution_details = ?
@@ -351,10 +392,10 @@ app.post('/api/reports/ransa', async (req, res) => {
       INSERT INTO ransa_requests (product_id, tag_weight, scale_weight, units_per_box, unit_type, distribution_details)
       VALUES (?, ?, ?, ?, ?, ?) RETURNING id
     `, [product_id, tag_weight, scale_weight, units_per_box, unit_type || 'Lbs', distribution_details]);
-    
+
     // Determine target warehouse column
-    const colMap = { 
-      'Ransa': 'bodega_1', 
+    const colMap = {
+      'Ransa': 'bodega_1',
       'Lomas de San Francisco': 'bodega_4',
       'Central de abasto - Soyapango (Cuarto Frío)': 'bodega_2',
       'Central de abasto - Usulután (Cuarto Frío)': 'bodega_3'
@@ -362,10 +403,10 @@ app.post('/api/reports/ransa', async (req, res) => {
     const col = colMap[distribution_details] || 'bodega_1';
 
     await query(`UPDATE inventory SET ${col} = ${col} + ?, initial_stock = initial_stock + ? WHERE product_id = ?`, [scale_weight, scale_weight, product_id]);
-    
+
     // Log Movement
     await query('INSERT INTO movements (product_id, origin_warehouse, dest_warehouse, weight, type) VALUES (?, ?, ?, ?, ?)', [product_id, 'Origin', distribution_details, scale_weight, 'INCOME']);
-    
+
     res.json({ id: info.lastInsertRowid });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -389,14 +430,14 @@ app.post('/api/dispatches', async (req, res) => {
     // Get the agro name to determine which bodega to deduct from
     const { rows: agroRows } = await query('SELECT name FROM agros WHERE id = ?', [agro_id]);
     const agroName = agroRows[0]?.name || 'Ransa';
-    
+
     const info = await query(`
       INSERT INTO dispatches (product_id, agro_id, weight, unit_type, value)
       VALUES (?, ?, ?, ?, ?) RETURNING id
     `, [product_id, agro_id, weight, unit_type || 'Lbs', value]);
-    
+
     // Map agro_id to bodega column
-    const agroToBodegaMap = { 
+    const agroToBodegaMap = {
       1: 'bodega_1', // Ransa
       2: 'bodega_2', // Soyapango
       3: 'bodega_3', // Usulután
@@ -415,7 +456,7 @@ app.post('/api/dispatches', async (req, res) => {
 
     await query(`UPDATE inventory SET ${bodegaCol} = ${bodegaCol} - ?, sold_stock = sold_stock + ? WHERE product_id = ?`, [weightInLbs, weightInLbs, product_id]);
     await query('INSERT INTO movements (product_id, origin_warehouse, dest_warehouse, weight, type) VALUES (?, ?, ?, ?, ?)', [product_id, agroName, 'Dispatch', weight, 'DISPATCH']);
-    
+
     res.json({ id: info.lastInsertRowid });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -440,14 +481,14 @@ app.post('/api/sales', async (req, res) => {
 app.post('/api/inventory/adjust', async (req, res) => {
   const { product_id, current_stock, initial_stock, warehouse } = req.body;
   try {
-    const colMap = { 
-      'Ransa': 'bodega_1', 
-      'Central de abasto - Soyapango (Cuarto Frío)': 'bodega_2', 
+    const colMap = {
+      'Ransa': 'bodega_1',
+      'Central de abasto - Soyapango (Cuarto Frío)': 'bodega_2',
       'Central de abasto - Usulután (Cuarto Frío)': 'bodega_3',
-      'Lomas de San Francisco': 'bodega_4' 
+      'Lomas de San Francisco': 'bodega_4'
     };
     const targetCol = colMap[warehouse] || 'bodega_1';
-    
+
     // If initial_stock is provided, update initial. If current_stock is provided, update specific bodega.
     if (initial_stock !== undefined) {
       await query('UPDATE inventory SET initial_stock = ? WHERE product_id = ?', [initial_stock, product_id]);
@@ -455,7 +496,7 @@ app.post('/api/inventory/adjust', async (req, res) => {
     if (current_stock !== undefined) {
       await query(`UPDATE inventory SET ${targetCol} = ? WHERE product_id = ?`, [current_stock, product_id]);
     }
-    
+
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -519,20 +560,20 @@ app.get('/api/agros', async (req, res) => {
 app.post('/api/inventory/transfer', async (req, res) => {
   const { product_id, origin, destination, weight } = req.body;
   try {
-    const colMap = { 
-      'Ransa': 'bodega_1', 
-      'Central de abasto - Soyapango (Cuarto Frío)': 'bodega_2', 
+    const colMap = {
+      'Ransa': 'bodega_1',
+      'Central de abasto - Soyapango (Cuarto Frío)': 'bodega_2',
       'Central de abasto - Usulután (Cuarto Frío)': 'bodega_3',
       'Lomas de San Francisco': 'bodega_4'
     };
     const originCol = colMap[origin];
     const destCol = colMap[destination];
-    
+
     await query(`UPDATE inventory SET ${originCol} = ${originCol} - ? WHERE product_id = ?`, [weight, product_id]);
     await query(`UPDATE inventory SET ${destCol} = ${destCol} + ? WHERE product_id = ?`, [weight, product_id]);
-    
+
     await query('INSERT INTO movements (product_id, origin_warehouse, dest_warehouse, weight, type) VALUES (?, ?, ?, ?, ?)', [product_id, origin, destination, weight, 'TRANSFER']);
-    
+
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -540,16 +581,16 @@ app.post('/api/inventory/transfer', async (req, res) => {
 });
 
 app.post('/api/production/process', async (req, res) => {
-    const { product_id, initial_kg, cut_weight, waste, storage_cost, transport_cost, labor_cost, other_costs } = req.body;
-    try {
-      await query(`
+  const { product_id, initial_kg, cut_weight, waste, storage_cost, transport_cost, labor_cost, other_costs } = req.body;
+  try {
+    await query(`
         INSERT INTO production_logs (product_id, initial_weight, cut_weight, waste, storage_cost, transport_cost, labor_cost, other_costs)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       `, [product_id, initial_kg, cut_weight, waste, storage_cost || 0, transport_cost || 0, labor_cost || 0, other_costs || 0]);
-      
-      // Corrected: Subtract KG and Add Lbs in a single operation
-      await query('UPDATE inventory SET bodega_2 = bodega_2 - ? + ? WHERE product_id = ?', [initial_kg, cut_weight, product_id]);
-    
+
+    // Corrected: Subtract KG and Add Lbs in a single operation
+    await query('UPDATE inventory SET bodega_2 = bodega_2 - ? + ? WHERE product_id = ?', [initial_kg, cut_weight, product_id]);
+
     await query('INSERT INTO movements (product_id, origin_warehouse, dest_warehouse, weight, type) VALUES (?, ?, ?, ?, ?)', [product_id, 'Bodega 1', 'Bodega 2 (Processed)', cut_weight, 'TRANSFER']);
 
     res.json({ success: true });
@@ -604,9 +645,9 @@ app.put('/api/dispatches/:id', async (req, res) => {
     const { rows } = await query('SELECT * FROM dispatches WHERE id = ?', [id]);
     if (rows.length > 0) {
       const old = rows[0];
-      
+
       // Map agro_id to bodega column
-      const agroToBodegaMap = { 
+      const agroToBodegaMap = {
         1: 'bodega_1', // Ransa
         2: 'bodega_2', // Soyapango
         3: 'bodega_3', // Usulután
@@ -617,7 +658,7 @@ app.put('/api/dispatches/:id', async (req, res) => {
       // Convert weights to lbs for inventory
       let oldWeightInLbs = parseFloat(old.weight);
       let newWeightInLbs = parseFloat(weight);
-      
+
       if (old.unit_type === 'Kg') {
         oldWeightInLbs = oldWeightInLbs * 2.20462;
       }
@@ -643,9 +684,9 @@ app.delete('/api/dispatches/:id', async (req, res) => {
     const { rows } = await query('SELECT * FROM dispatches WHERE id = ?', [id]);
     if (rows.length > 0) {
       const log = rows[0];
-      
+
       // Map agro_id to bodega column
-      const agroToBodegaMap = { 
+      const agroToBodegaMap = {
         1: 'bodega_1', // Ransa
         2: 'bodega_2', // Soyapango
         3: 'bodega_3', // Usulután
@@ -726,14 +767,14 @@ app.post('/api/admin/sync-catalog', async (req, res) => {
       ['1627', 'CARNE BOVINA CONGELADA SIN HUESO TAPA CUADRIL / PICAÑA', 'Prime', 9.20],
       ['1628', 'CARNE BOVINA CONGELADA SIN HUESO RECORTE DE CARNE 90 VL premium', 'Industrial', 4.65]
     ];
-    
+
     // Delete records in reverse dependency order to avoid FK errors
     await query('DELETE FROM inventory');
     await query('DELETE FROM ransa_requests');
     await query('DELETE FROM dispatches');
     await query('DELETE FROM orders');
     await query('DELETE FROM products');
-    
+
     // Re-insert exactly as image
     for (const p of products) {
       await query('INSERT INTO products (code, name, category, price_per_lb) VALUES (?, ?, ?, ?)', p);
@@ -743,7 +784,7 @@ app.post('/api/admin/sync-catalog', async (req, res) => {
     for (const p of prods) {
       await query('INSERT INTO inventory (product_id, initial_stock, current_stock) VALUES (?, 100, 100)');
     }
-    
+
     res.json({ success: true, message: 'Catálogo sincronizado con la imagen' });
   } catch (err) {
     res.status(500).json({ error: err.message });

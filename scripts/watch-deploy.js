@@ -5,57 +5,64 @@ import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '../');
+const DEBOUNCE_MS = 5000;
 
-console.log('🚀 Sistema de Sincronización Automática Iniciado...');
-console.log('📡 Vigila cambios en: /src y /server');
+// Archivos/carpetas a ignorar
+const IGNORE = ['node_modules', '.git', 'dist', '.github', 'scratch', 'inventario_oficial.db-wal', 'inventario_oficial.db-shm'];
 
-let isSyncing = false;
-let pendingSync = false;
+console.log('🚀 SISTEMA DE SINCRONIZACIÓN AUTOMÁTICA (CLOUD) INICIADO');
+console.log('👀 Vigilando cambios en todos los archivos del proyecto...');
 
-const startSync = () => {
-    if (isSyncing) {
-        pendingSync = true;
-        return;
-    }
+let timer = null;
+let pendingChanges = false;
 
-    isSyncing = true;
-    pendingSync = false;
+function shouldIgnore(filename) {
+    if (!filename) return true;
+    return IGNORE.some(ig => filename.includes(ig));
+}
 
-    console.log('📦 Detectado cambio. Preparando sincronización...');
-
+function deploy() {
     try {
-        // Debounce: Wait 5 seconds before pushing to avoid rapid builds
-        setTimeout(() => {
-            console.log('📤 Subiendo cambios a GitHub...');
-            execSync('git add .', { cwd: ROOT });
-            
-            // Check if there are changes to commit
-            const status = execSync('git status --porcelain', { cwd: ROOT }).toString();
-            if (status) {
-                execSync('git commit -m "Auto-sync: ' + new Date().toLocaleString() + '"', { cwd: ROOT });
-                execSync('git push origin main', { cwd: ROOT });
-                console.log('✅ Sincronizado correctamente con la nube.');
-            } else {
-                console.log('ℹ️ Sin cambios relevantes para subir.');
-            }
-            
-            isSyncing = false;
-            if (pendingSync) startSync(); // If changes happened during sync, run again
-        }, 5000); 
+        console.log('\n📤 Cambios detectados. Sincronizando con la nube (GitHub/Render)...');
+        
+        // Verificar si hay cambios antes de hacer nada
+        const status = execSync('git status --porcelain', { cwd: ROOT }).toString().trim();
+        if (!status) {
+            console.log('✅ No hay cambios reales para subir.');
+            return;
+        }
 
-    } catch (error) {
-        console.error('❌ Error en sincronización:', error.message);
-        isSyncing = false;
+        const timestamp = new Date().toLocaleString('es-MX');
+        execSync('git add .', { cwd: ROOT, stdio: 'inherit' });
+        execSync(`git commit -m "Actualización automática: ${timestamp}"`, { cwd: ROOT, stdio: 'inherit' });
+        execSync('git push origin main', { cwd: ROOT, stdio: 'inherit' });
+        
+        console.log(`✅ ¡Cambios subidos con éxito!`);
+        console.log(`🚀 Render se está actualizando automáticamente.`);
+        console.log(`   (La URL pública se actualizará en unos minutos)\n`);
+    } catch (e) {
+        console.error('❌ Error en sincronización:', e.message);
     }
-};
+}
 
-// Monitor relevant folders
-watch(join(ROOT, 'src'), { recursive: true }, (evt, filename) => {
-    if (filename) startSync();
+function scheduleDeployment() {
+    pendingChanges = true;
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(() => {
+        if (pendingChanges) {
+            pendingChanges = false;
+            deploy();
+        }
+    }, DEBOUNCE_MS);
+}
+
+// Vigilar cambios en la raíz de forma recursiva
+watch(ROOT, { recursive: true }, (event, filename) => {
+    if (filename && !shouldIgnore(filename)) {
+        console.log(`📝 Archivo modificado: ${filename}`);
+        scheduleDeployment();
+    }
 });
 
-watch(join(ROOT, 'server'), { recursive: true }, (evt, filename) => {
-    if (filename) startSync();
-});
-
-console.log('💡 Los cambios se subirán automáticamente a GitHub (Render se actualizará solo).');
+console.log('💡 Los cambios se subirán automáticamente a GitHub y Render.');
+console.log('   No cierres esta ventana.\n');
