@@ -74,6 +74,10 @@ async function query(sql, params = []) {
 
 async function exec(sql) {
   if (isProduction) {
+    if (!pool) {
+      console.warn('⚠️ Exec intentada sin conexión a base de datos.');
+      return { rows: [] };
+    }
     // Postgres uses SERIAL or IDENTITY instead of AUTOINCREMENT
     const pgSql = sql
       .replace(/INTEGER PRIMARY KEY AUTOINCREMENT/gi, 'SERIAL PRIMARY KEY')
