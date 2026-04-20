@@ -1692,6 +1692,10 @@ const App = () => {
           </motion.div>
         </AnimatePresence>
       </main>
+
+      <footer style={{ textAlign: 'center', padding: '30px', color: 'var(--text-muted)', fontSize: '0.7rem', borderTop: '1px solid var(--border)', marginTop: '2rem' }}>
+        🚀 Sistema de Inventario Lomas - v2.0 | Estado: <span style={{ color: 'var(--success)', fontWeight: 800 }}>ACTUALIZADO</span> (20 Abr - 13:06)
+      </footer>
     </div>
   );
 };
