@@ -222,14 +222,10 @@ const initDb = async () => {
 
     CREATE TABLE IF NOT EXISTS food_costing (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      product_id INTEGER,
-      gross_weight DECIMAL(10,2),
-      gross_cost DECIMAL(10,2),
-      cooked_weight DECIMAL(10,2),
-      cooked_cost DECIMAL(10,2),
-      waste_weight DECIMAL(10,2),
-      waste_cost DECIMAL(10,2),
-      date DATE DEFAULT (date('now'))
+      date TEXT,
+      event_name TEXT,
+      details TEXT, 
+      total_balance DECIMAL(10,2)
     );
   `);
 
