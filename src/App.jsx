@@ -226,8 +226,8 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
                 <tr>
                   <th className="col-cod">Cod</th>
                   <th className="col-carne">Carne / Producto</th>
-                  <th className="col-qty">Kg</th>
-                  <th className="col-qty">Lbs</th>
+                  <th className="col-qty">Stock Disponible (Lbs)</th>
+                  <th className="col-qty">Ref. Kg</th>
                 </tr>
               </thead>
               <tbody>
@@ -235,8 +235,8 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
                   <tr key={p.id}>
                     <td className="col-cod" style={{ fontWeight: 800, color: 'var(--text-muted)' }}>{p.code}</td>
                     <td className="col-carne" style={{ fontWeight: 700, color: 'var(--text-main)' }}>{p.name}</td>
-                    <td className="col-qty" style={{ fontWeight: 700, color: 'var(--accent)' }}>{p.stock_kg || 0} <small>kg</small></td>
-                    <td className="col-qty" style={{ color: 'var(--success)', fontWeight: 800 }}>{((p.stock_kg || 0) * 2.20462).toFixed(2)} <small>lbs</small></td>
+                    <td className="col-qty" style={{ color: 'var(--success)', fontWeight: 800, fontSize: '1.1rem' }}>{((p.stock_kg || 0) * 2.20462).toFixed(2)} <small>lbs</small></td>
+                    <td className="col-qty" style={{ fontWeight: 600, color: 'rgba(255,255,255,0.3)' }}>{p.stock_kg || 0} <small>kg</small></td>
                   </tr>
                 ))}
               </tbody>
