@@ -98,16 +98,10 @@ const migrateDatabase = async () => {
   for (const [id, name] of agros) {
     try {
       if (isProduction) {
-        // Postgres syntax
         await query('INSERT INTO agros (id, name) VALUES (?, ?) ON CONFLICT (id) DO NOTHING', [id, name]);
       } else {
-        // SQLite syntax
         await query('INSERT OR IGNORE INTO agros (id, name) VALUES (?, ?)', [id, name]);
       }
-    } catch (e) {
-      console.error(`Error migrating agro ${name}:`, e.message);
-    }
-  }
       await query('UPDATE agros SET name = ? WHERE id = ?', [name, id]);
     } catch (e) {
       console.warn(`Failed to sync agro ${name}:`, e.message);
