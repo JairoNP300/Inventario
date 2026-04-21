@@ -30,8 +30,10 @@ import {
   Coins
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import { jsPDF } from 'jspdf';
+import html2canvas from 'html2canvas';
 
-const API_BASE = window.location.origin.includes('localhost') ? 'http://localhost:3000/api' : '/api';
+const API_BASE = '/api'; // Unified single-port API access for enterprise production
 
 // --- Componente Universal de Inteligencia de Producto ---
 const ProductIntelligenceCard = ({ product }) => {
@@ -512,16 +514,6 @@ const InvoicingSystem = ({ products, agros, onUpdate }) => {
             <input type="text" placeholder="Colonia San Benito..." value={client.address} onChange={e => setClient({...client, address: e.target.value})} />
           </div>
 
-          <div className="form-row two-col">
-            <div className="form-group"><label>NRC Cliente</label><input type="text" onChange={e => setClient({...client, nrc: e.target.value})} /></div>
-            <div className="form-group"><label>NIT/DUI</label><input type="text" onChange={e => setClient({...client, nit: e.target.value})} /></div>
-          </div>
-
-          <div className="form-group">
-            <label>Dirección de Envío / Fiscal</label>
-            <input type="text" placeholder="Ciudad, Municipio, Departamento" onChange={e => setClient({...client, address: e.target.value})} />
-          </div>
-
           <hr style={{ opacity: 0.1, margin: '2.5rem 0' }} />
 
           <div className="form-row two-col" style={{ alignItems: 'flex-start' }}>
@@ -709,350 +701,227 @@ const InvoicingSystem = ({ products, agros, onUpdate }) => {
         </div>
       </div>
 
-      <style>{`
-        .invoice-container { 
-          background: white; 
-          padding: 40px; 
-          color: #1e293b; 
-          font-family: 'Inter', sans-serif; 
-          max-width: 900px; 
-          margin: 3rem auto; 
-          border-radius: 16px; 
-          box-shadow: 0 20px 40px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.05); 
-          position: relative;
-          overflow: hidden;
-        }
-        
-        .invoice-container::before {
-          content: "";
-          position: absolute;
-          top: 0; left: 0; right: 0; height: 8px;
-          background: linear-gradient(90deg, #1e3a8a, #3b82f6);
-        }
-
-        .invoice-header { 
-          display: flex; 
-          justify-content: space-between; 
-          align-items: flex-start;
-          padding-bottom: 25px; 
-          border-bottom: 2px solid #f1f5f9; 
-          margin-bottom: 25px;
-        }
-        
-        .invoice-header-content { flex: 1; }
-        .company-title { color: #0f172a; margin: 0 0 8px 0; font-size: 1.5rem; font-weight: 900; letter-spacing: -0.5px; }
-        .company-details { font-size: 10px; margin: 0; color: #64748b; line-height: 1.6; }
-        .company-details strong { color: #334155; }
-        
-        .invoice-logo { margin-left: 30px; }
-        .logo-placeholder { 
-          width: 80px; height: 80px; 
-          background: #f8fafc;
-          border-radius: 12px;
-          display: flex; align-items: center; justify-content: center; 
-          font-size: 11px; font-weight: bold; color: #94a3b8; 
-          border: 1px dashed #cbd5e1;
-        }
-
-        .dte-info-card { 
-          display: flex;
-          justify-content: space-between;
-          background: #f8fafc; 
-          border-radius: 12px;
-          border: 1px solid #e2e8f0; 
-          padding: 18px 25px;
-          margin-bottom: 25px; 
-          align-items: center;
-        }
-        
-        .dte-text { flex: 1; }
-        .dte-title { margin: 0; font-size: 14px; font-weight: 800; color: #0f172a; letter-spacing: 0.5px; }
-        .dte-subtitle { margin: 4px 0 10px 0; font-size: 11px; color: #3b82f6; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;}
-        .dte-codes { font-size: 9px; color: #64748b; font-family: monospace; line-height: 1.5;}
-        
-        .date-box { 
-          text-align: right;
-          padding-left: 20px;
-          border-left: 1px solid #cbd5e1;
-        }
-        .date-label { font-size: 9px; color: #64748b; font-weight: 700; letter-spacing: 1px; margin-bottom: 4px; }
-        .date-value { font-size: 13px; font-weight: 800; color: #0f172a; }
-
-        .receptor-card { 
-          border-radius: 12px;
-          border: 1px solid #e2e8f0;
-          overflow: hidden;
-          margin-bottom: 30px;
-        }
-        .receptor-header { 
-          background: #f1f5f9; 
-          color: #334155; 
-          padding: 10px 20px; 
-          font-weight: 800; 
-          font-size: 11px;
-          letter-spacing: 1px;
-          border-bottom: 1px solid #e2e8f0;
-        }
-        .receptor-body { 
-          display: grid; 
-          grid-template-columns: 2fr 1fr 1fr; 
-          padding: 15px 20px; 
-          gap: 15px; 
-          font-size: 10.5px; 
-          color: #334155;
-          background: white;
-        }
-        .receptor-item { display: flex; flex-direction: column; gap: 4px; }
-        .receptor-item strong { color: #94a3b8; font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .receptor-item span { font-weight: 600; color: #0f172a; }
-        .full-width { grid-column: span 3; }
-
-        .table-wrapper {
-          border-radius: 12px;
-          border: 1px solid #e2e8f0;
-          overflow: hidden;
-          margin-bottom: 30px;
-        }
-        
-        .invoice-body-table { 
-          width: 100%; 
-          border-collapse: collapse; 
-          background: white;
-        }
-        .invoice-body-table th { 
-          background: #f8fafc; 
-          color: #64748b; 
-          font-size: 10px; 
-          font-weight: 700;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-          padding: 12px 15px; 
-          text-align: left; 
-          border-bottom: 1px solid #e2e8f0;
-        }
-        .invoice-body-table td { 
-          font-size: 11px; 
-          padding: 12px 15px; 
-          color: #334155; 
-          border-bottom: 1px solid #f1f5f9;
-        }
-        .invoice-body-table tbody tr:last-child td { border-bottom: none; }
-        .invoice-body-table tbody tr:nth-child(even) td { background: #fcfcfc; }
-        
-        .center-align { text-align: center; }
-        .right-align { text-align: right; }
-        .fw-bold { font-weight: 700; color: #0f172a; }
-        .empty-row { text-align: center; padding: 30px !important; color: #94a3b8; font-style: italic; }
-
-        .invoice-footer-grid { 
-          display: grid; 
-          grid-template-columns: 1fr 340px; 
-          gap: 30px; 
-          align-items: end;
-        }
-        
-        .total-letras { 
-          background: #f8fafc;
-          border-radius: 12px;
-          border: 1px solid #e2e8f0;
-          padding: 20px; 
-        }
-        .letras-title { font-size: 9px; color: #64748b; font-weight: bold; letter-spacing: 1px; margin-bottom: 5px; }
-        .letras-value { font-size: 12px; font-weight: 800; color: #0f172a; margin-bottom: 15px; text-transform: uppercase; }
-        .letras-note { font-size: 8.5px; color: #94a3b8; border-top: 1px dashed #cbd5e1; padding-top: 10px; line-height: 1.4; }
-
-        .total-breakdown { 
-          background: white;
-          border-radius: 12px;
-          border: 1px solid #e2e8f0; 
-          overflow: hidden;
-        }
-        .total-row { 
-          display: flex; 
-          justify-content: space-between; 
-          padding: 12px 20px; 
-          font-size: 11px; 
-          border-bottom: 1px solid #f1f5f9; 
-          color: #475569;
-          font-weight: 600;
-        }
-        .total-row:last-child { border-bottom: none; }
-        .main-total { 
-          background: #1e293b; 
-          color: white; 
-          font-weight: 800; 
-          font-size: 14px; 
-          padding: 16px 20px; 
-        }
-        .main-total span { color: white; }
-
-        @media print { 
-          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-          .no-print { display: none !important; } 
-          .invoice-container { 
-            border: none; margin: 0; width: 100%; max-width: 100%; box-shadow: none; padding: 0; 
-          } 
-          .invoice-container::before { height: 12px; }
-        }
-      `}</style>
-    </div>
+      </div>
   );
 };
 
 // --- FoodReport Component (Printable Audit) ---
-const FoodReport = ({ data, onBack }) => {
+const FoodReport = ({ data, products = [], onBack }) => {
   if (!data) return null;
-  const details = typeof data.json_data === 'string' ? JSON.parse(data.json_data) : data.json_data;
+  const [isCapturing, setIsCapturing] = useState(false);
+
+  let details = {};
+  try {
+    details = typeof data.json_data === 'string' ? JSON.parse(data.json_data) : (data.json_data || {});
+  } catch(e) {
+    details = data.json_data || {};
+  }
   
+  // Safe numeric conversion
+  const n = (val) => parseFloat(val) || 0;
+
   // Calculations
-  const meatTotal = details.meats?.reduce((acc, m) => acc + (parseFloat(m.weight) || 0), 0) || 0;
-  const cookedWeightMatch = details.batch_purpose?.match(/(\d+(\.\d+)?)/);
-  const cookedWeight = cookedWeightMatch ? parseFloat(cookedWeightMatch[0]) : 0;
+  const meatTotal = (details.meats || []).reduce((acc, m) => acc + n(m.weight), 0);
+  const purposeText = String(details.batch_purpose || '');
+  const cookedWeightMatch = purposeText.match(/(\d+(\.\d+)?)/);
+  const cookedWeight = cookedWeightMatch ? n(cookedWeightMatch[0]) : (n(details.cooked_weight));
+  
+  const totalRawCost = (details.meats || []).reduce((acc, m) => acc + n(m.cost), 0);
+  const totalInputCost = (details.inputs || []).reduce((acc, i) => acc + n(i.cost), 0);
+  const salePrice = n(details.sale_price);
+  const leftoverValue = n(details.leftover_value);
+  
+  const totalOperationalCost = totalRawCost + totalInputCost;
+  const netUtility = salePrice - totalOperationalCost + leftoverValue;
+  
   const yieldPercent = meatTotal > 0 ? (cookedWeight / meatTotal) * 100 : 0;
-  const unitCost = cookedWeight > 0 ? (details.total_cost / cookedWeight) : 0;
+  const unitCost = cookedWeight > 0 ? (totalOperationalCost / cookedWeight) : 0;
+  const marginPercent = salePrice > 0 ? (netUtility / salePrice) * 100 : 0;
+  const isLoss = netUtility < 0;
+
+  const handleDownloadPDF = async () => {
+    setIsCapturing(true);
+    setTimeout(async () => {
+      const element = document.getElementById('audit-print-zone');
+      try {
+        const canvas = await html2canvas(element, { scale: 2, useCORS: true, backgroundColor: '#020617' });
+        const imgData = canvas.toDataURL('image/jpeg', 1.0);
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+        pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+        pdf.save(`Auditoria_Lote_${new Date(data.date).toISOString().split('T')[0]}.pdf`);
+      } catch (err) {
+        console.error("PDF generation failed", err);
+        alert("Error al generar PDF.");
+      }
+      setIsCapturing(false);
+    }, 100);
+  };
 
   return (
-    <div className="report-print-container" style={{ margin: '30px auto', maxWidth: '1000px' }}>
-      <div className="no-print" style={{ marginBottom: '20px', display: 'flex', gap: '15px' }}>
-        <button onClick={onBack} className="btn-primary" style={{ background: 'rgba(255,255,255,0.05)', color: 'white', width: 'auto', border: '1px solid var(--border)' }}>
-          <ShieldCheck size={18} /> Volver al Control
+    <motion.div 
+      initial={{ opacity: 0, scale: 0.98 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="report-screen-wrapper"
+    >
+      <div className="no-print report-actions-bar">
+        <button onClick={onBack} className="btn-back">
+          <ShieldCheck size={20} /> Salir de Auditoría
         </button>
-        <button onClick={() => window.print()} className="btn-primary" style={{ background: 'var(--success)', color: 'white', width: 'auto', boxShadow: '0 0 20px rgba(34, 197, 94, 0.2)' }}>
-          <Printer size={18} /> Generar Reporte de Lote
+        <button onClick={handleDownloadPDF} disabled={isCapturing} className="btn-print-action">
+          <Download size={20} /> {isCapturing ? 'Generando PDF...' : 'Descargar como PDF'}
         </button>
       </div>
 
-      <div className="invoice-container">
-        <div className="invoice-header">
-           <div className="invoice-header-content">
-             <h2 className="company-title">CARNES DEL PARAGUAY S.A.S DE C.V.</h2>
-             <p className="company-details">
-               <strong>REPORTE DE AUDITORÍA OPERACIONAL - CONTROL DE LOTES</strong><br/>
-               Documento interno para control de costos, rendimientos y mermas en producción de alimentos.
-             </p>
-           </div>
-           <div className="invoice-logo">
-              <div className="logo-placeholder">AUDIT</div>
-           </div>
-        </div>
-
-        <div className="dte-info-card">
-           <div className="dte-text">
-             <h3 className="dte-title">CLIENTE / DESTINO: {details.event_name}</h3>
-             <h4 className="dte-subtitle">PROPÓSITO: {details.batch_purpose}</h4>
-           </div>
-           <div className="date-box">
-             <div className="date-label">FECHA DE PROCESO</div>
-             <div className="date-value">{new Date(data.date).toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' }).toUpperCase()}</div>
+      <div id="audit-print-zone" className="audit-dashboard-container" style={{ padding: '20px', borderRadius: '16px' }}>
+        {/* Header Elegante */}
+        <div className="audit-header">
+           <div className="header-badge">DOCUMENTO DE AUDITORÍA OPERACIONAL</div>
+           <h1 className="header-company">CARNES DEL PARAGUAY</h1>
+           <p className="header-subtitle">Control de Rendimiento Técnico y Rentabilidad Financiera</p>
+           <div className="header-meta">
+             <div className="meta-item"><span>Destino:</span> <strong>{details.event_name || 'Sin Asignar'}</strong></div>
+             <div className="meta-item"><span>Fecha:</span> <strong>{new Date(data.date).toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })}</strong></div>
+             <div className="meta-item"><span>Pago/Estado:</span> <strong>{details.payment_status || 'Por defecto'}</strong></div>
+             <div className="meta-item"><span>Propósito:</span> <strong>{details.batch_purpose || 'General'}</strong></div>
            </div>
         </div>
 
-        <div className="receptor-card">
-          <div className="receptor-header">ANÁLISIS DE RENDIMIENTO TÉCNICO</div>
-          <div className="receptor-body">
-             <div className="receptor-item"><strong>Materia Prima (Entrada):</strong> <span>{meatTotal.toFixed(2)} LBS</span></div>
-             <div className="receptor-item"><strong>Producto Final (Salida):</strong> <span>{cookedWeight.toFixed(2)} LBS</span></div>
-             <div className="receptor-item"><strong>Rendimiento Operativo:</strong> <span>{yieldPercent.toFixed(1)}%</span></div>
-          </div>
+        {/* KPI Metrics Bar */}
+        <div className="metrics-grid">
+           <div className="metric-card gold">
+             <div className="metric-icon"><Layers size={20} /></div>
+             <div className="metric-info">
+               <span className="metric-label">Materia Prima</span>
+               <span className="metric-value">{meatTotal.toFixed(2)} <small>Lbs</small></span>
+             </div>
+           </div>
+           <div className="metric-card blue">
+             <div className="metric-icon"><Utensils size={20} /></div>
+             <div className="metric-info">
+               <span className="metric-label">Producto Final</span>
+               <span className="metric-value">{cookedWeight.toFixed(2)} <small>Lbs</small></span>
+             </div>
+           </div>
+           <div className="metric-card purple">
+             <div className="metric-icon"><Activity size={20} /></div>
+             <div className="metric-info">
+               <span className="metric-label">Rendimiento</span>
+               <span className="metric-value">{yieldPercent.toFixed(1)}%</span>
+             </div>
+           </div>
+           <div className="metric-card cyan">
+             <div className="metric-icon"><Coins size={20} /></div>
+             <div className="metric-info">
+               <span className="metric-label">Costo por libra</span>
+               <span className="metric-value">${unitCost.toFixed(2)}</span>
+             </div>
+           </div>
         </div>
 
-        <div className="table-wrapper">
-          <table className="invoice-body-table">
-            <thead>
-              <tr>
-                <th>Detalle de Materia Prima</th>
-                <th className="right-align">LBS</th>
-                <th className="right-align">Subtotal</th>
-              </tr>
-            </thead>
-            <tbody>
-              {details.meats?.map((m, i) => (
-                <tr key={i}>
-                  <td>Lote Carne #{i+1}</td>
-                  <td className="right-align">{m.weight} lbs</td>
-                  <td className="right-align fw-bold">${parseFloat(m.cost).toFixed(2)}</td>
-                </tr>
-              ))}
-              <tr>
-                <td colSpan="2" className="fw-bold" style={{ textAlign:'right', background:'#f8fafc' }}>Total Carnes:</td>
-                <td className="right-align fw-bold" style={{ background:'#f8fafc', color:'var(--accent)' }}>
-                  ${details.meats?.reduce((acc, m) => acc + (parseFloat(m.cost) || 0), 0).toFixed(2)}
-                </td>
-              </tr>
-            </tbody>
-          </table>
+        {/* Utility Hero Card */}
+        <div className={`utility-badge ${isLoss ? 'loss' : 'profit'}`}>
+           <div className="utility-label">{isLoss ? 'PÉRDIDA OPERACIONAL' : 'UTILIDAD TOTAL DEL LOTE'}</div>
+           <div className="utility-value">${Math.abs(netUtility).toFixed(2)}</div>
+           <div className="utility-progress">
+             <div className="progress-fill" style={{ width: `${Math.min(100, Math.max(0, marginPercent))}%` }}></div>
+           </div>
         </div>
 
-        {details.inputs?.length > 0 && details.inputs[0].description && (
-          <div className="table-wrapper">
-            <table className="invoice-body-table">
-              <thead>
-                <tr>
-                  <th>Insumos y Adicionales (Verduras, Gas, Especies)</th>
-                  <th className="right-align">Costo</th>
-                </tr>
-              </thead>
-              <tbody>
-                {details.inputs.map((inp, i) => (
-                  <tr key={i}>
-                    <td>{inp.description}</td>
-                    <td className="right-align fw-bold">${parseFloat(inp.cost).toFixed(2)}</td>
+        {/* Tables Section */}
+        <div className="two-column-audit">
+            <div className="audit-section">
+              <h3 className="section-title">Análisis de Costos Directos</h3>
+              <table className="audit-table">
+                <thead>
+                  <tr><th>Detalle Materia Prima</th><th className="right">Lbs</th><th className="right">Costo</th></tr>
+                </thead>
+                <tbody>
+                  {(details.meats || []).map((m, i) => {
+                    const pName = m.product_name || products.find(p => String(p.id) === String(m.product_id))?.name || `Lote #${i+1} - Carne`;
+                    return (
+                      <tr key={i}>
+                        <td>{pName}</td>
+                        <td className="right">{n(m.weight).toFixed(2)}</td>
+                        <td className="right fw-bold">${n(m.cost).toFixed(2)}</td>
+                      </tr>
+                    );
+                  })}
+                  <tr className="subtotal-row">
+                    <td colSpan="2">TOTAL MATERIA PRIMA</td>
+                    <td className="right">${totalRawCost.toFixed(2)}</td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                </tbody>
+              </table>
 
-        <div className="invoice-footer-grid">
-           <div className="total-letras">
-             <div className="letras-title">RESUMEN DE RENTABILIDAD</div>
-             <div style={{ display:'flex', flexDirection:'column', gap:'10px' }}>
-                <div style={{ display:'flex', justifyContent:'space-between', fontSize:'11px' }}>
-                  <span>Precio de Venta Acordado:</span>
-                  <b style={{ color:'#0f172a' }}>${parseFloat(details.sale_price).toFixed(2)}</b>
-                </div>
-                <div style={{ display:'flex', justifyContent:'space-between', fontSize:'11px' }}>
-                  <span>Valor de comida que sobró:</span>
-                  <b style={{ color:'var(--success)' }}>${parseFloat(details.leftover_value || 0).toFixed(2)}</b>
-                </div>
-                <div style={{ display:'flex', justifyContent:'space-between', fontSize:'11px', borderTop:'1px dashed #cbd5e1', paddingTop:'5px' }}>
-                  <span>COSTO UNITARIO x LIBRA PRODUCTO:</span>
-                  <b style={{ color:'var(--accent)' }}>${unitCost.toFixed(2)} / LBS</b>
-                </div>
-             </div>
-             <div className="letras-note" style={{marginTop:'15px'}}>
-               <strong>OBSERVACIONES:</strong> {details.notes || 'Sin observaciones adicionales.'}
-             </div>
-           </div>
-           <div className="total-breakdown">
-             <div className="total-row"><span>Costo Total Operativo</span> <span>${parseFloat(details.total_cost).toFixed(2)}</span></div>
-             <div className="total-row main-total" style={{ background:(details.balance >= 0 ? '#166534' : '#991b1b') }}>
-                <span>UTILIDAD NETA DEL LOTE</span> 
-                <span>${parseFloat(details.balance).toFixed(2)}</span>
-             </div>
-           </div>
+              {details.inputs?.length > 0 && details.inputs[0].description && (
+                <table className="audit-table" style={{marginTop:'20px'}}>
+                  <thead>
+                    <tr><th>Insumos Operativos</th><th className="right">Costo</th></tr>
+                  </thead>
+                  <tbody>
+                    {details.inputs.map((inp, i) => (
+                      <tr key={i}>
+                        <td>{inp.description}</td>
+                        <td className="right fw-bold">${n(inp.cost).toFixed(2)}</td>
+                      </tr>
+                    ))}
+                    <tr className="subtotal-row grey">
+                      <td>TOTAL INSUMOS / VARIOS</td>
+                      <td className="right">${totalInputCost.toFixed(2)}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              )}
+            </div>
+
+            <div className="audit-section">
+               <h3 className="section-title">Resumen Financiero</h3>
+               <div className="summary-card">
+                 <div className="summary-item">
+                   <span>Costo Total de Operación:</span>
+                   <span className="val-red">-${totalOperationalCost.toFixed(2)}</span>
+                 </div>
+                 <div className="summary-item">
+                   <span>Ingresos por Venta / Crédito:</span>
+                   <span className="val-green">+${salePrice.toFixed(2)}</span>
+                 </div>
+                 <div className="summary-item">
+                   <span>Valor Residual (Sobrante):</span>
+                   <span className="val-green">+${leftoverValue.toFixed(2)}</span>
+                 </div>
+                 <div className="summary-divider"></div>
+                 <div className="summary-item total">
+                   <span>RESULTADO FINAL:</span>
+                   <span className={isLoss ? 'val-red' : 'val-green'}>
+                     {isLoss ? '-' : '+'}${Math.abs(netUtility).toFixed(2)}
+                   </span>
+                 </div>
+               </div>
+
+               <div className="notes-box">
+                  <strong>NOTAS DE AUDITORÍA:</strong>
+                  <p>{details.notes || 'No se registraron observaciones adicionales para este lote específico.'}</p>
+               </div>
+            </div>
         </div>
 
-        <div style={{ marginTop: '50px', display: 'flex', justifyContent: 'space-around', borderTop: '1px solid #e2e8f0', paddingTop: '40px' }}>
-          <div style={{ textAlign: 'center', minWidth: '150px' }}>
-            <div style={{ height: '1px', background: '#94a3b8', width: '100%', marginBottom: '10px' }}></div>
-            <span style={{ fontSize: '10px', color: '#64748b' }}>Firma de Auditoría</span>
-          </div>
-          <div style={{ textAlign: 'center', minWidth: '150px' }}>
-            <div style={{ height: '1px', background: '#94a3b8', width: '100%', marginBottom: '10px' }}></div>
-            <span style={{ fontSize: '10px', color: '#64748b' }}>Sello Operación Local</span>
-          </div>
-        </div>
+
       </div>
 
       <style>{`
         @media print {
-          .app-container { background: white !important; }
-          .nav-tabs, header, .global-status-banner, footer, .ProcessStepper { display: none !important; }
+          .no-print, .btn-back, .report-actions-bar { display: none !important; }
+          body { background: white !important; padding: 0 !important; }
+          .audit-dashboard-container { 
+            box-shadow: none !important; border: none !important; margin: 0 !important; width: 100% !important; max-width: 100% !important;
+          }
+          .utility-badge { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          .metrics-grid .metric-card { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
       `}</style>
-    </div>
+    </motion.div>
   );
 };
 
@@ -1437,6 +1306,8 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
   });
   const [selectedReport, setSelectedReport] = useState(null);
 
+  if (selectedReport) return <FoodReport data={selectedReport} onBack={() => { setSelectedReport(null); onUpdate(); }} />;
+
   const addMeat = () => setMeats([...meats, { product_id: '', weight: '', cost: '' }]);
   const addInput = () => setInputs([...inputs, { description: '', cost: '' }]);
 
@@ -1479,9 +1350,18 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    const enrichedMeats = meats.map(m => {
+      const p = products.find(p => String(p.id) === String(m.product_id));
+      return { ...m, product_name: p ? p.name : 'Carne / Producto Desconocido' };
+    });
+
     const data = {
       event_name: extraData.event_name,
-      meats,
+      batch_purpose: extraData.batch_purpose,
+      payment_status: extraData.payment_status,
+      notes: extraData.notes,
+      meats: enrichedMeats,
       inputs,
       total_cost: totalCost,
       sale_price: extraData.sale_price,
@@ -1501,16 +1381,51 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
         cooked_weight: netBalance,
         json_data: JSON.stringify(data)
       })
-    }).then(() => {
-        alert('Lote guardado');
+    }).then(res => res.json()).then(saved => {
+        setMeats([{ product_id: '', weight: '', cost: '' }]);
+        setInputs([{ description: '', cost: '' }]);
+        setExtraData({ event_name: '', batch_purpose: '', sale_price: '', leftover_value: '', notes: '' });
         onUpdate();
-    });
+        setSelectedReport({ 
+          id: saved.id,
+          gross_weight: data.meats.reduce((acc, m) => acc + (parseFloat(m.weight) || 0), 0),
+          gross_cost: data.total_cost,
+          cooked_weight: data.balance,
+          json_data: JSON.stringify(data),
+          date: data.date
+        });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }).catch(e => console.error(e));
   };
 
-  if (selectedReport) return <FoodReport data={selectedReport} onBack={() => setSelectedReport(null)} />;
+  if (selectedReport) return <FoodReport data={selectedReport} products={products} onBack={() => { setSelectedReport(null); onUpdate(); }} />;
+
+
+  const handleClearHistory = async () => {
+    try {
+      await fetch(`${API_BASE}/food-costing-all`, { method: 'DELETE' });
+      onUpdate();
+    } catch (e) {
+      console.error("Error al eliminar historial.", e);
+    }
+  };
+
+  const handleDeleteRow = async (id) => {
+    try {
+      await fetch(`${API_BASE}/food-costing/${id}`, { method: 'DELETE' });
+      onUpdate();
+    } catch (e) {
+      console.error("Error al eliminar registro.", e);
+    }
+  };
 
   return (
     <div className="report-content">
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px', gap: '10px' }}>
+         <button onClick={handleClearHistory} className="btn-primary" style={{ width: 'auto', background: '#ef4444', fontSize: '0.8rem', padding: '8px 15px', color: 'white' }}>
+           <Trash2 size={16} /> Vaciar Historial
+         </button>
+      </div>
       <div className="card-grid">
         <form onSubmit={handleSubmit} className="form-card" style={{ gridColumn: 'span 2' }}>
           <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1660,19 +1575,26 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
             </thead>
             <tbody>
               {logs.map(lg => {
-                let details = { event_name: 'Desconocido', batch_purpose: '-', total_cost: 0, sale_price: 0, leftover_value: 0, balance: 0 };
+                let details = { 
+                  event_name: lg.event_name || 'Desconocido', 
+                  batch_purpose: lg.details || '-', 
+                  total_cost: parseFloat(lg.gross_cost) || 0, 
+                  sale_price: 0, 
+                  leftover_value: 0, 
+                  balance: parseFloat(lg.cooked_weight) || 0 
+                };
                 try { 
-                  if (lg.json_data) details = JSON.parse(lg.json_data);
-                  else {
-                    details.total_cost = lg.gross_cost;
-                    details.balance = lg.cooked_weight;
+                  if (lg.json_data) {
+                    const parsed = typeof lg.json_data === 'string' ? JSON.parse(lg.json_data) : lg.json_data;
+                    details = { ...details, ...parsed };
                   }
                 } catch(e) {}
 
                 // Recalculate yield for history if possible
-                const histWeightMatch = details.batch_purpose?.match(/(\d+(\.\d+)?)/);
-                const hWeight = histWeightMatch ? parseFloat(histWeightMatch[0]) : 0;
-                const hRawTotal = details.meats?.reduce((acc, m) => acc + (parseFloat(m.weight) || 0), 0) || 0;
+                const pText = String(details.batch_purpose || '');
+                const histWeightMatch = pText.match(/(\d+(\.\d+)?)/);
+                const hWeight = histWeightMatch ? parseFloat(histWeightMatch[0]) : (parseFloat(lg.cooked_weight) || 0);
+                const hRawTotal = (details.meats || []).reduce((acc, m) => acc + (parseFloat(m.weight) || 0), 0) || (parseFloat(lg.gross_weight) || 0);
                 const hYield = hRawTotal > 0 ? (hWeight / hRawTotal) * 100 : 0;
 
                 return (
@@ -1690,13 +1612,22 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
                     }}>
                       ${(details.balance || 0).toFixed(2)}
                     </td>
-                    <td style={{ textAlign: 'center' }}>
+                    <td style={{ textAlign: 'center', display: 'flex', gap: '5px', justifyContent: 'center' }}>
                       <button 
-                        onClick={() => setSelectedReport(lg)} 
+                        onClick={() => { setSelectedReport(lg); window.scrollTo({ top: 0, behavior: 'smooth' }); }} 
                         className="btn-primary" 
                         style={{ padding: '6px 12px', fontSize: '0.7rem', width: 'auto', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)' }}
+                        title="Ver Reporte"
                       >
-                        <Printer size={14} /> Reporte
+                        <Printer size={14} /> 
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteRow(lg.id)} 
+                        className="btn-primary" 
+                        style={{ padding: '6px 10px', fontSize: '0.7rem', width: 'auto', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', color: '#ef4444' }}
+                        title="Eliminar Registro"
+                      >
+                        <Trash2 size={14} />
                       </button>
                     </td>
                   </tr>

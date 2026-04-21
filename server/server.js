@@ -250,11 +250,15 @@ const initDb = async () => {
     );
 
     CREATE TABLE IF NOT EXISTS food_costing (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       date TEXT,
       event_name TEXT,
       details TEXT, 
-      total_balance DECIMAL(10,2)
+      product_id INTEGER,
+      gross_weight DECIMAL(10,2),
+      gross_cost DECIMAL(10,2),
+      cooked_weight DECIMAL(10,2),
+      json_data TEXT
     );
   `);
 
@@ -276,6 +280,15 @@ const initDb = async () => {
       sqliteDb.prepare('ALTER TABLE inventory ADD COLUMN bodega_2 DECIMAL(10,2) DEFAULT 0').run();
       sqliteDb.prepare('ALTER TABLE inventory ADD COLUMN bodega_3 DECIMAL(10,2) DEFAULT 0').run();
       sqliteDb.prepare('ALTER TABLE inventory ADD COLUMN bodega_4 DECIMAL(10,2) DEFAULT 0').run();
+    } catch (e) { }
+    try {
+      sqliteDb.prepare('ALTER TABLE food_costing ADD COLUMN json_data TEXT').run();
+    } catch (e) { }
+    try {
+      sqliteDb.prepare('ALTER TABLE food_costing ADD COLUMN gross_weight DECIMAL(10,2)').run();
+      sqliteDb.prepare('ALTER TABLE food_costing ADD COLUMN gross_cost DECIMAL(10,2)').run();
+      sqliteDb.prepare('ALTER TABLE food_costing ADD COLUMN cooked_weight DECIMAL(10,2)').run();
+      sqliteDb.prepare('ALTER TABLE food_costing ADD COLUMN product_id INTEGER').run();
     } catch (e) { }
   }
 
@@ -752,25 +765,30 @@ app.get('/api/orders', async (req, res) => {
 
 app.get('/api/food-costing', async (req, res) => {
   const { rows } = await query(`
-    SELECT f.*, p.name as product_name 
-    FROM food_costing f
-    JOIN products p ON f.product_id = p.id
+    SELECT * FROM food_costing 
     ORDER BY date DESC
   `);
   res.json(rows);
 });
 
 app.post('/api/food-costing', async (req, res) => {
-  const { product_id, gross_weight, gross_cost, cooked_weight, cooked_cost, waste_weight, waste_cost } = req.body;
+  const { product_id, gross_weight, gross_cost, cooked_weight, json_data } = req.body;
   try {
     const info = await query(`
-      INSERT INTO food_costing (product_id, gross_weight, gross_cost, cooked_weight, cooked_cost, waste_weight, waste_cost)
-      VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id
-    `, [product_id, gross_weight, gross_cost, cooked_weight, cooked_cost, waste_weight, waste_cost]);
+      INSERT INTO food_costing (product_id, gross_weight, gross_cost, cooked_weight, json_data, date)
+      VALUES (?, ?, ?, ?, ?, ?) RETURNING id
+    `, [product_id, gross_weight, gross_cost, cooked_weight, json_data, new Date().toISOString()]);
     res.json({ id: info.lastInsertRowid });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+});
+
+app.delete('/api/food-costing-all', async (req, res) => {
+  try {
+    await query('DELETE FROM food_costing');
+    res.json({ success: true, message: 'Historial de lotes eliminado correctamente' });
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.delete('/api/food-costing/:id', async (req, res) => {
