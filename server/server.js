@@ -320,10 +320,18 @@ const initDb = async () => {
   // Ensure inventory exists for all products with initial stock in all warehouses
   const { rows: prods } = await query('SELECT id FROM products');
   for (const p of prods) {
-    await query(`
-      INSERT OR IGNORE INTO inventory (product_id, bodega_1, bodega_2, bodega_3, bodega_4, initial_stock, sold_stock) 
-      VALUES (?, 100, 100, 100, 100, 400, 0)
-    `, [p.id]);
+    if (isProduction) {
+      await query(`
+        INSERT INTO inventory (product_id, bodega_1, bodega_2, bodega_3, bodega_4, initial_stock, sold_stock) 
+        VALUES (?, 100, 100, 100, 100, 400, 0)
+        ON CONFLICT(product_id) DO NOTHING
+      `, [p.id]);
+    } else {
+      await query(`
+        INSERT OR IGNORE INTO inventory (product_id, bodega_1, bodega_2, bodega_3, bodega_4, initial_stock, sold_stock) 
+        VALUES (?, 100, 100, 100, 100, 400, 0)
+      `, [p.id]);
+    }
     // Force update for existing ones if needed for this test phase
     await query('UPDATE inventory SET bodega_1 = 100, bodega_2 = 100, bodega_3 = 100, bodega_4 = 100 WHERE product_id = ?', [p.id]);
   }
@@ -341,7 +349,11 @@ const initDb = async () => {
   ];
   // Sync destinations
   for (const a of agros) {
-    await query('INSERT OR IGNORE INTO agros (name) VALUES (?)', [a]);
+    if (isProduction) {
+      await query('INSERT INTO agros (name) VALUES (?) ON CONFLICT(name) DO NOTHING', [a]);
+    } else {
+      await query('INSERT OR IGNORE INTO agros (name) VALUES (?)', [a]);
+    }
   }
   // Optional: Delete agros not in list to keep it 100% accurate, but only if they are not in use
   const agrosPlaceholders = agros.map(() => '?').join(',');
