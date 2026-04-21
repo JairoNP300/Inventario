@@ -1400,6 +1400,38 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
 
   if (selectedReport) return <FoodReport data={selectedReport} products={products} onBack={() => { setSelectedReport(null); onUpdate(); }} />;
 
+  const handleExportExcel = () => {
+    const historyData = logs.map(lg => {
+      let details = {};
+      try { 
+        details = typeof lg.json_data === 'string' ? JSON.parse(lg.json_data) : (lg.json_data || {});
+      } catch(e) {}
+
+      const materiasPrimas = (details.meats || []).map((m, i) => {
+        const pName = m.product_name || products.find(p => String(p.id) === String(m.product_id))?.name || `Carne Lote #${i+1}`;
+        return `${pName} (${m.weight} Lbs - $${parseFloat(m.cost || 0).toFixed(2)})`;
+      }).join(' | ');
+
+      const insumosOps = (details.inputs || []).filter(inp => inp.description).map(inp => `${inp.description} ($${parseFloat(inp.cost || 0).toFixed(2)})`).join(' | ');
+
+      return {
+        Fecha: new Date(lg.date).toLocaleDateString(),
+        Propósito: details.batch_purpose || lg.details || '-',
+        Destino: details.event_name || lg.event_name || 'Desconocido',
+        'Detalle Materia Prima': materiasPrimas,
+        'Insumos Operativos': insumosOps || 'Ninguno',
+        'Costo Operativo': details.total_cost || lg.gross_cost || 0,
+        'Venta Acordada': details.sale_price || 0,
+        'Utilidad Neta': details.balance || lg.cooked_weight || 0,
+        Notas: details.notes || ''
+      };
+    });
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(historyData);
+    XLSX.utils.book_append_sheet(wb, ws, "Historial_Comida");
+    XLSX.writeFile(wb, `Auditoria_Comida_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
 
   const handleClearHistory = async () => {
     try {
@@ -1422,6 +1454,9 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
   return (
     <div className="report-content">
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px', gap: '10px' }}>
+         <button onClick={handleExportExcel} className="btn-primary" style={{ width: 'auto', background: '#059669', fontSize: '0.8rem', padding: '8px 15px' }}>
+           <FileSpreadsheet size={16} /> Exportar Extendido (.xlsx)
+         </button>
          <button onClick={handleClearHistory} className="btn-primary" style={{ width: 'auto', background: '#ef4444', fontSize: '0.8rem', padding: '8px 15px', color: 'white' }}>
            <Trash2 size={16} /> Vaciar Historial
          </button>
