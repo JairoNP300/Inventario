@@ -495,7 +495,21 @@ const InvoicingSystem = ({ products, agros, onUpdate }) => {
           <h3>Panel de Facturación Electrónica</h3>
           <div className="form-group">
             <label>Razón Social / Nombre Cliente</label>
-            <input type="text" placeholder="Ej: INDUSTRIAS BENDEK S.A DE C.V" onChange={e => setClient({...client, name: e.target.value})} />
+            <input type="text" placeholder="Ej: INDUSTRIAS BENDEK S.A DE C.V" value={client.name} onChange={e => setClient({...client, name: e.target.value})} />
+          </div>
+          <div className="form-row two-col" style={{ marginTop: '10px' }}>
+            <div className="form-group">
+              <label>NIT / DUI</label>
+              <input type="text" placeholder="0000-000000-000-0" value={client.nit} onChange={e => setClient({...client, nit: e.target.value})} />
+            </div>
+            <div className="form-group">
+              <label>NRC</label>
+              <input type="text" placeholder="367641-0" value={client.nrc} onChange={e => setClient({...client, nrc: e.target.value})} />
+            </div>
+          </div>
+          <div className="form-group" style={{ marginTop: '10px' }}>
+            <label>Dirección Completa</label>
+            <input type="text" placeholder="Colonia San Benito..." value={client.address} onChange={e => setClient({...client, address: e.target.value})} />
           </div>
 
           <div className="form-row two-col">
@@ -885,6 +899,163 @@ const InvoicingSystem = ({ products, agros, onUpdate }) => {
   );
 };
 
+// --- FoodReport Component (Printable Audit) ---
+const FoodReport = ({ data, onBack }) => {
+  if (!data) return null;
+  const details = typeof data.json_data === 'string' ? JSON.parse(data.json_data) : data.json_data;
+  
+  // Calculations
+  const meatTotal = details.meats?.reduce((acc, m) => acc + (parseFloat(m.weight) || 0), 0) || 0;
+  const cookedWeightMatch = details.batch_purpose?.match(/(\d+(\.\d+)?)/);
+  const cookedWeight = cookedWeightMatch ? parseFloat(cookedWeightMatch[0]) : 0;
+  const yieldPercent = meatTotal > 0 ? (cookedWeight / meatTotal) * 100 : 0;
+  const unitCost = cookedWeight > 0 ? (details.total_cost / cookedWeight) : 0;
+
+  return (
+    <div className="report-print-container" style={{ margin: '30px auto', maxWidth: '1000px' }}>
+      <div className="no-print" style={{ marginBottom: '20px', display: 'flex', gap: '15px' }}>
+        <button onClick={onBack} className="btn-primary" style={{ background: 'rgba(255,255,255,0.05)', color: 'white', width: 'auto', border: '1px solid var(--border)' }}>
+          <ShieldCheck size={18} /> Volver al Control
+        </button>
+        <button onClick={() => window.print()} className="btn-primary" style={{ background: 'var(--success)', color: 'white', width: 'auto', boxShadow: '0 0 20px rgba(34, 197, 94, 0.2)' }}>
+          <Printer size={18} /> Generar Reporte de Lote
+        </button>
+      </div>
+
+      <div className="invoice-container">
+        <div className="invoice-header">
+           <div className="invoice-header-content">
+             <h2 className="company-title">CARNES DEL PARAGUAY S.A.S DE C.V.</h2>
+             <p className="company-details">
+               <strong>REPORTE DE AUDITORÍA OPERACIONAL - CONTROL DE LOTES</strong><br/>
+               Documento interno para control de costos, rendimientos y mermas en producción de alimentos.
+             </p>
+           </div>
+           <div className="invoice-logo">
+              <div className="logo-placeholder">AUDIT</div>
+           </div>
+        </div>
+
+        <div className="dte-info-card">
+           <div className="dte-text">
+             <h3 className="dte-title">CLIENTE / DESTINO: {details.event_name}</h3>
+             <h4 className="dte-subtitle">PROPÓSITO: {details.batch_purpose}</h4>
+           </div>
+           <div className="date-box">
+             <div className="date-label">FECHA DE PROCESO</div>
+             <div className="date-value">{new Date(data.date).toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' }).toUpperCase()}</div>
+           </div>
+        </div>
+
+        <div className="receptor-card">
+          <div className="receptor-header">ANÁLISIS DE RENDIMIENTO TÉCNICO</div>
+          <div className="receptor-body">
+             <div className="receptor-item"><strong>Materia Prima (Entrada):</strong> <span>{meatTotal.toFixed(2)} LBS</span></div>
+             <div className="receptor-item"><strong>Producto Final (Salida):</strong> <span>{cookedWeight.toFixed(2)} LBS</span></div>
+             <div className="receptor-item"><strong>Rendimiento Operativo:</strong> <span>{yieldPercent.toFixed(1)}%</span></div>
+          </div>
+        </div>
+
+        <div className="table-wrapper">
+          <table className="invoice-body-table">
+            <thead>
+              <tr>
+                <th>Detalle de Materia Prima</th>
+                <th className="right-align">LBS</th>
+                <th className="right-align">Subtotal</th>
+              </tr>
+            </thead>
+            <tbody>
+              {details.meats?.map((m, i) => (
+                <tr key={i}>
+                  <td>Lote Carne #{i+1}</td>
+                  <td className="right-align">{m.weight} lbs</td>
+                  <td className="right-align fw-bold">${parseFloat(m.cost).toFixed(2)}</td>
+                </tr>
+              ))}
+              <tr>
+                <td colSpan="2" className="fw-bold" style={{ textAlign:'right', background:'#f8fafc' }}>Total Carnes:</td>
+                <td className="right-align fw-bold" style={{ background:'#f8fafc', color:'var(--accent)' }}>
+                  ${details.meats?.reduce((acc, m) => acc + (parseFloat(m.cost) || 0), 0).toFixed(2)}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        {details.inputs?.length > 0 && details.inputs[0].description && (
+          <div className="table-wrapper">
+            <table className="invoice-body-table">
+              <thead>
+                <tr>
+                  <th>Insumos y Adicionales (Verduras, Gas, Especies)</th>
+                  <th className="right-align">Costo</th>
+                </tr>
+              </thead>
+              <tbody>
+                {details.inputs.map((inp, i) => (
+                  <tr key={i}>
+                    <td>{inp.description}</td>
+                    <td className="right-align fw-bold">${parseFloat(inp.cost).toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        <div className="invoice-footer-grid">
+           <div className="total-letras">
+             <div className="letras-title">RESUMEN DE RENTABILIDAD</div>
+             <div style={{ display:'flex', flexDirection:'column', gap:'10px' }}>
+                <div style={{ display:'flex', justifyContent:'space-between', fontSize:'11px' }}>
+                  <span>Precio de Venta Acordado:</span>
+                  <b style={{ color:'#0f172a' }}>${parseFloat(details.sale_price).toFixed(2)}</b>
+                </div>
+                <div style={{ display:'flex', justifyContent:'space-between', fontSize:'11px' }}>
+                  <span>Valor de comida que sobró:</span>
+                  <b style={{ color:'var(--success)' }}>${parseFloat(details.leftover_value || 0).toFixed(2)}</b>
+                </div>
+                <div style={{ display:'flex', justifyContent:'space-between', fontSize:'11px', borderTop:'1px dashed #cbd5e1', paddingTop:'5px' }}>
+                  <span>COSTO UNITARIO x LIBRA PRODUCTO:</span>
+                  <b style={{ color:'var(--accent)' }}>${unitCost.toFixed(2)} / LBS</b>
+                </div>
+             </div>
+             <div className="letras-note" style={{marginTop:'15px'}}>
+               <strong>OBSERVACIONES:</strong> {details.notes || 'Sin observaciones adicionales.'}
+             </div>
+           </div>
+           <div className="total-breakdown">
+             <div className="total-row"><span>Costo Total Operativo</span> <span>${parseFloat(details.total_cost).toFixed(2)}</span></div>
+             <div className="total-row main-total" style={{ background:(details.balance >= 0 ? '#166534' : '#991b1b') }}>
+                <span>UTILIDAD NETA DEL LOTE</span> 
+                <span>${parseFloat(details.balance).toFixed(2)}</span>
+             </div>
+           </div>
+        </div>
+
+        <div style={{ marginTop: '50px', display: 'flex', justifyContent: 'space-around', borderTop: '1px solid #e2e8f0', paddingTop: '40px' }}>
+          <div style={{ textAlign: 'center', minWidth: '150px' }}>
+            <div style={{ height: '1px', background: '#94a3b8', width: '100%', marginBottom: '10px' }}></div>
+            <span style={{ fontSize: '10px', color: '#64748b' }}>Firma de Auditoría</span>
+          </div>
+          <div style={{ textAlign: 'center', minWidth: '150px' }}>
+            <div style={{ height: '1px', background: '#94a3b8', width: '100%', marginBottom: '10px' }}></div>
+            <span style={{ fontSize: '10px', color: '#64748b' }}>Sello Operación Local</span>
+          </div>
+        </div>
+      </div>
+
+      <style>{`
+        @media print {
+          .app-container { background: white !important; }
+          .nav-tabs, header, .global-status-banner, footer, .ProcessStepper { display: none !important; }
+        }
+      `}</style>
+    </div>
+  );
+};
+
 // --- ExportReport ---
 const ExportReport = ({ products, agros, refreshTrigger }) => {
   const [loading, setLoading] = useState(false);
@@ -936,7 +1107,7 @@ const LogisticsHub = ({ products, agros, refreshTrigger, onUpdate, forceMode, in
   const [formData, setFormData] = useState({ 
     product_id: '', origin: 'Ransa', destination: 'Lomas de San Francisco', 
     weight: '', tag_weight: '', scale_weight: '', units_per_box: '',
-    unit_type: 'Kg', value: '', agro_id: '',
+    unit_type: 'Lbs', value: '', agro_id: '',
     total_to_distribute: '', distributions: {} 
   });
 
@@ -1035,16 +1206,16 @@ const LogisticsHub = ({ products, agros, refreshTrigger, onUpdate, forceMode, in
           <div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px' }}>
               <div className="form-group">
-                <label>Peso según Viñeta (Kg)</label>
+                <label>Peso según Viñeta (Lbs)</label>
                 <input type="number" step="0.01" value={formData.tag_weight} onChange={e => setFormData({...formData, tag_weight: e.target.value})} required />
               </div>
               <div className="form-group">
-                <label>Peso según Báscula (Kg)</label>
+                <label>Peso según Báscula (Lbs)</label>
                 <input type="number" step="0.01" value={formData.scale_weight} onChange={e => setFormData({...formData, scale_weight: e.target.value})} required />
               </div>
               <div className="form-group">
                 <label>Unidad</label>
-                <input type="text" value="Kilogramos (KG)" readOnly style={{ background: 'rgba(15, 23, 42, 0.4)', borderColor: 'rgba(255,255,255,0.05)' }} />
+                <input type="text" value="Libras (LBS)" readOnly style={{ background: 'rgba(15, 23, 42, 0.4)', borderColor: 'rgba(255,255,255,0.05)' }} />
               </div>
             </div>
             <div className="form-group" style={{ background: 'rgba(255,255,255,0.03)', padding: '20px', borderRadius: '16px', border: '1px solid var(--border)' }}>
@@ -1154,7 +1325,7 @@ const LogisticsHub = ({ products, agros, refreshTrigger, onUpdate, forceMode, in
                 <tr>
                   <th className="col-date">Fecha</th>
                   <th className="col-carne">Producto</th>
-                  <th className="col-qty">Kg</th>
+                  <th className="col-qty">Lbs</th>
                   <th className="col-carne">Destino</th>
                   <th className="col-actions">Acciones</th>
                 </tr>
@@ -1174,7 +1345,7 @@ const LogisticsHub = ({ products, agros, refreshTrigger, onUpdate, forceMode, in
                 <tr key={log.id} className="fade-in">
                   <td className="col-date">{new Date(log.date).toLocaleDateString()}</td>
                   <td className="col-carne" style={{ fontWeight: 700 }}>{log.product_name}</td>
-                  <td className="col-qty">{activeSubTab === 'unified' ? log.scale_weight : log.weight} <small>{log.unit_type || (activeSubTab === 'unified' ? 'Kg' : 'Lbs')}</small></td>
+                  <td className="col-qty">{activeSubTab === 'unified' ? log.scale_weight : log.weight} <small>{log.unit_type || 'Lbs'}</small></td>
                   <td className="col-carne" style={{ color: 'var(--accent)', fontWeight: 700 }}>{log.destination || log.agro_name || 'Central'}</td>
                   {activeSubTab !== 'unified' && <td className="col-qty">${(log.value || 0).toFixed(2)}</td>}
                   <td className="col-actions">
@@ -1264,6 +1435,7 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
     payment_status: 'Crédito',
     notes: ''
   });
+  const [selectedReport, setSelectedReport] = useState(null);
 
   const addMeat = () => setMeats([...meats, { product_id: '', weight: '', cost: '' }]);
   const addInput = () => setInputs([...inputs, { description: '', cost: '' }]);
@@ -1330,13 +1502,12 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
         json_data: JSON.stringify(data)
       })
     }).then(() => {
-      onUpdate();
-      setMeats([{ product_id: '', weight: '', cost: '' }]);
-      setInputs([{ description: '', cost: '' }]);
-      setExtraData({ event_name: '', batch_purpose: '', sale_price: '', leftover_value: '', notes: '' });
-      alert('Contabilidad de lote guardada correctamente.');
+        alert('Lote guardado');
+        onUpdate();
     });
   };
+
+  if (selectedReport) return <FoodReport data={selectedReport} onBack={() => setSelectedReport(null)} />;
 
   return (
     <div className="report-content">
@@ -1484,6 +1655,7 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
                 <th>Venta ($)</th>
                 <th>Rend. %</th>
                 <th>Utilidad ($)</th>
+                <th>Acción</th>
               </tr>
             </thead>
             <tbody>
@@ -1517,6 +1689,15 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
                       background: (details.balance || 0) >= 0 ? 'rgba(34, 197, 94, 0.05)' : 'rgba(239, 68, 68, 0.05)'
                     }}>
                       ${(details.balance || 0).toFixed(2)}
+                    </td>
+                    <td style={{ textAlign: 'center' }}>
+                      <button 
+                        onClick={() => setSelectedReport(lg)} 
+                        className="btn-primary" 
+                        style={{ padding: '6px 12px', fontSize: '0.7rem', width: 'auto', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)' }}
+                      >
+                        <Printer size={14} /> Reporte
+                      </button>
                     </td>
                   </tr>
                 );
