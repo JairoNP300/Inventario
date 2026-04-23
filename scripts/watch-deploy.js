@@ -1,4 +1,4 @@
-import { watch } from 'fs';
+import { watch, existsSync, unlinkSync } from 'fs';
 import { execSync } from 'child_process';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
@@ -8,7 +8,18 @@ const ROOT = join(__dirname, '../');
 const DEBOUNCE_MS = 5000;
 
 // Archivos/carpetas a ignorar
-const IGNORE = ['node_modules', '.git', 'dist', '.github', 'scratch', 'inventario_oficial.db-wal', 'inventario_oficial.db-shm'];
+const IGNORE = [
+    'node_modules',
+    '.git',
+    'dist',
+    '.github',
+    'scratch',
+    'inventario_oficial.db-wal',
+    'inventario_oficial.db-shm',
+    '.timestamp-',
+    '.tmp',
+    '.swp'
+];
 
 console.log('🚀 SISTEMA DE SINCRONIZACIÓN AUTOMÁTICA (CLOUD) INICIADO');
 console.log('👀 Vigilando cambios en todos los archivos del proyecto...');
@@ -21,9 +32,22 @@ function shouldIgnore(filename) {
     return IGNORE.some(ig => filename.includes(ig));
 }
 
+function clearStaleGitLockIfNeeded() {
+    const lockPath = join(ROOT, '.git', 'index.lock');
+    if (existsSync(lockPath)) {
+        try {
+            unlinkSync(lockPath);
+            console.log('🧹 Lock de git anterior eliminado automáticamente (.git/index.lock).');
+        } catch (e) {
+            console.warn('⚠️ No se pudo eliminar .git/index.lock automáticamente:', e.message);
+        }
+    }
+}
+
 function deploy() {
     try {
         console.log('\n📤 Cambios detectados. Sincronizando con la nube (GitHub/Render)...');
+        clearStaleGitLockIfNeeded();
         
         // Verificar si hay cambios antes de hacer nada
         const status = execSync('git status --porcelain', { cwd: ROOT }).toString().trim();
@@ -41,6 +65,9 @@ function deploy() {
         console.log(`🚀 Render se está actualizando automáticamente.`);
         console.log(`   (La URL pública se actualizará en unos minutos)\n`);
     } catch (e) {
+        if (String(e.message || '').includes('index.lock')) {
+            console.warn('⚠️ Se detectó bloqueo de git, se reintentará en el próximo ciclo.');
+        }
         console.error('❌ Error en sincronización:', e.message);
     }
 }
