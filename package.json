@@ -19,7 +19,9 @@
     "serve:public": "npm run build && npm run start:public",
     "online": "npm run build && concurrently --raw \"node server/server.js\" \"npx cloudflared tunnel --url http://localhost:3000 --no-autoupdate\"",
     "stop": "Get-Process -Id (Get-NetTCPConnection -LocalPort 3000).OwningProcess | Stop-Process -Force",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest --run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "cors": "^2.8.5",
