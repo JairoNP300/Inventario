@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '../');
 const DEBOUNCE_MS = 5000;
+const RENDER_DEPLOY_HOOK_URL = process.env.RENDER_DEPLOY_HOOK_URL || '';
 
 // Archivos/carpetas a ignorar
 const IGNORE = [
@@ -44,7 +45,25 @@ function clearStaleGitLockIfNeeded() {
     }
 }
 
-function deploy() {
+async function triggerRenderDeployHook() {
+    if (!RENDER_DEPLOY_HOOK_URL) {
+        console.log('ℹ️ RENDER_DEPLOY_HOOK_URL no configurada. Se usará solo auto-deploy por git push.');
+        return;
+    }
+
+    try {
+        const res = await fetch(RENDER_DEPLOY_HOOK_URL, { method: 'POST' });
+        if (!res.ok) {
+            console.warn(`⚠️ Hook de Render respondió ${res.status}. Revisa la URL del deploy hook.`);
+            return;
+        }
+        console.log('🚀 Deploy de Render disparado por webhook.');
+    } catch (e) {
+        console.warn('⚠️ No se pudo disparar webhook de Render:', e.message);
+    }
+}
+
+async function deploy() {
     try {
         console.log('\n📤 Cambios detectados. Sincronizando con la nube (GitHub/Render)...');
         clearStaleGitLockIfNeeded();
@@ -60,6 +79,7 @@ function deploy() {
         execSync('git add .', { cwd: ROOT, stdio: 'inherit' });
         execSync(`git commit -m "Actualización automática: ${timestamp}"`, { cwd: ROOT, stdio: 'inherit' });
         execSync('git push origin main', { cwd: ROOT, stdio: 'inherit' });
+        await triggerRenderDeployHook();
         
         console.log(`✅ ¡Cambios subidos con éxito!`);
         console.log(`🚀 Render se está actualizando automáticamente.`);
@@ -72,12 +92,12 @@ function deploy() {
     }
 }
 
-function deployOnStartupIfNeeded() {
+async function deployOnStartupIfNeeded() {
     try {
         const status = execSync('git status --porcelain', { cwd: ROOT }).toString().trim();
         if (status) {
             console.log('\n📌 Cambios pendientes detectados al iniciar. Publicando automáticamente...');
-            deploy();
+            await deploy();
         } else {
             console.log('✅ Repositorio limpio al iniciar. Esperando nuevos cambios...');
         }
@@ -89,10 +109,10 @@ function deployOnStartupIfNeeded() {
 function scheduleDeployment() {
     pendingChanges = true;
     if (timer) clearTimeout(timer);
-    timer = setTimeout(() => {
+    timer = setTimeout(async () => {
         if (pendingChanges) {
             pendingChanges = false;
-            deploy();
+            await deploy();
         }
     }, DEBOUNCE_MS);
 }
