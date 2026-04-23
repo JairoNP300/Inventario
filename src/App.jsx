@@ -39,6 +39,7 @@ const API_BASE = '/api'; // Unified single-port API access for enterprise produc
 // --- Componente Universal de Inteligencia de Producto ---
 const ProductIntelligenceCard = ({ product }) => {
   if (!product) return null;
+  const n = (v) => Number(v) || 0;
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -58,17 +59,17 @@ const ProductIntelligenceCard = ({ product }) => {
         <div>
           <strong style={{ display: 'block', color: 'var(--accent)', marginBottom: '15px', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '2px' }}>Disponibilidad por Ubicación:</strong>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '0.85rem' }}>
-            <span style={{ color: 'var(--text-muted)' }}>Ransa: <b style={{ color: 'var(--text-main)' }}>{(product.stock_kg || 0).toFixed(1)}kg</b></span>
-            <span style={{ color: 'var(--text-muted)' }}>Lomas: <b style={{ color: 'var(--accent)' }}>{(product.stock_b4 || 0).toFixed(1)}lbs</b></span>
-            <span style={{ color: 'var(--text-muted)' }}>Soyapango: <b style={{ color: 'var(--accent)' }}>{((product.stock_b2 || 0) * 2.20462).toFixed(1)}lbs</b></span>
-            <span style={{ color: 'var(--text-muted)' }}>Usulután: <b style={{ color: 'var(--accent)' }}>{((product.stock_b3 || 0) * 2.20462).toFixed(1)}lbs</b></span>
+            <span style={{ color: 'var(--text-muted)' }}>Ransa: <b style={{ color: 'var(--text-main)' }}>{n(product.stock_kg).toFixed(1)}kg</b></span>
+            <span style={{ color: 'var(--text-muted)' }}>Lomas: <b style={{ color: 'var(--accent)' }}>{n(product.stock_b4).toFixed(1)}lbs</b></span>
+            <span style={{ color: 'var(--text-muted)' }}>Soyapango: <b style={{ color: 'var(--accent)' }}>{(n(product.stock_b2) * 2.20462).toFixed(1)}lbs</b></span>
+            <span style={{ color: 'var(--text-muted)' }}>Usulután: <b style={{ color: 'var(--accent)' }}>{(n(product.stock_b3) * 2.20462).toFixed(1)}lbs</b></span>
           </div>
         </div>
         <div style={{ borderLeft: '1px solid var(--border-light)', paddingLeft: '25px' }}>
           <strong style={{ display: 'block', color: 'var(--accent)', marginBottom: '15px', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '2px' }}>Precios de Venta:</strong>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '0.9rem' }}>
-            <span>Libra: <b style={{ color: 'var(--success)', fontWeight: 800 }}>${(product.price_per_lb || 0).toFixed(2)}</b></span>
-            <span>Kilogramo: <b style={{ color: 'var(--success)', fontWeight: 800 }}>${(product.price_per_kg || 0).toFixed(2)}</b></span>
+            <span>Libra: <b style={{ color: 'var(--success)', fontWeight: 800 }}>${n(product.price_per_lb).toFixed(2)}</b></span>
+            <span>Kilogramo: <b style={{ color: 'var(--success)', fontWeight: 800 }}>${n(product.price_per_kg).toFixed(2)}</b></span>
           </div>
         </div>
       </div>
