@@ -335,6 +335,7 @@ const UnitSelector = ({ value, onChange }) => (
 
 // --- StatusReport ---
 const StatusReport = ({ products, refreshTrigger, onUpdate }) => {
+  const toNum = (v) => Number(v) || 0;
   const productRows = Array.isArray(products) ? products : [];
   const [inventory, setInventory] = useState([]);
   const [viewUnit, setViewUnit] = useState('Lbs');
@@ -387,7 +388,7 @@ const StatusReport = ({ products, refreshTrigger, onUpdate }) => {
                 <option value="">Seleccione Producto...</option>
                 {productRows.map(p => {
                   const inv = inventoryRows.find(i => i.name === p.name);
-                  return <option key={p.id} value={p.id}>{p.name} (B1:{inv?.bodega_1 || 0} | B2:{inv?.bodega_2 || 0} | B3:{inv?.bodega_3 || 0})</option>
+                  return <option key={p.id} value={p.id}>{p.name} (B1:{toNum(inv?.bodega_1)} | B2:{toNum(inv?.bodega_2)} | B3:{toNum(inv?.bodega_3)})</option>
                 })}
               </select>
             </div>
@@ -437,10 +438,14 @@ const StatusReport = ({ products, refreshTrigger, onUpdate }) => {
                     const factor = 2.20462;
 
                     // B1, B2, B3 are stored as KG. B4 is stored as LBS.
-                    const b1 = isKg ? (i.bodega_1 || 0) : ((i.bodega_1 || 0) * factor);
-                    const b2 = isKg ? (i.bodega_2 || 0) : ((i.bodega_2 || 0) * factor);
-                    const b3 = isKg ? (i.bodega_3 || 0) : ((i.bodega_3 || 0) * factor);
-                    const b4 = isKg ? ((i.bodega_4 || 0) / factor) : (i.bodega_4 || 0);
+                    const b1Base = toNum(i.bodega_1);
+                    const b2Base = toNum(i.bodega_2);
+                    const b3Base = toNum(i.bodega_3);
+                    const b4Base = toNum(i.bodega_4);
+                    const b1 = isKg ? b1Base : (b1Base * factor);
+                    const b2 = isKg ? b2Base : (b2Base * factor);
+                    const b3 = isKg ? b3Base : (b3Base * factor);
+                    const b4 = isKg ? (b4Base / factor) : b4Base;
 
                     const total = b1 + b2 + b3 + b4;
 
@@ -1231,6 +1236,7 @@ const LogisticsHub = ({ products, agros, refreshTrigger, onUpdate, forceMode, in
 };
 
 const ConfigPanel = ({ products, onUpdate }) => {
+  const toNum = (v) => Number(v) || 0;
   const productRows = Array.isArray(products) ? products : [];
   const [editing, setEditing] = useState(null);
   const [formData, setFormData] = useState({ code: '', name: '', category: '', price_per_lb: '' });
@@ -1274,8 +1280,8 @@ const ConfigPanel = ({ products, onUpdate }) => {
               <tr key={p.id}>
                 <td>{editing === p.id ? <input value={formData.code} onChange={e => setFormData({ ...formData, code: e.target.value })} style={{ width: 50 }} /> : p.code}</td>
                 <td>{editing === p.id ? <input value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} /> : p.name}</td>
-                <td>{editing === p.id ? <input type="number" step="0.01" value={formData.price_per_lb} onChange={e => setFormData({ ...formData, price_per_lb: e.target.value })} /> : `$${(p.price_per_lb || 0).toFixed(2)}`}</td>
-                <td>{editing === p.id ? <input type="number" step="0.01" value={formData.price_per_kg} onChange={e => setFormData({ ...formData, price_per_kg: e.target.value })} /> : `$${(p.price_per_kg || 0).toFixed(2)}`}</td>
+                <td>{editing === p.id ? <input type="number" step="0.01" value={formData.price_per_lb} onChange={e => setFormData({ ...formData, price_per_lb: e.target.value })} /> : `$${toNum(p.price_per_lb).toFixed(2)}`}</td>
+                <td>{editing === p.id ? <input type="number" step="0.01" value={formData.price_per_kg} onChange={e => setFormData({ ...formData, price_per_kg: e.target.value })} /> : `$${toNum(p.price_per_kg).toFixed(2)}`}</td>
                 <td>
                   {editing === p.id ? <button onClick={handleSave}>Guardar</button> : <button onClick={() => handleEdit(p)}><Edit2 size={16} /></button>}
                 </td>
