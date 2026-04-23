@@ -2,9 +2,11 @@ import { watch, existsSync, unlinkSync } from 'fs';
 import { execSync } from 'child_process';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '../');
+dotenv.config({ path: join(ROOT, '.env') });
 const DEBOUNCE_MS = 5000;
 const RENDER_DEPLOY_HOOK_URL = process.env.RENDER_DEPLOY_HOOK_URL || '';
 
