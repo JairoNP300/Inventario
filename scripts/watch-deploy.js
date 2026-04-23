@@ -45,6 +45,20 @@ function deploy() {
     }
 }
 
+function deployOnStartupIfNeeded() {
+    try {
+        const status = execSync('git status --porcelain', { cwd: ROOT }).toString().trim();
+        if (status) {
+            console.log('\n📌 Cambios pendientes detectados al iniciar. Publicando automáticamente...');
+            deploy();
+        } else {
+            console.log('✅ Repositorio limpio al iniciar. Esperando nuevos cambios...');
+        }
+    } catch (e) {
+        console.error('❌ Error verificando cambios iniciales:', e.message);
+    }
+}
+
 function scheduleDeployment() {
     pendingChanges = true;
     if (timer) clearTimeout(timer);
@@ -63,6 +77,8 @@ watch(ROOT, { recursive: true }, (event, filename) => {
         scheduleDeployment();
     }
 });
+
+deployOnStartupIfNeeded();
 
 console.log('💡 Los cambios se subirán automáticamente a GitHub y Render.');
 console.log('   No cierres esta ventana.\n');
