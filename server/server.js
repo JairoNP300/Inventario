@@ -3,6 +3,7 @@ import express from 'express';
 
 import cors from 'cors';
 import { fileURLToPath } from 'url';
+import { promises as fs } from 'fs';
 import { dirname, join } from 'path';
 import pkg from 'pg';
 const { Pool } = pkg;
@@ -16,6 +17,22 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 app.use(express.static(join(__dirname, '../dist')));
+
+// Public URL exposure (for auto-start scripts)
+async function getPublicUrl() {
+  try {
+    const path = join(__dirname, '../PUBLIC_URL.txt');
+    const url = (await fs.readFile(path, 'utf8')).trim();
+    return url || null;
+  } catch (e) {
+    return null;
+  }
+}
+
+app.get('/api/public-url', async (req, res) => {
+  const url = await getPublicUrl();
+  res.json({ url });
+});
 
 // --- DATABASE CONFIGURATION ---
 const isProduction = !!process.env.DATABASE_URL || !!process.env.RENDER;

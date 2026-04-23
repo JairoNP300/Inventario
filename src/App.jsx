@@ -30,6 +30,7 @@ import {
   Coins
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import InvoiceLayout from './components/InvoiceLayout.jsx';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 
@@ -39,15 +40,15 @@ const API_BASE = '/api'; // Unified single-port API access for enterprise produc
 const ProductIntelligenceCard = ({ product }) => {
   if (!product) return null;
   return (
-      <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      style={{ 
-        marginTop: '1.5rem', 
+      style={{
+        marginTop: '1.5rem',
         marginBottom: '2rem',
-        padding: '2rem', 
-        background: 'rgba(0, 0, 0, 0.25)', 
-        borderRadius: '20px', 
+        padding: '2rem',
+        background: 'rgba(0, 0, 0, 0.25)',
+        borderRadius: '20px',
         border: '1px solid var(--border-light)',
         boxShadow: 'inset 0 0 20px rgba(56, 189, 248, 0.05)',
         backdropFilter: 'blur(10px)'
@@ -57,17 +58,17 @@ const ProductIntelligenceCard = ({ product }) => {
         <div>
           <strong style={{ display: 'block', color: 'var(--accent)', marginBottom: '15px', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '2px' }}>Disponibilidad por Ubicación:</strong>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '0.85rem' }}>
-            <span style={{color: 'var(--text-muted)'}}>Ransa: <b style={{color: 'var(--text-main)'}}>{(product.stock_kg || 0).toFixed(1)}kg</b></span>
-            <span style={{color: 'var(--text-muted)'}}>Lomas: <b style={{color: 'var(--accent)'}}>{(product.stock_b4 || 0).toFixed(1)}lbs</b></span>
-            <span style={{color: 'var(--text-muted)'}}>Soyapango: <b style={{color: 'var(--accent)'}}>{((product.stock_b2 || 0) * 2.20462).toFixed(1)}lbs</b></span>
-            <span style={{color: 'var(--text-muted)'}}>Usulután: <b style={{color: 'var(--accent)'}}>{((product.stock_b3 || 0) * 2.20462).toFixed(1)}lbs</b></span>
+            <span style={{ color: 'var(--text-muted)' }}>Ransa: <b style={{ color: 'var(--text-main)' }}>{(product.stock_kg || 0).toFixed(1)}kg</b></span>
+            <span style={{ color: 'var(--text-muted)' }}>Lomas: <b style={{ color: 'var(--accent)' }}>{(product.stock_b4 || 0).toFixed(1)}lbs</b></span>
+            <span style={{ color: 'var(--text-muted)' }}>Soyapango: <b style={{ color: 'var(--accent)' }}>{((product.stock_b2 || 0) * 2.20462).toFixed(1)}lbs</b></span>
+            <span style={{ color: 'var(--text-muted)' }}>Usulután: <b style={{ color: 'var(--accent)' }}>{((product.stock_b3 || 0) * 2.20462).toFixed(1)}lbs</b></span>
           </div>
         </div>
         <div style={{ borderLeft: '1px solid var(--border-light)', paddingLeft: '25px' }}>
           <strong style={{ display: 'block', color: 'var(--accent)', marginBottom: '15px', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '2px' }}>Precios de Venta:</strong>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '0.9rem' }}>
-            <span>Libra: <b style={{color: 'var(--success)', fontWeight: 800}}>${(product.price_per_lb || 0).toFixed(2)}</b></span>
-            <span>Kilogramo: <b style={{color: 'var(--success)', fontWeight: 800}}>${(product.price_per_kg || 0).toFixed(2)}</b></span>
+            <span>Libra: <b style={{ color: 'var(--success)', fontWeight: 800 }}>${(product.price_per_lb || 0).toFixed(2)}</b></span>
+            <span>Kilogramo: <b style={{ color: 'var(--success)', fontWeight: 800 }}>${(product.price_per_kg || 0).toFixed(2)}</b></span>
           </div>
         </div>
       </div>
@@ -84,17 +85,18 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
     storage_cost: '', transport_cost: '', labor_cost: '', other_costs: ''
   });
 
-  const filteredProducts = products.filter(p => 
-    p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+  const productsList = Array.isArray(products) ? products : [];
+  const filteredProducts = productsList.filter(p =>
+    p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (p.code && p.code.includes(searchTerm))
   );
 
   const handleCalcWaste = () => {
     const initLbs = parseFloat(formData.initial_weight) || 0;
     const cutLbs = parseFloat(formData.cut_weight) || 0;
-    setFormData(prev => ({ 
-      ...prev, 
-      waste: (initLbs - cutLbs).toFixed(2) 
+    setFormData(prev => ({
+      ...prev,
+      waste: (initLbs - cutLbs).toFixed(2)
     }));
   };
 
@@ -121,11 +123,11 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
       method: editingId ? 'PUT' : 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(formData)
-    }).then(() => { 
-      onUpdate(); 
-      setFormData({ product_id: '', initial_kg: '', initial_weight: '', cut_weight: '', waste: '', storage_cost: '', transport_cost: '', labor_cost: '', other_costs: '' }); 
+    }).then(() => {
+      onUpdate();
+      setFormData({ product_id: '', initial_kg: '', initial_weight: '', cut_weight: '', waste: '', storage_cost: '', transport_cost: '', labor_cost: '', other_costs: '' });
       setEditingId(null);
-      alert(editingId ? 'Cambios guardados correctamente' : 'Proceso registrado'); 
+      alert(editingId ? 'Cambios guardados correctamente' : 'Proceso registrado');
       if (!editingId) window.dispatchEvent(new CustomEvent('changeTab', { detail: 'distribution' }));
     });
   };
@@ -136,7 +138,7 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
         <Activity size={16} style={{ verticalAlign: 'middle', marginRight: '8px' }} />
         <strong>Monitor de Producción:</strong> Seguimiento integral de mermas y rendimiento directo en Libras.
       </div>
-      
+
       <div className="card-grid">
         <form onSubmit={e => {
           e.preventDefault();
@@ -152,10 +154,10 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
           });
         }} className="form-card">
           <h3>Panel de Conversión & Proceso</h3>
-          
+
           <div className="form-group">
             <label>Producto a Procesar</label>
-            <select value={formData.product_id} onChange={e => setFormData({...formData, product_id: e.target.value})} required>
+            <select value={formData.product_id} onChange={e => setFormData({ ...formData, product_id: e.target.value })} required>
               <option value="">Seleccione Producto...</option>
               {products.map(p => <option key={p.id} value={p.id}>{p.code ? `${p.code}: ` : ''}{p.name}</option>)}
             </select>
@@ -169,7 +171,7 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
               </label>
               <input type="number" step="0.01" value={formData.initial_weight} onChange={e => {
                 const w = e.target.value;
-                setFormData(prev => ({...prev, initial_weight: w, waste: (parseFloat(w || 0) - parseFloat(prev.cut_weight || 0)).toFixed(2)}));
+                setFormData(prev => ({ ...prev, initial_weight: w, waste: (parseFloat(w || 0) - parseFloat(prev.cut_weight || 0)).toFixed(2) }));
               }} placeholder="0.00" required />
             </div>
             <div className="form-group">
@@ -181,7 +183,7 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
               </label>
               <input type="number" step="0.01" value={formData.cut_weight} onChange={e => {
                 const c = e.target.value;
-                setFormData(prev => ({...prev, cut_weight: c, waste: (parseFloat(prev.initial_weight || 0) - parseFloat(c || 0)).toFixed(2)}));
+                setFormData(prev => ({ ...prev, cut_weight: c, waste: (parseFloat(prev.initial_weight || 0) - parseFloat(c || 0)).toFixed(2) }));
               }} placeholder="0.00" required />
             </div>
           </div>
@@ -191,15 +193,15 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
             <div className="form-row three-col">
               <div className="form-group">
                 <label>Almacenaje ($)</label>
-                <input type="number" step="0.01" value={formData.storage_cost} onChange={e => setFormData({...formData, storage_cost: e.target.value})} />
+                <input type="number" step="0.01" value={formData.storage_cost} onChange={e => setFormData({ ...formData, storage_cost: e.target.value })} />
               </div>
               <div className="form-group">
                 <label>Transporte ($)</label>
-                <input type="number" step="0.01" value={formData.transport_cost} onChange={e => setFormData({...formData, transport_cost: e.target.value})} />
+                <input type="number" step="0.01" value={formData.transport_cost} onChange={e => setFormData({ ...formData, transport_cost: e.target.value })} />
               </div>
               <div className="form-group">
                 <label>Mano Obra ($)</label>
-                <input type="number" step="0.01" value={formData.labor_cost} onChange={e => setFormData({...formData, labor_cost: e.target.value})} />
+                <input type="number" step="0.01" value={formData.labor_cost} onChange={e => setFormData({ ...formData, labor_cost: e.target.value })} />
               </div>
             </div>
           </div>
@@ -207,16 +209,16 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
           <button type="submit" className="btn-primary" style={{ background: editingId ? 'var(--secondary)' : 'var(--accent)', marginTop: '20px' }}>
             {editingId ? <><Save size={18} /> Actualizar Conversión</> : <><Package size={18} /> Finalizar Producción & Conversión</>}
           </button>
-          {editingId && <button type="button" onClick={() => {setEditingId(null); setFormData({ product_id: '', initial_kg: '', initial_weight: '', cut_weight: '', waste: '', storage_cost: '', transport_cost: '', labor_cost: '', other_costs: '' });}} className="btn-primary" style={{background:'#64748b', marginTop:'10px'}}>Cancelar Edición</button>}
+          {editingId && <button type="button" onClick={() => { setEditingId(null); setFormData({ product_id: '', initial_kg: '', initial_weight: '', cut_weight: '', waste: '', storage_cost: '', transport_cost: '', labor_cost: '', other_costs: '' }); }} className="btn-primary" style={{ background: '#64748b', marginTop: '10px' }}>Cancelar Edición</button>}
         </form>
 
-        <div className="form-card">
+          <div className="form-card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <h4>Stock para Proceso</h4>
-            <motion.input 
+            <motion.input
               whileFocus={{ width: '250px', borderColor: 'var(--accent)' }}
-              type="text" 
-              placeholder="🔍 Buscar..." 
+              type="text"
+              placeholder="🔍 Buscar..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               style={{ width: '200px', padding: '10px 18px', fontSize: '0.8rem', borderRadius: '25px', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', color: '#fff' }}
@@ -233,14 +235,18 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
                 </tr>
               </thead>
               <tbody>
-                {filteredProducts.map(p => (
-                  <tr key={p.id}>
-                    <td className="col-cod" style={{ fontWeight: 800, color: 'var(--text-muted)' }}>{p.code}</td>
-                    <td className="col-carne" style={{ fontWeight: 700, color: 'var(--text-main)' }}>{p.name}</td>
-                    <td className="col-qty" style={{ color: 'var(--success)', fontWeight: 800, fontSize: '1.1rem' }}>{((p.stock_kg || 0) * 2.20462).toFixed(2)} <small>lbs</small></td>
-                    <td className="col-qty" style={{ fontWeight: 600, color: 'rgba(255,255,255,0.3)' }}>{p.stock_kg || 0} <small>kg</small></td>
-                  </tr>
-                ))}
+                {filteredProducts.length === 0 ? (
+                  <tr><td colSpan={4} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>Sin stock disponible</td></tr>
+                ) : (
+                  filteredProducts.map(p => (
+                    <tr key={p.id}>
+                      <td className="col-cod" style={{ fontWeight: 800, color: 'var(--text-muted)' }}>{p.code}</td>
+                      <td className="col-carne" style={{ fontWeight: 700, color: 'var(--text-main)' }}>{p.name}</td>
+                      <td className="col-qty" style={{ color: 'var(--success)', fontWeight: 800, fontSize: '1.1rem' }}>{((p.stock_kg || 0) * 2.20462).toFixed(2)} <small>lbs</small></td>
+                      <td className="col-qty" style={{ fontWeight: 600, color: 'rgba(255,255,255,0.3)' }}>{p.stock_kg || 0} <small>kg</small></td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -270,21 +276,21 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
                   <td className="col-qty" style={{ color: 'var(--secondary)', fontWeight: 800 }}>{log.cut_weight} <small>lbs</small></td>
                   <td className="col-qty" style={{ color: 'var(--danger)', fontWeight: 700 }}>-{log.waste} <small>lbs</small></td>
                   <td className="col-actions">
-                    <div style={{ display:'flex', gap:'8px', justifyContent: 'center' }}>
-                      <motion.button 
+                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                      <motion.button
                         whileHover={{ scale: 1.2 }}
                         onClick={() => handleEdit(log)}
                         style={{ background: 'none', border: 'none', color: '#f59e0b', cursor: 'pointer' }}
                       >
                         <Edit2 size={14} />
                       </motion.button>
-                      <motion.button 
+                      <motion.button
                         whileHover={{ scale: 1.2 }}
                         onClick={() => {
-                          if(confirm('¿Eliminar registro y revertir inventario?')) {
+                          if (confirm('¿Eliminar registro y revertir inventario?')) {
                             fetch(`${API_BASE}/production/logs/${log.id}`, { method: 'DELETE' }).then(onUpdate);
                           }
-                        }} 
+                        }}
                         style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer' }}
                       >
                         <Trash2 size={14} />
@@ -329,12 +335,33 @@ const UnitSelector = ({ value, onChange }) => (
 
 // --- StatusReport ---
 const StatusReport = ({ products, refreshTrigger, onUpdate }) => {
+  const productRows = Array.isArray(products) ? products : [];
   const [inventory, setInventory] = useState([]);
   const [viewUnit, setViewUnit] = useState('Lbs');
   const [adjData, setAdjData] = useState({ product_id: '', current_stock: '', initial_stock: '', warehouse: 'Ransa' });
+  const inventoryRows = Array.isArray(inventory) ? inventory : [];
+  const warehouseOptions = [
+    { label: 'Ransa', value: 'Ransa' },
+    { label: 'Soyapango', value: 'Central de abasto - Soyapango (Cuarto Frío)' },
+    { label: 'Usulután', value: 'Central de abasto - Usulután (Cuarto Frío)' },
+    { label: 'Lomas de San Francisco', value: 'Lomas de San Francisco' }
+  ];
 
   useEffect(() => {
-    fetch(`${API_BASE}/reports/inventory-status`).then(r => r.json()).then(setInventory);
+    let cancelled = false;
+    fetch(`${API_BASE}/reports/inventory-status`)
+      .then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
+      .then(data => {
+        if (!cancelled) setInventory(Array.isArray(data) ? data : []);
+      })
+      .catch(err => {
+        console.error('Error loading inventory status', err);
+        if (!cancelled) setInventory([]);
+      });
+    return () => { cancelled = true; };
   }, [refreshTrigger]);
 
   const handleAdjust = (e) => {
@@ -343,7 +370,8 @@ const StatusReport = ({ products, refreshTrigger, onUpdate }) => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(adjData)
-    }).then(() => { onUpdate(); setAdjData({ product_id: '', current_stock: '', initial_stock: '', warehouse: 'Ransa' }); alert('Ajuste realizado'); });
+    }).then(() => { onUpdate(); setAdjData({ product_id: '', current_stock: '', initial_stock: '', warehouse: 'Ransa' }); alert('Ajuste realizado'); })
+      .catch(err => { console.error('Error adjusting inventory', err); alert('Error al ajustar inventario'); });
   };
 
   return (
@@ -357,8 +385,8 @@ const StatusReport = ({ products, refreshTrigger, onUpdate }) => {
               <label>Producto a Ajustar</label>
               <select value={adjData.product_id} onChange={e => setAdjData({ ...adjData, product_id: e.target.value })} required>
                 <option value="">Seleccione Producto...</option>
-                {products.map(p => {
-                  const inv = inventory.find(i => i.name === p.name);
+                {productRows.map(p => {
+                  const inv = inventoryRows.find(i => i.name === p.name);
                   return <option key={p.id} value={p.id}>{p.name} (B1:{inv?.bodega_1 || 0} | B2:{inv?.bodega_2 || 0} | B3:{inv?.bodega_3 || 0})</option>
                 })}
               </select>
@@ -366,7 +394,7 @@ const StatusReport = ({ products, refreshTrigger, onUpdate }) => {
             <div className="form-group">
               <label>Sede / Bodega a ajustar</label>
               <select value={adjData.warehouse} onChange={e => setAdjData({ ...adjData, warehouse: e.target.value })} required>
-                {['Ransa', 'Soyapango', 'Usulután', 'Lomas de San Francisco'].map(w => <option key={w} value={w}>{w}</option>)}
+                {warehouseOptions.map(w => <option key={w.value} value={w.value}>{w.label}</option>)}
               </select>
             </div>
           </div>
@@ -403,35 +431,41 @@ const StatusReport = ({ products, refreshTrigger, onUpdate }) => {
                 </tr>
               </thead>
               <tbody>
-                {inventory.map(i => {
-                  const isKg = viewUnit === 'Kg';
-                  const factor = 2.20462;
-                  
-                  // B1, B2, B3 are stored as KG. B4 is stored as LBS.
-                  const b1 = isKg ? (i.bodega_1 || 0) : ((i.bodega_1 || 0) * factor);
-                  const b2 = isKg ? (i.bodega_2 || 0) : ((i.bodega_2 || 0) * factor);
-                  const b3 = isKg ? (i.bodega_3 || 0) : ((i.bodega_3 || 0) * factor);
-                  const b4 = isKg ? ((i.bodega_4 || 0) / factor) : (i.bodega_4 || 0);
-                  
-                  const total = b1 + b2 + b3 + b4;
+                {inventoryRows.length > 0 ? (
+                  inventoryRows.map(i => {
+                    const isKg = viewUnit === 'Kg';
+                    const factor = 2.20462;
 
-                  return (
-                    <tr key={i.name}>
-                      <td className="col-carne" style={{ fontWeight: 700, color: 'var(--text-main)' }}>{i.name}</td>
-                      <td className="col-qty" style={{ color: 'var(--accent)' }}>{b1.toFixed(1)}</td>
-                      <td className="col-qty" style={{ color: 'var(--success)' }}>{b2.toFixed(1)}</td>
-                      <td className="col-qty" style={{ color: 'var(--success)' }}>{b3.toFixed(1)}</td>
-                      <td className="col-qty" style={{ color: 'var(--secondary)' }}>{b4.toFixed(1)}</td>
-                      <td className="col-qty" style={{ background: 'rgba(14, 165, 233, 0.05)', fontWeight: 800 }}>
-                        <span style={{ 
-                          color: (isKg ? total * factor : total) < 20 ? 'var(--danger)' : 'var(--accent)'
-                        }}>
-                          {total.toFixed(1)} <small>{viewUnit.toLowerCase()}</small>
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
+                    // B1, B2, B3 are stored as KG. B4 is stored as LBS.
+                    const b1 = isKg ? (i.bodega_1 || 0) : ((i.bodega_1 || 0) * factor);
+                    const b2 = isKg ? (i.bodega_2 || 0) : ((i.bodega_2 || 0) * factor);
+                    const b3 = isKg ? (i.bodega_3 || 0) : ((i.bodega_3 || 0) * factor);
+                    const b4 = isKg ? ((i.bodega_4 || 0) / factor) : (i.bodega_4 || 0);
+
+                    const total = b1 + b2 + b3 + b4;
+
+                    return (
+                      <tr key={i.name}>
+                        <td className="col-carne" style={{ fontWeight: 700, color: 'var(--text-main)' }}>{i.name}</td>
+                        <td className="col-qty" style={{ color: 'var(--accent)' }}>{b1.toFixed(1)}</td>
+                        <td className="col-qty" style={{ color: 'var(--success)' }}>{b2.toFixed(1)}</td>
+                        <td className="col-qty" style={{ color: 'var(--success)' }}>{b3.toFixed(1)}</td>
+                        <td className="col-qty" style={{ color: 'var(--secondary)' }}>{b4.toFixed(1)}</td>
+                        <td className="col-qty" style={{ background: 'rgba(14, 165, 233, 0.05)', fontWeight: 800 }}>
+                          <span style={{
+                            color: (isKg ? total * factor : total) < 20 ? 'var(--danger)' : 'var(--accent)'
+                          }}>
+                            {total.toFixed(1)} <small>{viewUnit.toLowerCase()}</small>
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>Sin datos de inventario</td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -443,15 +477,16 @@ const StatusReport = ({ products, refreshTrigger, onUpdate }) => {
           <h4 style={{ color: '#ef4444', margin: 0, border: 'none', fontSize: '1.2rem' }}>Protocolo de Reinicio Crítico</h4>
           <p style={{ margin: '8px 0 0 0', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Esta acción vaciará todas las existencias y logs del sistema. Actúe con precaución.</p>
         </div>
-        <button 
+        <button
           onClick={() => {
+            if (inventoryRows.length === 0) { alert('El inventario ya está en cero.'); return; }
             if (confirm('⚠️ ¿Deseas poner todas las existencias en CERO?')) {
               if (confirm('❌ ESTA ACCIÓN ES IRREVERSIBLE. ¿Continuar?')) {
                 fetch(`${API_BASE}/admin/clear-inventory`, { method: 'POST' }).then(() => { onUpdate(); alert('Inventario Vaciado'); });
               }
             }
-          }} 
-          className="btn-danger" 
+          }}
+          className="btn-danger"
           style={{ width: 'auto' }}
         >
           <Trash2 size={20} /> Vaciar Sistema
@@ -466,10 +501,11 @@ const numeroALetras = (num) => {
   const unidades = ['', 'UN', 'DOS', 'TRES', 'CUATRO', 'CINCO', 'SEIS', 'SIETE', 'OCHO', 'NUEVE'];
   const decenas = ['DIEZ', 'VEINTE', 'TREINTA', 'CUARENTA', 'CINCUENTA', 'SESENTA', 'SETENTA', 'OCHENTA', 'NOVENTA'];
   // Implementación básica para mostrar el concepto
-  return `${num.toFixed(2)} DÓLARES`; 
+  return `${num.toFixed(2)} DÓLARES`;
 };
 
 // --- InvoicingSystem (Paso 4) ---
+// React is already imported at the top of this file
 const InvoicingSystem = ({ products, agros, onUpdate }) => {
   const [cart, setCart] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState('');
@@ -489,6 +525,40 @@ const InvoicingSystem = ({ products, agros, onUpdate }) => {
   const sumatoriaVentas = cart.reduce((acc, i) => acc + i.total, 0);
   const iva = sumatoriaVentas * 0.13;
   const totalPagar = sumatoriaVentas + iva;
+  const printableItems = cart.map(ci => ({ qty: ci.qty, unit: ci.unit, description: ci.name, unitPrice: ci.price, total: ci.total }));
+  const saveAndPrint = () => {
+    if (!client.name || cart.length === 0) {
+      alert('Datos incompletos');
+      return;
+    }
+
+    Promise.all(cart.map(item => {
+      return fetch(`${API_BASE}/dispatches`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          product_id: item.product_id,
+          agro_id: item.agro_id,
+          weight: item.qty,
+          unit_type: item.unit,
+          value: item.total
+        })
+      });
+    })).then(() => {
+      alert('Venta guardada exitosamente. Abriendo vista de impresión...');
+      window.print();
+      setCart([]);
+      onUpdate();
+      window.dispatchEvent(new CustomEvent('changeTab', { detail: 'status' }));
+    });
+  };
+
+  const companyInfo = {
+    name: 'CARNES DEL PARAGUAY S.A.S DE C.V',
+    address: 'CALLE LA MASCOTA, CONDOMINIO GALICIA, COLONIA SAN BENITO, 18',
+    nit: '0623-160725-114-6',
+    nrc: '367641-0'
+  };
 
   return (
     <div className="report-content">
@@ -497,21 +567,21 @@ const InvoicingSystem = ({ products, agros, onUpdate }) => {
           <h3>Panel de Facturación Electrónica</h3>
           <div className="form-group">
             <label>Razón Social / Nombre Cliente</label>
-            <input type="text" placeholder="Ej: INDUSTRIAS BENDEK S.A DE C.V" value={client.name} onChange={e => setClient({...client, name: e.target.value})} />
+            <input type="text" placeholder="Ej: INDUSTRIAS BENDEK S.A DE C.V" value={client.name} onChange={e => setClient({ ...client, name: e.target.value })} />
           </div>
           <div className="form-row two-col" style={{ marginTop: '10px' }}>
             <div className="form-group">
               <label>NIT / DUI</label>
-              <input type="text" placeholder="0000-000000-000-0" value={client.nit} onChange={e => setClient({...client, nit: e.target.value})} />
+              <input type="text" placeholder="0000-000000-000-0" value={client.nit} onChange={e => setClient({ ...client, nit: e.target.value })} />
             </div>
             <div className="form-group">
               <label>NRC</label>
-              <input type="text" placeholder="367641-0" value={client.nrc} onChange={e => setClient({...client, nrc: e.target.value})} />
+              <input type="text" placeholder="367641-0" value={client.nrc} onChange={e => setClient({ ...client, nrc: e.target.value })} />
             </div>
           </div>
           <div className="form-group" style={{ marginTop: '10px' }}>
             <label>Dirección Completa</label>
-            <input type="text" placeholder="Colonia San Benito..." value={client.address} onChange={e => setClient({...client, address: e.target.value})} />
+            <input type="text" placeholder="Colonia San Benito..." value={client.address} onChange={e => setClient({ ...client, address: e.target.value })} />
           </div>
 
           <hr style={{ opacity: 0.1, margin: '2.5rem 0' }} />
@@ -526,15 +596,15 @@ const InvoicingSystem = ({ products, agros, onUpdate }) => {
               {(() => {
                 const baseProduct = products.find(p => String(p.id) === String(selectedProduct));
                 if (!baseProduct) return null;
-                
+
                 const getInCartKg = (agroID) => cart
                   .filter(item => String(item.product_id) === String(selectedProduct) && String(item.agro_id) === String(agroID))
                   .reduce((acc, item) => acc + (item.unit === 'Lbs' ? item.qty / 2.20462 : item.qty), 0);
-                  
+
                 const getInCartLbs = (agroID) => cart
                   .filter(item => String(item.product_id) === String(selectedProduct) && String(item.agro_id) === String(agroID))
                   .reduce((acc, item) => acc + (item.unit === 'Kg' ? item.qty * 2.20462 : item.qty), 0);
-                  
+
                 const displayProduct = {
                   ...baseProduct,
                   stock_kg: Math.max(0, (baseProduct.stock_kg || 0) - getInCartKg(1)),
@@ -566,142 +636,33 @@ const InvoicingSystem = ({ products, agros, onUpdate }) => {
               </div>
             </div>
           </div>
-
-          <button onClick={addToCart} className="btn-primary" style={{ marginTop: '2rem', width: '100%' }}>
-            <Activity size={18} /> Registrar Item en Detalle
-          </button>
+          <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'flex-end' }}>
+            <button
+              type="button"
+              className="btn-primary"
+              style={{ background: 'var(--accent)', color: '#020617' }}
+              onClick={addToCart}
+            >
+              <PlusCircle size={16} /> Agregar al detalle
+            </button>
+          </div>
         </div>
       </div>
+      <InvoiceLayout
+        company={companyInfo.name}
+        address={companyInfo.address}
+        nit={companyInfo.nit}
+        nrc={companyInfo.nrc}
+        recipient={client}
+        date={new Date().toISOString()}
+        items={printableItems}
+        totals={{ subtotal: sumatoriaVentas, tax: iva, total: totalPagar }}
+        onPrint={() => window.print()}
+        onSave={saveAndPrint}
+        onCancel={() => setCart([])}
+      />
 
-      {/* VISTA DE IMPRESIÓN (ESTILO CREDITO FISCAL) */}
-      <div id="invoice-layout" className="invoice-container">
-        
-        {/* Encabezado Principal */}
-        <div className="invoice-header">
-          <div className="invoice-header-content">
-            <h2 className="company-title">CARNES DEL PARAGUAY S.A.S DE C.V.</h2>
-            <p className="company-details">
-              <strong>DIRECCIÓN:</strong> CALLE LA MASCOTA, CONDOMINIO GALICIA, COLONIA SAN BENITO, 18.<br/> 
-              MUNICIPIO DE SAN SALVADOR CENTRO.<br/>
-              <strong>NIT:</strong> 0623-160725-114-6 | <strong>NRC:</strong> 367641-0 <br/>
-              <strong>TELÉFONO:</strong> 2222-2222 | <strong>CORREO:</strong> carnesdelparaguaysasdecv@gmail.com
-            </p>
-          </div>
-          <div className="invoice-logo">
-             <div className="logo-placeholder">LOGO</div>
-          </div>
-        </div>
-
-        {/* Info Documento (Sin QR) */}
-        <div className="dte-info-card">
-          <div className="dte-text">
-            <h3 className="dte-title">DOCUMENTO TRIBUTARIO ELECTRÓNICO</h3>
-            <h4 className="dte-subtitle">COMPROBANTE DE CRÉDITO FISCAL</h4>
-            <div className="dte-codes">
-              <span><strong>Código de Generación:</strong> {Math.random().toString(36).toUpperCase().substring(2, 10)}-ABCD-EFGH-IJKL</span><br/>
-              <span><strong>Número de Control:</strong> DTE-03-M001P001-1234567890</span>
-            </div>
-          </div>
-          <div className="date-box">
-            <div className="date-label">FECHA DE EMISIÓN</div>
-            <div className="date-value">{new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' }).toUpperCase()}</div>
-          </div>
-        </div>
-
-        {/* Receptor */}
-        <div className="receptor-card">
-          <div className="receptor-header">DATOS DEL RECEPTOR</div>
-          <div className="receptor-body">
-             <div className="receptor-item"><strong>Nombre / Razón Social:</strong> <span>{client.name || '---'}</span></div>
-             <div className="receptor-item"><strong>NRC:</strong> <span>{client.nrc || '---'}</span></div>
-             <div className="receptor-item"><strong>NIT / DUI:</strong> <span>{client.nit || '---'}</span></div>
-             <div className="receptor-item full-width"><strong>Dirección:</strong> <span>{client.address || '---'}</span></div>
-          </div>
-        </div>
-
-        {/* Cuerpo */}
-        <div className="table-wrapper">
-          <table className="invoice-body-table">
-            <thead>
-              <tr>
-                <th>N°</th>
-                <th>Cant</th>
-                <th>Unidad</th>
-                <th>Descripción de los Bienes o Servicios</th>
-                <th className="right-align">P. Unitario</th>
-                <th className="right-align">Ventas Gravadas</th>
-              </tr>
-            </thead>
-            <tbody>
-              {cart.map((item, idx) => (
-                <tr key={item.id}>
-                  <td className="center-align">{idx+1}</td>
-                  <td className="center-align">{item.qty}</td>
-                  <td className="center-align">{item.unit}</td>
-                  <td className="desc-cell">{item.name}</td>
-                  <td className="right-align">${item.price.toFixed(2)}</td>
-                  <td className="right-align fw-bold">${item.total.toFixed(2)}</td>
-                </tr>
-              ))}
-              {cart.length === 0 && (
-                <tr>
-                  <td colSpan="6" className="empty-row">No hay productos registrados en el detalle</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Totales */}
-        <div className="invoice-footer-grid">
-          <div className="total-letras">
-            <div className="letras-title">SON:</div>
-            <div className="letras-value">{numeroALetras(totalPagar)}</div>
-            <div className="letras-note">Esta factura no incluye retenciones adicionales sujetas al comprador salvo que se especifique. Operación sujeta a revisión.</div>
-          </div>
-          <div className="total-breakdown">
-            <div className="total-row"><span>Sumatoria Ventas Gravadas</span> <span>${sumatoriaVentas.toFixed(2)}</span></div>
-            <div className="total-row"><span>13% IVA</span> <span>${iva.toFixed(2)}</span></div>
-            <div className="total-row main-total"><span>MONTO TOTAL A PAGAR</span> <span>${totalPagar.toFixed(2)}</span></div>
-          </div>
-        </div>
-
-        <div className="no-print" style={{ display:'flex', gap:'10px', marginTop:'20px' }}>
-          <button 
-            onClick={() => {
-              if(!client.name || cart.length === 0) return alert('Datos incompletos');
-              Promise.all(cart.map(item => {
-                return fetch(`${API_BASE}/dispatches`, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ 
-                    product_id: item.product_id, 
-                    agro_id: item.agro_id, 
-                    weight: item.qty, 
-                    unit_type: item.unit, 
-                    value: item.total 
-                  })
-                });
-              })).then(() => {
-                alert('Venta guardada exitosamente. Abriendo vista de impresión...');
-                window.print();
-                setCart([]);
-                onUpdate();
-                window.dispatchEvent(new CustomEvent('changeTab', { detail: 'status' }));
-              });
-            }} 
-            className="btn-primary" 
-            style={{flex:1, background:'var(--success)', color: 'white'}}
-          >
-            <Printer size={18} /> Guardar Venta & Imprimir
-          </button>
-          <button onClick={() => setCart([])} className="btn-primary" style={{flex:1, background:'var(--danger)', color: 'white'}}>
-            <Trash2 size={18} /> Cancelar Operación
-          </button>
-        </div>
-      </div>
-
-      </div>
+    </div>
   );
 };
 
@@ -713,10 +674,10 @@ const FoodReport = ({ data, products = [], onBack }) => {
   let details = {};
   try {
     details = typeof data.json_data === 'string' ? JSON.parse(data.json_data) : (data.json_data || {});
-  } catch(e) {
+  } catch (e) {
     details = data.json_data || {};
   }
-  
+
   // Safe numeric conversion
   const n = (val) => parseFloat(val) || 0;
 
@@ -725,19 +686,38 @@ const FoodReport = ({ data, products = [], onBack }) => {
   const purposeText = String(details.batch_purpose || '');
   const cookedWeightMatch = purposeText.match(/(\d+(\.\d+)?)/);
   const cookedWeight = cookedWeightMatch ? n(cookedWeightMatch[0]) : (n(details.cooked_weight));
-  
+
   const totalRawCost = (details.meats || []).reduce((acc, m) => acc + n(m.cost), 0);
   const totalInputCost = (details.inputs || []).reduce((acc, i) => acc + n(i.cost), 0);
   const salePrice = n(details.sale_price);
   const leftoverValue = n(details.leftover_value);
-  
+
   const totalOperationalCost = totalRawCost + totalInputCost;
   const netUtility = salePrice - totalOperationalCost + leftoverValue;
-  
+
   const yieldPercent = meatTotal > 0 ? (cookedWeight / meatTotal) * 100 : 0;
   const unitCost = cookedWeight > 0 ? (totalOperationalCost / cookedWeight) : 0;
   const marginPercent = salePrice > 0 ? (netUtility / salePrice) * 100 : 0;
   const isLoss = netUtility < 0;
+
+  // Prepare a lightweight printable invoice data (for unified layout)
+  const items = (details.meats || []).map((m, idx) => ({
+    qty: Number(m.weight) || 0,
+    unit: 'Lbs',
+    description: m.name || m.product_name || `Producto ${idx + 1}`,
+    unitPrice: Number(m.cost) || 0,
+    total: (Number(m.weight) || 0) * (Number(m.cost) || 0)
+  }));
+  const recipient = {
+    name: details?.recipient?.name,
+    nit: details?.recipient?.nit,
+    nrc: details?.recipient?.nrc,
+    address: details?.recipient?.address
+  };
+  const docDate = data.date || new Date().toISOString();
+  const subtotal = items.reduce((a, it) => a + (it.total || 0), 0);
+  const tax = subtotal * 0.13;
+  const total = subtotal + tax;
 
   const handleDownloadPDF = async () => {
     setIsCapturing(true);
@@ -760,7 +740,7 @@ const FoodReport = ({ data, products = [], onBack }) => {
   };
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
       className="report-screen-wrapper"
@@ -777,138 +757,152 @@ const FoodReport = ({ data, products = [], onBack }) => {
       <div id="audit-print-zone" className="audit-dashboard-container" style={{ padding: '20px', borderRadius: '16px' }}>
         {/* Header Elegante */}
         <div className="audit-header">
-           <div className="header-badge">DOCUMENTO DE AUDITORÍA OPERACIONAL</div>
-           <h1 className="header-company">CARNES DEL PARAGUAY</h1>
-           <p className="header-subtitle">Control de Rendimiento Técnico y Rentabilidad Financiera</p>
-           <div className="header-meta">
-             <div className="meta-item"><span>Destino:</span> <strong>{details.event_name || 'Sin Asignar'}</strong></div>
-             <div className="meta-item"><span>Fecha:</span> <strong>{new Date(data.date).toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })}</strong></div>
-             <div className="meta-item"><span>Pago/Estado:</span> <strong>{details.payment_status || 'Por defecto'}</strong></div>
-             <div className="meta-item"><span>Propósito:</span> <strong>{details.batch_purpose || 'General'}</strong></div>
-           </div>
+          <div className="header-badge">DOCUMENTO DE AUDITORÍA OPERACIONAL</div>
+          <h1 className="header-company">CARNES DEL PARAGUAY</h1>
+          <p className="header-subtitle">Control de Rendimiento Técnico y Rentabilidad Financiera</p>
+          <div className="header-meta">
+            <div className="meta-item"><span>Destino:</span> <strong>{details.event_name || 'Sin Asignar'}</strong></div>
+            <div className="meta-item"><span>Fecha:</span> <strong>{new Date(data.date).toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })}</strong></div>
+            <div className="meta-item"><span>Pago/Estado:</span> <strong>{details.payment_status || 'Por defecto'}</strong></div>
+            <div className="meta-item"><span>Propósito:</span> <strong>{details.batch_purpose || 'General'}</strong></div>
+          </div>
         </div>
 
         {/* KPI Metrics Bar */}
         <div className="metrics-grid">
-           <div className="metric-card gold">
-             <div className="metric-icon"><Layers size={20} /></div>
-             <div className="metric-info">
-               <span className="metric-label">Materia Prima</span>
-               <span className="metric-value">{meatTotal.toFixed(2)} <small>Lbs</small></span>
-             </div>
-           </div>
-           <div className="metric-card blue">
-             <div className="metric-icon"><Utensils size={20} /></div>
-             <div className="metric-info">
-               <span className="metric-label">Producto Final</span>
-               <span className="metric-value">{cookedWeight.toFixed(2)} <small>Lbs</small></span>
-             </div>
-           </div>
-           <div className="metric-card purple">
-             <div className="metric-icon"><Activity size={20} /></div>
-             <div className="metric-info">
-               <span className="metric-label">Rendimiento</span>
-               <span className="metric-value">{yieldPercent.toFixed(1)}%</span>
-             </div>
-           </div>
-           <div className="metric-card cyan">
-             <div className="metric-icon"><Coins size={20} /></div>
-             <div className="metric-info">
-               <span className="metric-label">Costo por libra</span>
-               <span className="metric-value">${unitCost.toFixed(2)}</span>
-             </div>
-           </div>
+          <div className="metric-card gold">
+            <div className="metric-icon"><Layers size={20} /></div>
+            <div className="metric-info">
+              <span className="metric-label">Materia Prima</span>
+              <span className="metric-value">{meatTotal.toFixed(2)} <small>Lbs</small></span>
+            </div>
+          </div>
+          <div className="metric-card blue">
+            <div className="metric-icon"><Utensils size={20} /></div>
+            <div className="metric-info">
+              <span className="metric-label">Producto Final</span>
+              <span className="metric-value">{cookedWeight.toFixed(2)} <small>Lbs</small></span>
+            </div>
+          </div>
+          <div className="metric-card purple">
+            <div className="metric-icon"><Activity size={20} /></div>
+            <div className="metric-info">
+              <span className="metric-label">Rendimiento</span>
+              <span className="metric-value">{yieldPercent.toFixed(1)}%</span>
+            </div>
+          </div>
+          <div className="metric-card cyan">
+            <div className="metric-icon"><Coins size={20} /></div>
+            <div className="metric-info">
+              <span className="metric-label">Costo por libra</span>
+              <span className="metric-value">${unitCost.toFixed(2)}</span>
+            </div>
+          </div>
         </div>
 
         {/* Utility Hero Card */}
         <div className={`utility-badge ${isLoss ? 'loss' : 'profit'}`}>
-           <div className="utility-label">{isLoss ? 'PÉRDIDA OPERACIONAL' : 'UTILIDAD TOTAL DEL LOTE'}</div>
-           <div className="utility-value">${Math.abs(netUtility).toFixed(2)}</div>
-           <div className="utility-progress">
-             <div className="progress-fill" style={{ width: `${Math.min(100, Math.max(0, marginPercent))}%` }}></div>
-           </div>
+          <div className="utility-label">{isLoss ? 'PÉRDIDA OPERACIONAL' : 'UTILIDAD TOTAL DEL LOTE'}</div>
+          <div className="utility-value">${Math.abs(netUtility).toFixed(2)}</div>
+          <div className="utility-progress">
+            <div className="progress-fill" style={{ width: `${Math.min(100, Math.max(0, marginPercent))}%` }}></div>
+          </div>
         </div>
 
         {/* Tables Section */}
         <div className="two-column-audit">
-            <div className="audit-section">
-              <h3 className="section-title">Análisis de Costos Directos</h3>
-              <table className="audit-table">
+          <div className="audit-section">
+            <h3 className="section-title">Análisis de Costos Directos</h3>
+            <table className="audit-table">
+              <thead>
+                <tr><th>Detalle Materia Prima</th><th className="right">Lbs</th><th className="right">Costo</th></tr>
+              </thead>
+              <tbody>
+                {(details.meats || []).map((m, i) => {
+                  const pName = m.product_name || products.find(p => String(p.id) === String(m.product_id))?.name || `Lote #${i + 1} - Carne`;
+                  return (
+                    <tr key={i}>
+                      <td>{pName}</td>
+                      <td className="right">{n(m.weight).toFixed(2)}</td>
+                      <td className="right fw-bold">${n(m.cost).toFixed(2)}</td>
+                    </tr>
+                  );
+                })}
+                <tr className="subtotal-row">
+                  <td colSpan="2">TOTAL MATERIA PRIMA</td>
+                  <td className="right">${totalRawCost.toFixed(2)}</td>
+                </tr>
+              </tbody>
+            </table>
+
+            {details.inputs?.length > 0 && details.inputs[0].description && (
+              <table className="audit-table" style={{ marginTop: '20px' }}>
                 <thead>
-                  <tr><th>Detalle Materia Prima</th><th className="right">Lbs</th><th className="right">Costo</th></tr>
+                  <tr><th>Insumos Operativos</th><th className="right">Costo</th></tr>
                 </thead>
                 <tbody>
-                  {(details.meats || []).map((m, i) => {
-                    const pName = m.product_name || products.find(p => String(p.id) === String(m.product_id))?.name || `Lote #${i+1} - Carne`;
-                    return (
-                      <tr key={i}>
-                        <td>{pName}</td>
-                        <td className="right">{n(m.weight).toFixed(2)}</td>
-                        <td className="right fw-bold">${n(m.cost).toFixed(2)}</td>
-                      </tr>
-                    );
-                  })}
-                  <tr className="subtotal-row">
-                    <td colSpan="2">TOTAL MATERIA PRIMA</td>
-                    <td className="right">${totalRawCost.toFixed(2)}</td>
+                  {details.inputs.map((inp, i) => (
+                    <tr key={i}>
+                      <td>{inp.description}</td>
+                      <td className="right fw-bold">${n(inp.cost).toFixed(2)}</td>
+                    </tr>
+                  ))}
+                  <tr className="subtotal-row grey">
+                    <td>TOTAL INSUMOS / VARIOS</td>
+                    <td className="right">${totalInputCost.toFixed(2)}</td>
                   </tr>
                 </tbody>
               </table>
+            )}
+          </div>
 
-              {details.inputs?.length > 0 && details.inputs[0].description && (
-                <table className="audit-table" style={{marginTop:'20px'}}>
-                  <thead>
-                    <tr><th>Insumos Operativos</th><th className="right">Costo</th></tr>
-                  </thead>
-                  <tbody>
-                    {details.inputs.map((inp, i) => (
-                      <tr key={i}>
-                        <td>{inp.description}</td>
-                        <td className="right fw-bold">${n(inp.cost).toFixed(2)}</td>
-                      </tr>
-                    ))}
-                    <tr className="subtotal-row grey">
-                      <td>TOTAL INSUMOS / VARIOS</td>
-                      <td className="right">${totalInputCost.toFixed(2)}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              )}
+          <div className="audit-section">
+            <h3 className="section-title">Resumen Financiero</h3>
+            <div className="summary-card">
+              <div className="summary-item">
+                <span>Costo Total de Operación:</span>
+                <span className="val-red">-${totalOperationalCost.toFixed(2)}</span>
+              </div>
+              <div className="summary-item">
+                <span>Ingresos por Venta / Crédito:</span>
+                <span className="val-green">+${salePrice.toFixed(2)}</span>
+              </div>
+              <div className="summary-item">
+                <span>Valor Residual (Sobrante):</span>
+                <span className="val-green">+${leftoverValue.toFixed(2)}</span>
+              </div>
+              <div className="summary-divider"></div>
+              <div className="summary-item total">
+                <span>RESULTADO FINAL:</span>
+                <span className={isLoss ? 'val-red' : 'val-green'}>
+                  {isLoss ? '-' : '+'}${Math.abs(netUtility).toFixed(2)}
+                </span>
+              </div>
             </div>
 
-            <div className="audit-section">
-               <h3 className="section-title">Resumen Financiero</h3>
-               <div className="summary-card">
-                 <div className="summary-item">
-                   <span>Costo Total de Operación:</span>
-                   <span className="val-red">-${totalOperationalCost.toFixed(2)}</span>
-                 </div>
-                 <div className="summary-item">
-                   <span>Ingresos por Venta / Crédito:</span>
-                   <span className="val-green">+${salePrice.toFixed(2)}</span>
-                 </div>
-                 <div className="summary-item">
-                   <span>Valor Residual (Sobrante):</span>
-                   <span className="val-green">+${leftoverValue.toFixed(2)}</span>
-                 </div>
-                 <div className="summary-divider"></div>
-                 <div className="summary-item total">
-                   <span>RESULTADO FINAL:</span>
-                   <span className={isLoss ? 'val-red' : 'val-green'}>
-                     {isLoss ? '-' : '+'}${Math.abs(netUtility).toFixed(2)}
-                   </span>
-                 </div>
-               </div>
-
-               <div className="notes-box">
-                  <strong>NOTAS DE AUDITORÍA:</strong>
-                  <p>{details.notes || 'No se registraron observaciones adicionales para este lote específico.'}</p>
-               </div>
+            <div className="notes-box">
+              <strong>NOTAS DE AUDITORÍA:</strong>
+              <p>{details.notes || 'No se registraron observaciones adicionales para este lote específico.'}</p>
             </div>
+          </div>
         </div>
 
 
       </div>
+
+      {items.length > 0 && (
+        <InvoiceLayout
+          company={'CARNES DEL PARAGUAY S.A.S DE C.V'}
+          address={'CALLE LA MASCOTA, CONDOMINIO GALICIA, COLONIA SAN BENITO, 18'}
+          nit={'0623-160725-114-6'}
+          nrc={'367641-0'}
+          recipient={recipient}
+          date={docDate}
+          items={items}
+          totals={{ subtotal, tax, total }}
+          onPrint={() => window.print()}
+        />
+      )}
 
       <style>{`
         @media print {
@@ -935,7 +929,7 @@ const ExportReport = ({ products, agros, refreshTrigger }) => {
       const resDispatch = await fetch(`${API_BASE}/reports/dispatches`);
       const resSales = await fetch(`${API_BASE}/sales`);
       const resInv = await fetch(`${API_BASE}/reports/inventory-status`);
-      
+
       const ransa = await resRansa.json();
       const dispatches = await resDispatch.json();
       const sales = await resSales.json();
@@ -973,11 +967,11 @@ const ExportReport = ({ products, agros, refreshTrigger }) => {
 const LogisticsHub = ({ products, agros, refreshTrigger, onUpdate, forceMode, incomeLogs = [], dispatchLogs = [] }) => {
   const [activeSubTab, setActiveSubTab] = useState(forceMode === 'unified' ? 'unified' : (forceMode === 'distribution' ? 'dispatch' : 'income'));
   const [editingId, setEditingId] = useState(null);
-  const [formData, setFormData] = useState({ 
-    product_id: '', origin: 'Ransa', destination: 'Lomas de San Francisco', 
+  const [formData, setFormData] = useState({
+    product_id: '', origin: 'Ransa', destination: 'Lomas de San Francisco',
     weight: '', tag_weight: '', scale_weight: '', units_per_box: '',
     unit_type: 'Lbs', value: '', agro_id: '',
-    total_to_distribute: '', distributions: {} 
+    total_to_distribute: '', distributions: {}
   });
 
   // Auto-calculate total value based on unit type and specific prices
@@ -988,16 +982,16 @@ const LogisticsHub = ({ products, agros, refreshTrigger, onUpdate, forceMode, in
         let price = 0;
         if (formData.unit_type === 'Lbs') price = product.price_per_lb;
         else if (formData.unit_type === 'Kg') price = product.price_per_kg;
-        
+
         setFormData(prev => ({ ...prev, value: (parseFloat(formData.weight) * (price || 0)).toFixed(2) }));
       }
     }
   }, [formData.product_id, formData.weight, formData.unit_type, activeSubTab, products]);
 
   const warehouses = [
-    'Ransa', 
-    'Lomas de San Francisco', 
-    'Central de abasto - Soyapango (Cuarto Frío)', 
+    'Ransa',
+    'Lomas de San Francisco',
+    'Central de abasto - Soyapango (Cuarto Frío)',
     'Central de abasto - Usulután (Cuarto Frío)'
   ];
 
@@ -1006,19 +1000,19 @@ const LogisticsHub = ({ products, agros, refreshTrigger, onUpdate, forceMode, in
     const isIncome = activeSubTab === 'income' || activeSubTab === 'unified';
     const endpoint = isIncome ? '/reports/ransa' : '/dispatches';
     const url = editingId ? `${API_BASE}${endpoint}/${editingId}` : `${API_BASE}${endpoint}`;
-    
+
     fetch(url, {
       method: editingId ? 'PUT' : 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(isIncome ? 
-        { product_id: formData.product_id, tag_weight: formData.tag_weight, scale_weight: formData.scale_weight, units_per_box: formData.units_per_box, unit_type: formData.unit_type, distribution_details: formData.destination } : 
+      body: JSON.stringify(isIncome ?
+        { product_id: formData.product_id, tag_weight: formData.tag_weight, scale_weight: formData.scale_weight, units_per_box: formData.units_per_box, unit_type: formData.unit_type, distribution_details: formData.destination } :
         { product_id: formData.product_id, agro_id: formData.agro_id, weight: formData.weight, unit_type: formData.unit_type, value: formData.value, origin_warehouse: formData.origin })
-    }).then(() => { 
-      onUpdate(); 
-      setFormData({ product_id: '', origin: 'Ransa', destination: 'Lomas de San Francisco', weight: '', tag_weight: '', scale_weight: '', units_per_box: '', unit_type: 'Lbs', agro_id: '', value: '' }); 
+    }).then(() => {
+      onUpdate();
+      setFormData({ product_id: '', origin: 'Ransa', destination: 'Lomas de San Francisco', weight: '', tag_weight: '', scale_weight: '', units_per_box: '', unit_type: 'Lbs', agro_id: '', value: '' });
       setEditingId(null);
       alert(editingId ? 'Cambios actualizados correctamente' : 'Guardado correctamente');
-      
+
       // Auto-navigation logic
       if (!editingId) {
         if (isIncome) window.dispatchEvent(new CustomEvent('changeTab', { detail: 'production' }));
@@ -1049,22 +1043,22 @@ const LogisticsHub = ({ products, agros, refreshTrigger, onUpdate, forceMode, in
     <div className="report-content">
       {forceMode === 'distribution' && (
         <div style={{ display: 'flex', gap: '10px', marginBottom: '2rem', justifyContent: 'center' }}>
-          <button onClick={() => setActiveSubTab('dispatch')} style={{ padding:'10px 20px', borderRadius:'10px', border:'none', background: activeSubTab === 'dispatch' ? '#1e3a8a':'#f1f5f9', color: activeSubTab === 'dispatch'?'white':'#64748b', fontWeight:700, cursor:'pointer' }}>Despacho Individual</button>
-          <button onClick={() => setActiveSubTab('mass')} style={{ padding:'10px 20px', borderRadius:'10px', border:'none', background: activeSubTab === 'mass' ? '#1e3a8a':'#f1f5f9', color: activeSubTab === 'mass'?'white':'#64748b', fontWeight:700, cursor:'pointer' }}>Distribución Masiva</button>
+          <button onClick={() => setActiveSubTab('dispatch')} style={{ padding: '10px 20px', borderRadius: '10px', border: 'none', background: activeSubTab === 'dispatch' ? '#1e3a8a' : '#f1f5f9', color: activeSubTab === 'dispatch' ? 'white' : '#64748b', fontWeight: 700, cursor: 'pointer' }}>Despacho Individual</button>
+          <button onClick={() => setActiveSubTab('mass')} style={{ padding: '10px 20px', borderRadius: '10px', border: 'none', background: activeSubTab === 'mass' ? '#1e3a8a' : '#f1f5f9', color: activeSubTab === 'mass' ? 'white' : '#64748b', fontWeight: 700, cursor: 'pointer' }}>Distribución Masiva</button>
         </div>
       )}
 
       <form className="form-card" onSubmit={handleAction}>
         <h3>
-          {activeSubTab === 'unified' ? 'Paso 1: Recepción & Traslado Inmediato' : 
-           activeSubTab === 'dispatch' ? 'Paso 3: Despacho Individual' : 
-           activeSubTab === 'mass' ? 'Paso 3: Distribución Masiva' :
-           'Paso 3: Distribución y Venta Final'}
+          {activeSubTab === 'unified' ? 'Paso 1: Recepción & Traslado Inmediato' :
+            activeSubTab === 'dispatch' ? 'Paso 3: Despacho Individual' :
+              activeSubTab === 'mass' ? 'Paso 3: Distribución Masiva' :
+                'Paso 3: Distribución y Venta Final'}
         </h3>
-        
+
         <div className="form-group">
           <label>Producto</label>
-          <select value={formData.product_id} onChange={e => setFormData({...formData, product_id: e.target.value})} required>
+          <select value={formData.product_id} onChange={e => setFormData({ ...formData, product_id: e.target.value })} required>
             <option value="">Seleccione...</option>
             {products.map(p => <option key={p.id} value={p.id}>{p.code ? `${p.code}: ` : ''}{p.name}</option>)}
           </select>
@@ -1076,11 +1070,11 @@ const LogisticsHub = ({ products, agros, refreshTrigger, onUpdate, forceMode, in
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px' }}>
               <div className="form-group">
                 <label>Peso según Viñeta (Lbs)</label>
-                <input type="number" step="0.01" value={formData.tag_weight} onChange={e => setFormData({...formData, tag_weight: e.target.value})} required />
+                <input type="number" step="0.01" value={formData.tag_weight} onChange={e => setFormData({ ...formData, tag_weight: e.target.value })} required />
               </div>
               <div className="form-group">
                 <label>Peso según Báscula (Lbs)</label>
-                <input type="number" step="0.01" value={formData.scale_weight} onChange={e => setFormData({...formData, scale_weight: e.target.value})} required />
+                <input type="number" step="0.01" value={formData.scale_weight} onChange={e => setFormData({ ...formData, scale_weight: e.target.value })} required />
               </div>
               <div className="form-group">
                 <label>Unidad</label>
@@ -1089,9 +1083,9 @@ const LogisticsHub = ({ products, agros, refreshTrigger, onUpdate, forceMode, in
             </div>
             <div className="form-group" style={{ background: 'rgba(255,255,255,0.03)', padding: '20px', borderRadius: '16px', border: '1px solid var(--border)' }}>
               <label style={{ color: 'var(--accent)', fontWeight: 800 }}>Central de Abasto a la que se traslada:</label>
-              <select 
-                value={formData.destination} 
-                onChange={e => setFormData({...formData, destination: e.target.value})}
+              <select
+                value={formData.destination}
+                onChange={e => setFormData({ ...formData, destination: e.target.value })}
                 style={{ border: '2px solid var(--accent)', background: 'rgba(0,0,0,0.2)' }}
               >
                 {warehouses.filter(w => w !== 'Ransa').map(w => <option key={w} value={w}>{w}</option>)}
@@ -1104,18 +1098,18 @@ const LogisticsHub = ({ products, agros, refreshTrigger, onUpdate, forceMode, in
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
             <div className="form-group">
               <label>Punto de Entrega (Destino)</label>
-              <select value={formData.agro_id} onChange={e => setFormData({...formData, agro_id: e.target.value})} required>
+              <select value={formData.agro_id} onChange={e => setFormData({ ...formData, agro_id: e.target.value })} required>
                 <option value="">Seleccione Destino...</option>
                 {agros.filter(a => a.name !== 'Ransa').map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
               </select>
             </div>
             <div className="form-group">
               <label>Bodega de Origen</label>
-              <motion.select 
+              <motion.select
                 whileFocus={{ scale: 1.05, borderColor: 'var(--accent)' }}
-                value={formData.origin} 
-                onChange={e => setFormData({...formData, origin: e.target.value})} 
-                required 
+                value={formData.origin}
+                onChange={e => setFormData({ ...formData, origin: e.target.value })}
+                required
                 style={{ border: '2px solid var(--border)', background: 'rgba(0,0,0,0.2)' }}
               >
                 <option value="Ransa">Ransa</option>
@@ -1131,8 +1125,8 @@ const LogisticsHub = ({ products, agros, refreshTrigger, onUpdate, forceMode, in
           <div className="form-group">
             <label>{activeSubTab === 'dispatch' ? 'Cantidad a Despachar' : 'Peso a Mover'}</label>
             <div style={{ display: 'flex', gap: '8px' }}>
-              <input type="number" step="0.01" value={formData.weight} onChange={e => setFormData({...formData, weight: e.target.value})} required style={{ flex: 1 }} />
-              <UnitSelector value={formData.unit_type} onChange={val => setFormData({...formData, unit_type: val})} />
+              <input type="number" step="0.01" value={formData.weight} onChange={e => setFormData({ ...formData, weight: e.target.value })} required style={{ flex: 1 }} />
+              <UnitSelector value={formData.unit_type} onChange={val => setFormData({ ...formData, unit_type: val })} />
             </div>
           </div>
         )}
@@ -1140,7 +1134,7 @@ const LogisticsHub = ({ products, agros, refreshTrigger, onUpdate, forceMode, in
         {activeSubTab === 'dispatch' && (
           <div className="form-group">
             <label>Valor Monetario Total ($)</label>
-            <input type="number" step="0.01" value={formData.value} onChange={e => setFormData({...formData, value: e.target.value})} required />
+            <input type="number" step="0.01" value={formData.value} onChange={e => setFormData({ ...formData, value: e.target.value })} required />
           </div>
         )}
 
@@ -1148,10 +1142,10 @@ const LogisticsHub = ({ products, agros, refreshTrigger, onUpdate, forceMode, in
           <div>
             <div className="form-group">
               <label>Cantidad Total a Distribuir (lbs)</label>
-              <input type="number" value={formData.total_to_distribute} onChange={e => setFormData({...formData, total_to_distribute: e.target.value})} placeholder="Ej: 500" />
+              <input type="number" value={formData.total_to_distribute} onChange={e => setFormData({ ...formData, total_to_distribute: e.target.value })} placeholder="Ej: 500" />
             </div>
             <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform:'uppercase' }}>Asignación por Destino</label>
+              <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>Asignación por Destino</label>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '10px' }}>
                 {agros.filter(a => a.name !== 'Ransa').map(a => {
                   const currentVal = formData.distributions?.[a.id] || '';
@@ -1160,7 +1154,7 @@ const LogisticsHub = ({ products, agros, refreshTrigger, onUpdate, forceMode, in
                       <span style={{ flex: 1, fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-main)' }}>{a.name}</span>
                       <input type="number" placeholder="lbs" value={currentVal} onChange={e => {
                         const newDist = { ...(formData.distributions || {}), [a.id]: e.target.value };
-                        setFormData({...formData, distributions: newDist});
+                        setFormData({ ...formData, distributions: newDist });
                       }} style={{ width: '100px', padding: '8px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', color: 'white', borderRadius: '8px' }} />
                     </div>
                   );
@@ -1179,9 +1173,9 @@ const LogisticsHub = ({ products, agros, refreshTrigger, onUpdate, forceMode, in
         )}
 
         <button type="submit" className="btn-primary" disabled={activeSubTab === 'mass' && (parseFloat(Object.values(formData.distributions || {}).reduce((acc, v) => acc + (parseFloat(v) || 0), 0)) > (parseFloat(formData.total_to_distribute) || 0))}>
-          {activeSubTab === 'mass' ? 'Confirmar Distribución Masiva' : 
-           activeSubTab === 'unified' ? 'Recepción -> Ir a Procesos' : 
-           activeSubTab === 'dispatch' ? 'Despacho -> Ir a Factura' : 'Ejecutar Paso'}
+          {activeSubTab === 'mass' ? 'Confirmar Distribución Masiva' :
+            activeSubTab === 'unified' ? 'Recepción -> Ir a Procesos' :
+              activeSubTab === 'dispatch' ? 'Despacho -> Ir a Factura' : 'Ejecutar Paso'}
         </button>
       </form>
 
@@ -1218,12 +1212,12 @@ const LogisticsHub = ({ products, agros, refreshTrigger, onUpdate, forceMode, in
                   <td className="col-carne" style={{ color: 'var(--accent)', fontWeight: 700 }}>{log.destination || log.agro_name || 'Central'}</td>
                   {activeSubTab !== 'unified' && <td className="col-qty">${(log.value || 0).toFixed(2)}</td>}
                   <td className="col-actions">
-                    <div style={{ display:'flex', gap:'8px', justifyContent: 'center' }}>
+                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
                       <motion.button whileHover={{ scale: 1.2 }} onClick={() => handleEdit(log)} style={{ background: 'none', border: 'none', color: '#f59e0b', cursor: 'pointer' }}><Edit2 size={14} /></motion.button>
                       <motion.button whileHover={{ scale: 1.2 }} onClick={() => {
-                          const type = activeSubTab === 'unified' ? 'ransa' : 'dispatches';
-                          if(confirm('¿Eliminar?')) { fetch(`${API_BASE}/${type === 'ransa' ? 'reports/ransa' : 'dispatches'}/${log.id}`, { method: 'DELETE' }).then(onUpdate); }
-                        }} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer' }}><Trash2 size={14} /></motion.button>
+                        const type = activeSubTab === 'unified' ? 'ransa' : 'dispatches';
+                        if (confirm('¿Eliminar?')) { fetch(`${API_BASE}/${type === 'ransa' ? 'reports/ransa' : 'dispatches'}/${log.id}`, { method: 'DELETE' }).then(onUpdate); }
+                      }} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer' }}><Trash2 size={14} /></motion.button>
                     </div>
                   </td>
                 </tr>
@@ -1237,15 +1231,16 @@ const LogisticsHub = ({ products, agros, refreshTrigger, onUpdate, forceMode, in
 };
 
 const ConfigPanel = ({ products, onUpdate }) => {
+  const productRows = Array.isArray(products) ? products : [];
   const [editing, setEditing] = useState(null);
   const [formData, setFormData] = useState({ code: '', name: '', category: '', price_per_lb: '' });
 
   const handleEdit = (p) => {
     setEditing(p.id);
-    setFormData({ 
-      code: p.code || '', 
-      name: p.name, 
-      category: p.category, 
+    setFormData({
+      code: p.code || '',
+      name: p.name,
+      category: p.category,
       price_per_lb: p.price_per_lb,
       price_per_kg: p.price_per_kg,
       price_per_box: p.price_per_box
@@ -1275,12 +1270,12 @@ const ConfigPanel = ({ products, onUpdate }) => {
             <tr><th>Cod</th><th>Producto</th><th>$/Libras</th><th>$/Kg</th><th>Acción</th></tr>
           </thead>
           <tbody>
-            {products.map(p => (
+            {productRows.map(p => (
               <tr key={p.id}>
-                <td>{editing === p.id ? <input value={formData.code} onChange={e => setFormData({...formData, code: e.target.value})} style={{width: 50}} /> : p.code}</td>
-                <td>{editing === p.id ? <input value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} /> : p.name}</td>
-                <td>{editing === p.id ? <input type="number" step="0.01" value={formData.price_per_lb} onChange={e => setFormData({...formData, price_per_lb: e.target.value})} /> : `$${(p.price_per_lb || 0).toFixed(2)}`}</td>
-                <td>{editing === p.id ? <input type="number" step="0.01" value={formData.price_per_kg} onChange={e => setFormData({...formData, price_per_kg: e.target.value})} /> : `$${(p.price_per_kg || 0).toFixed(2)}`}</td>
+                <td>{editing === p.id ? <input value={formData.code} onChange={e => setFormData({ ...formData, code: e.target.value })} style={{ width: 50 }} /> : p.code}</td>
+                <td>{editing === p.id ? <input value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} /> : p.name}</td>
+                <td>{editing === p.id ? <input type="number" step="0.01" value={formData.price_per_lb} onChange={e => setFormData({ ...formData, price_per_lb: e.target.value })} /> : `$${(p.price_per_lb || 0).toFixed(2)}`}</td>
+                <td>{editing === p.id ? <input type="number" step="0.01" value={formData.price_per_kg} onChange={e => setFormData({ ...formData, price_per_kg: e.target.value })} /> : `$${(p.price_per_kg || 0).toFixed(2)}`}</td>
                 <td>
                   {editing === p.id ? <button onClick={handleSave}>Guardar</button> : <button onClick={() => handleEdit(p)}><Edit2 size={16} /></button>}
                 </td>
@@ -1292,6 +1287,40 @@ const ConfigPanel = ({ products, onUpdate }) => {
     </div>
   );
 };
+
+class TabErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidUpdate(prevProps) {
+    if (prevProps.resetKey !== this.props.resetKey && this.state.hasError) {
+      this.setState({ hasError: false, error: null });
+    }
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="form-card" style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.4)' }}>
+          <h3 style={{ color: '#ef4444' }}>Error al abrir esta pestaña</h3>
+          <p style={{ color: 'var(--text-muted)' }}>
+            Ocurrió un error inesperado en el renderizado. Presiona refrescar y vuelve a intentar.
+          </p>
+          <button className="btn-primary" onClick={this.props.onRetry} style={{ width: 'auto' }}>
+            Reintentar
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
   const [meats, setMeats] = useState([{ product_id: '', weight: '', cost: '' }]);
@@ -1314,7 +1343,7 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
   const updateMeat = (idx, field, val) => {
     const newMeats = [...meats];
     newMeats[idx][field] = val;
-    
+
     // Auto-calculate cost if we have product and weight
     if (field === 'product_id' || field === 'weight') {
       const pId = field === 'product_id' ? val : newMeats[idx].product_id;
@@ -1324,7 +1353,7 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
         newMeats[idx].cost = (parseFloat(w) * (product.price_per_lb || 0)).toFixed(2);
       }
     }
-    
+
     setMeats(newMeats);
   };
 
@@ -1369,7 +1398,7 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
       balance: netBalance,
       date: new Date().toISOString()
     };
-    
+
     // We send it as a unified 'batch' to the food-costing endpoint
     fetch(`${API_BASE}/food-costing`, {
       method: 'POST',
@@ -1382,56 +1411,24 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
         json_data: JSON.stringify(data)
       })
     }).then(res => res.json()).then(saved => {
-        setMeats([{ product_id: '', weight: '', cost: '' }]);
-        setInputs([{ description: '', cost: '' }]);
-        setExtraData({ event_name: '', batch_purpose: '', sale_price: '', leftover_value: '', notes: '' });
-        onUpdate();
-        setSelectedReport({ 
-          id: saved.id,
-          gross_weight: data.meats.reduce((acc, m) => acc + (parseFloat(m.weight) || 0), 0),
-          gross_cost: data.total_cost,
-          cooked_weight: data.balance,
-          json_data: JSON.stringify(data),
-          date: data.date
-        });
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+      setMeats([{ product_id: '', weight: '', cost: '' }]);
+      setInputs([{ description: '', cost: '' }]);
+      setExtraData({ event_name: '', batch_purpose: '', sale_price: '', leftover_value: '', notes: '' });
+      onUpdate();
+      setSelectedReport({
+        id: saved.id,
+        gross_weight: data.meats.reduce((acc, m) => acc + (parseFloat(m.weight) || 0), 0),
+        gross_cost: data.total_cost,
+        cooked_weight: data.balance,
+        json_data: JSON.stringify(data),
+        date: data.date
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }).catch(e => console.error(e));
   };
 
   if (selectedReport) return <FoodReport data={selectedReport} products={products} onBack={() => { setSelectedReport(null); onUpdate(); }} />;
 
-  const handleExportExcel = () => {
-    const historyData = logs.map(lg => {
-      let details = {};
-      try { 
-        details = typeof lg.json_data === 'string' ? JSON.parse(lg.json_data) : (lg.json_data || {});
-      } catch(e) {}
-
-      const materiasPrimas = (details.meats || []).map((m, i) => {
-        const pName = m.product_name || products.find(p => String(p.id) === String(m.product_id))?.name || `Carne Lote #${i+1}`;
-        return `${pName} (${m.weight} Lbs - $${parseFloat(m.cost || 0).toFixed(2)})`;
-      }).join(' | ');
-
-      const insumosOps = (details.inputs || []).filter(inp => inp.description).map(inp => `${inp.description} ($${parseFloat(inp.cost || 0).toFixed(2)})`).join(' | ');
-
-      return {
-        Fecha: new Date(lg.date).toLocaleDateString(),
-        Propósito: details.batch_purpose || lg.details || '-',
-        Destino: details.event_name || lg.event_name || 'Desconocido',
-        'Detalle Materia Prima': materiasPrimas,
-        'Insumos Operativos': insumosOps || 'Ninguno',
-        'Costo Operativo': details.total_cost || lg.gross_cost || 0,
-        'Venta Acordada': details.sale_price || 0,
-        'Utilidad Neta': details.balance || lg.cooked_weight || 0,
-        Notas: details.notes || ''
-      };
-    });
-
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.json_to_sheet(historyData);
-    XLSX.utils.book_append_sheet(wb, ws, "Historial_Comida");
-    XLSX.writeFile(wb, `Auditoria_Comida_${new Date().toISOString().split('T')[0]}.xlsx`);
-  };
 
   const handleClearHistory = async () => {
     try {
@@ -1454,12 +1451,9 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
   return (
     <div className="report-content">
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px', gap: '10px' }}>
-         <button onClick={handleExportExcel} className="btn-primary" style={{ width: 'auto', background: '#059669', fontSize: '0.8rem', padding: '8px 15px' }}>
-           <FileSpreadsheet size={16} /> Exportar Extendido (.xlsx)
-         </button>
-         <button onClick={handleClearHistory} className="btn-primary" style={{ width: 'auto', background: '#ef4444', fontSize: '0.8rem', padding: '8px 15px', color: 'white' }}>
-           <Trash2 size={16} /> Vaciar Historial
-         </button>
+        <button onClick={handleClearHistory} className="btn-primary" style={{ width: 'auto', background: '#ef4444', fontSize: '0.8rem', padding: '8px 15px', color: 'white' }}>
+          <Trash2 size={16} /> Vaciar Historial
+        </button>
       </div>
       <div className="card-grid">
         <form onSubmit={handleSubmit} className="form-card" style={{ gridColumn: 'span 2' }}>
@@ -1470,22 +1464,22 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
           <div className="form-row two-col">
             <div className="form-group">
               <label>Destino de Venta (Cliente/Institución)</label>
-              <input 
-                type="text" 
-                value={extraData.event_name} 
-                onChange={e => setExtraData({...extraData, event_name: e.target.value})} 
-                placeholder="Ej: MAG, CNR, Relaciones Exteriores..." 
-                required 
+              <input
+                type="text"
+                value={extraData.event_name}
+                onChange={e => setExtraData({ ...extraData, event_name: e.target.value })}
+                placeholder="Ej: MAG, CNR, Relaciones Exteriores..."
+                required
               />
             </div>
             <div className="form-group">
               <label>Cantidad Producida y Propósito del Lote</label>
-              <input 
-                type="text" 
-                value={extraData.batch_purpose} 
-                onChange={e => setExtraData({...extraData, batch_purpose: e.target.value})} 
-                placeholder="Ej: 10 libras para tacos..." 
-                required 
+              <input
+                type="text"
+                value={extraData.batch_purpose}
+                onChange={e => setExtraData({ ...extraData, batch_purpose: e.target.value })}
+                placeholder="Ej: 10 libras para tacos..."
+                required
               />
             </div>
           </div>
@@ -1524,26 +1518,26 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
             <div style={{ position: 'absolute', top: '-20px', right: '-20px', opacity: 0.1 }}>
               <TrendingUp size={120} color="var(--accent)" />
             </div>
-            
+
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
               <h4 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <Coins size={20} color="var(--accent)" /> 
+                <Coins size={20} color="var(--accent)" />
                 Análisis de Rentabilidad
               </h4>
             </div>
-            
+
             <div className="form-row three-col">
               <div className="form-group">
                 <label>Precio Venta / Crédito ($)</label>
-                <input type="number" step="0.01" value={extraData.sale_price} onChange={e => setExtraData({...extraData, sale_price: e.target.value})} placeholder="0.00" style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--accent)' }} />
+                <input type="number" step="0.01" value={extraData.sale_price} onChange={e => setExtraData({ ...extraData, sale_price: e.target.value })} placeholder="0.00" style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--accent)' }} />
               </div>
               <div className="form-group">
                 <label>Valor de comida que sobró ($)</label>
-                <input type="number" step="0.01" value={extraData.leftover_value} onChange={e => setExtraData({...extraData, leftover_value: e.target.value})} placeholder="0.00" style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--success)' }} />
+                <input type="number" step="0.01" value={extraData.leftover_value} onChange={e => setExtraData({ ...extraData, leftover_value: e.target.value })} placeholder="0.00" style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--success)' }} />
               </div>
               <div className="form-group" style={{ textAlign: 'center' }}>
-                <motion.div 
-                  animate={{ scale: [1, 1.05, 1] }} 
+                <motion.div
+                  animate={{ scale: [1, 1.05, 1] }}
                   transition={{ repeat: Infinity, duration: 3 }}
                   style={{ fontSize: '2.5rem', lineHeight: 1, fontWeight: 950, color: netBalance >= 0 ? 'var(--success)' : '#ef4444', textShadow: netBalance >= 0 ? '0 0 25px rgba(34,197,94,0.4)' : '0 0 25px rgba(239,68,68,0.4)' }}
                 >
@@ -1554,7 +1548,7 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
                 </div>
               </div>
             </div>
-            
+
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1.5fr', gap: '20px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '20px', marginTop: '20px', fontSize: '0.85rem' }}>
               <div style={{ display: 'flex', flexDirection: 'column' }}>
                 <span style={{ color: 'var(--text-muted)' }}>Materia Prima (Carnes):</span>
@@ -1578,9 +1572,9 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
 
           <div className="form-group" style={{ marginTop: '2rem' }}>
             <label style={{ color: 'var(--accent)', fontWeight: 800 }}>Observaciones y Detalles Finales del Lote</label>
-            <textarea 
-              value={extraData.notes} 
-              onChange={e => setExtraData({...extraData, notes: e.target.value})} 
+            <textarea
+              value={extraData.notes}
+              onChange={e => setExtraData({ ...extraData, notes: e.target.value })}
               placeholder="Escribe aquí cualquier detalle adicional, variaciones en costos o notas sobre la entrega..."
               style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', borderRadius: '16px', padding: '15px', color: 'white', minHeight: '80px', resize: 'vertical', marginTop: '8px' }}
             />
@@ -1610,20 +1604,20 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
             </thead>
             <tbody>
               {logs.map(lg => {
-                let details = { 
-                  event_name: lg.event_name || 'Desconocido', 
-                  batch_purpose: lg.details || '-', 
-                  total_cost: parseFloat(lg.gross_cost) || 0, 
-                  sale_price: 0, 
-                  leftover_value: 0, 
-                  balance: parseFloat(lg.cooked_weight) || 0 
+                let details = {
+                  event_name: lg.event_name || 'Desconocido',
+                  batch_purpose: lg.details || '-',
+                  total_cost: parseFloat(lg.gross_cost) || 0,
+                  sale_price: 0,
+                  leftover_value: 0,
+                  balance: parseFloat(lg.cooked_weight) || 0
                 };
-                try { 
+                try {
                   if (lg.json_data) {
                     const parsed = typeof lg.json_data === 'string' ? JSON.parse(lg.json_data) : lg.json_data;
                     details = { ...details, ...parsed };
                   }
-                } catch(e) {}
+                } catch (e) { }
 
                 // Recalculate yield for history if possible
                 const pText = String(details.batch_purpose || '');
@@ -1640,25 +1634,25 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
                     <td>${(details.total_cost || 0).toFixed(2)}</td>
                     <td style={{ color: 'var(--accent)' }}>${(details.sale_price || 0)}</td>
                     <td style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{hYield > 0 ? hYield.toFixed(0) + '%' : '-'}</td>
-                    <td style={{ 
-                      fontWeight: 900, 
+                    <td style={{
+                      fontWeight: 900,
                       color: (details.balance || 0) >= 0 ? 'var(--success)' : '#ef4444',
                       background: (details.balance || 0) >= 0 ? 'rgba(34, 197, 94, 0.05)' : 'rgba(239, 68, 68, 0.05)'
                     }}>
                       ${(details.balance || 0).toFixed(2)}
                     </td>
                     <td style={{ textAlign: 'center', display: 'flex', gap: '5px', justifyContent: 'center' }}>
-                      <button 
-                        onClick={() => { setSelectedReport(lg); window.scrollTo({ top: 0, behavior: 'smooth' }); }} 
-                        className="btn-primary" 
+                      <button
+                        onClick={() => { setSelectedReport(lg); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                        className="btn-primary"
                         style={{ padding: '6px 12px', fontSize: '0.7rem', width: 'auto', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)' }}
                         title="Ver Reporte"
                       >
-                        <Printer size={14} /> 
+                        <Printer size={14} />
                       </button>
-                      <button 
-                        onClick={() => handleDeleteRow(lg.id)} 
-                        className="btn-primary" 
+                      <button
+                        onClick={() => handleDeleteRow(lg.id)}
+                        className="btn-primary"
                         style={{ padding: '6px 10px', fontSize: '0.7rem', width: 'auto', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', color: '#ef4444' }}
                         title="Eliminar Registro"
                       >
@@ -1695,18 +1689,18 @@ const ProcessStepper = ({ currentTab }) => {
         const isActive = idx === currentIdx;
         return (
           <React.Fragment key={step.id}>
-            <div style={{ 
-              display: 'flex', 
-              flexDirection: 'column', 
-              alignItems: 'center', 
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
               gap: '8px',
               opacity: isActive || isCompleted ? 1 : 0.4,
               transition: 'all 0.3s ease'
             }}>
-              <div style={{ 
-                width: '40px', 
-                height: '40px', 
-                borderRadius: '50%', 
+              <div style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
                 background: isActive ? 'var(--accent)' : (isCompleted ? 'var(--success)' : 'rgba(255,255,255,0.05)'),
                 color: isActive || isCompleted ? '#020617' : 'var(--text-muted)',
                 display: 'flex',
@@ -1732,6 +1726,10 @@ const ProcessStepper = ({ currentTab }) => {
 };
 
 const App = () => {
+  const [publicUrl, setPublicUrl] = useState(null);
+  useEffect(() => {
+    fetch('/api/public-url').then(r => r.json()).then(d => setPublicUrl(d?.url ?? null)).catch(() => setPublicUrl(null));
+  }, []);
   const [activeTab, setActiveTab] = useState('income');
   const [products, setProducts] = useState([]);
   const [agros, setAgros] = useState([]);
@@ -1750,13 +1748,34 @@ const App = () => {
 
   useEffect(() => {
     const fetchData = () => {
-      fetch(`${API_BASE}/products`).then(r => r.json()).then(setProducts);
-      fetch(`${API_BASE}/agros`).then(r => r.json()).then(setAgros);
-      fetch(`${API_BASE}/production/logs`).then(r => r.json()).then(setProductionLogs);
-      fetch(`${API_BASE}/reports/dispatches`).then(r => r.json()).then(setDispatchLogs);
-      fetch(`${API_BASE}/reports/ransa`).then(r => r.json()).then(setIncomeLogs);
-      fetch(`${API_BASE}/reports/inventory-status`).then(r => r.json()).then(setInventorySummary);
-      fetch(`${API_BASE}/food-costing`).then(r => r.json()).then(setFoodCostingLogs);
+      fetch(`${API_BASE}/products`)
+        .then(r => r.json())
+        .then(d => setProducts(Array.isArray(d) ? d : []))
+        .catch(() => setProducts([]));
+      fetch(`${API_BASE}/agros`)
+        .then(r => r.json())
+        .then(d => setAgros(Array.isArray(d) ? d : []))
+        .catch(() => setAgros([]));
+      fetch(`${API_BASE}/production/logs`)
+        .then(r => r.json())
+        .then(d => setProductionLogs(Array.isArray(d) ? d : []))
+        .catch(() => setProductionLogs([]));
+      fetch(`${API_BASE}/reports/dispatches`)
+        .then(r => r.json())
+        .then(d => setDispatchLogs(Array.isArray(d) ? d : []))
+        .catch(() => setDispatchLogs([]));
+      fetch(`${API_BASE}/reports/ransa`)
+        .then(r => r.json())
+        .then(d => setIncomeLogs(Array.isArray(d) ? d : []))
+        .catch(() => setIncomeLogs([]));
+      fetch(`${API_BASE}/reports/inventory-status`)
+        .then(r => r.json())
+        .then(d => setInventorySummary(Array.isArray(d) ? d : []))
+        .catch(() => setInventorySummary([]));
+      fetch(`${API_BASE}/food-costing`)
+        .then(r => r.json())
+        .then(d => setFoodCostingLogs(Array.isArray(d) ? d : []))
+        .catch(() => setFoodCostingLogs([]));
     };
     fetchData();
     const inv = setInterval(fetchData, 30000);
@@ -1767,6 +1786,12 @@ const App = () => {
 
   return (
     <div className="app-container">
+      {publicUrl && (
+        <div style={{ padding: 8, background: '#0b2030', color: '#e5e7eb', textAlign: 'center' }}>
+          URL pública: <a href={publicUrl} target="_blank" rel="noreferrer" style={{ color: '#93c5fd' }}>{publicUrl}</a>
+          <button onClick={() => window.open(publicUrl, '_blank')} style={{ marginLeft: 8, padding: '4px 8px', borderRadius: 6, border: '1px solid #334e68', background: '#1f2a3a', color: '#fff' }}>Abrir</button>
+        </div>
+      )}
       <header>
         <div className="subtitle">Carnes del Paraguay</div>
         <h1>Logística & Control de Inventario</h1>
@@ -1783,23 +1808,23 @@ const App = () => {
           return (
             <div key={w.col} className="status-item">
               <div className="status-label">{w.label}</div>
-              <div className="status-value">{Math.round(val).toLocaleString()} <span style={{fontSize:'0.6rem', color:'var(--text-muted)'}}>LBS</span></div>
+              <div className="status-value">{Math.round(val).toLocaleString()} <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>LBS</span></div>
             </div>
           );
         })}
-        
+
         <div className="status-item global">
           <div className="status-label">EXISTENCIA GLOBAL</div>
           <div className="status-value">
-             {Math.round(inventorySummary.reduce((acc, i) => acc + (parseFloat(i.final_stock) || 0), 0)).toLocaleString()} <small style={{fontSize:'0.6rem'}}>LBS</small>
+            {Math.round(inventorySummary.reduce((acc, i) => acc + (parseFloat(i.final_stock) || 0), 0)).toLocaleString()} <small style={{ fontSize: '0.6rem' }}>LBS</small>
           </div>
         </div>
 
         <div className="banner-actions">
-          <motion.button 
+          <motion.button
             whileHover={{ rotate: 180 }}
-            onClick={triggerRefresh} 
-            className="btn-primary" 
+            onClick={triggerRefresh}
+            className="btn-primary"
             style={{ width: '50px', height: '50px', padding: 0, borderRadius: '50%', display: 'flex', alignItems: 'center', justifySelf: 'center', justifyContent: 'center' }}
           >
             <RefreshCcw size={20} />
@@ -1807,6 +1832,12 @@ const App = () => {
         </div>
       </div>
 
+      {publicUrl && (
+        <div style={{ padding: 8, textAlign: 'center', background: '#0b2030', color: '#e5e7eb' }}>
+          URL pública: <a href={publicUrl} target="_blank" rel="noreferrer" style={{ color: '#93c5fd' }}>{publicUrl}</a>
+          <button onClick={() => window.open(publicUrl, '_blank')} style={{ marginLeft: 8, padding: '4px 8px', borderRadius: 6, border: '1px solid #334e68', background: '#1f2a3a', color: '#fff' }}>Abrir</button>
+        </div>
+      )}
       <nav className="nav-tabs">
         <button className={activeTab === 'income' ? 'active' : ''} onClick={() => setActiveTab('income')}><Store size={18} /> Recepción</button>
         <button className={activeTab === 'production' ? 'active' : ''} onClick={() => setActiveTab('production')}><Cpu size={18} /> Procesos</button>
@@ -1828,14 +1859,16 @@ const App = () => {
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
           >
-            {activeTab === 'income' && <LogisticsHub products={products} agros={agros} refreshTrigger={refresh} onUpdate={triggerRefresh} forceMode="unified" incomeLogs={incomeLogs} dispatchLogs={dispatchLogs} />}
-            {activeTab === 'production' && <ProductionReport products={products} onUpdate={triggerRefresh} productionLogs={productionLogs} />}
-            {activeTab === 'distribution' && <LogisticsHub products={products} agros={agros} refreshTrigger={refresh} onUpdate={triggerRefresh} forceMode="distribution" incomeLogs={incomeLogs} dispatchLogs={dispatchLogs} />}
-            {activeTab === 'invoice' && <InvoicingSystem products={products} agros={agros} onUpdate={triggerRefresh} />}
-            {activeTab === 'status' && <StatusReport products={products} refreshTrigger={refresh} onUpdate={triggerRefresh} />}
-            {activeTab === 'reports' && <ExportReport products={products} agros={agros} refreshTrigger={refresh} />}
-            {activeTab === 'comida' && <FoodCostingSystem products={products} onUpdate={triggerRefresh} logs={foodCostingLogs} />}
-            {activeTab === 'config' && <ConfigPanel products={products} onUpdate={triggerRefresh} />}
+            <TabErrorBoundary resetKey={activeTab} onRetry={triggerRefresh}>
+              {activeTab === 'income' && <LogisticsHub products={products} agros={agros} refreshTrigger={refresh} onUpdate={triggerRefresh} forceMode="unified" incomeLogs={incomeLogs} dispatchLogs={dispatchLogs} />}
+              {activeTab === 'production' && <ProductionReport products={products} onUpdate={triggerRefresh} productionLogs={productionLogs} />}
+              {activeTab === 'distribution' && <LogisticsHub products={products} agros={agros} refreshTrigger={refresh} onUpdate={triggerRefresh} forceMode="distribution" incomeLogs={incomeLogs} dispatchLogs={dispatchLogs} />}
+              {activeTab === 'invoice' && <InvoicingSystem products={products} agros={agros} onUpdate={triggerRefresh} />}
+              {activeTab === 'status' && <StatusReport products={products} refreshTrigger={refresh} onUpdate={triggerRefresh} />}
+              {activeTab === 'reports' && <ExportReport products={products} agros={agros} refreshTrigger={refresh} />}
+              {activeTab === 'comida' && <FoodCostingSystem products={products} onUpdate={triggerRefresh} logs={foodCostingLogs} />}
+              {activeTab === 'config' && <ConfigPanel products={products} onUpdate={triggerRefresh} />}
+            </TabErrorBoundary>
           </motion.div>
         </AnimatePresence>
       </main>
