@@ -515,37 +515,36 @@ app.get('/api/reports/dispatches', async (req, res) => {
 });
 
 app.post('/api/dispatches', async (req, res) => {
-  const { product_id, agro_id, weight, unit_type, value } = req.body;
+  const { product_id, agro_id, weight, unit_type, value, origin_warehouse } = req.body;
   try {
-    // Get the agro name to determine which bodega to deduct from
-    const { rows: agroRows } = await query('SELECT name FROM agros WHERE id = ?', [agro_id]);
-    const agroName = agroRows[0]?.name || 'Ransa';
-
     const info = await query(`
       INSERT INTO dispatches (product_id, agro_id, weight, unit_type, value)
       VALUES (?, ?, ?, ?, ?) RETURNING id
     `, [product_id, agro_id, weight, unit_type || 'Lbs', value]);
 
-    // Map agro_id to bodega column
-    const agroToBodegaMap = {
-      1: 'bodega_1', // Ransa
-      2: 'bodega_2', // Soyapango
-      3: 'bodega_3', // Usulután
-      4: 'bodega_4'  // Lomas de San Francisco
+    // Determine which bodega to deduct from based on origin_warehouse
+    const colMap = {
+      'Ransa': 'bodega_1',
+      'Lomas de San Francisco': 'bodega_4',
+      'Central de abasto - Soyapango (Cuarto Frío)': 'bodega_2',
+      'Soyapango': 'bodega_2',
+      'Central de abasto - Usulután (Cuarto Frío)': 'bodega_3',
+      'Usulután': 'bodega_3'
     };
-    const bodegaCol = agroToBodegaMap[agro_id] || 'bodega_1';
+    const bodegaCol = colMap[origin_warehouse] || 'bodega_2';
 
-    // Convert weight to lbs for inventory if needed
-    let weightInLbs = parseFloat(weight);
-    if (unit_type === 'Kg') {
-      weightInLbs = weightInLbs * 2.20462;
-    } else if (unit_type === 'Cajas') {
-      // For boxes, we'll assume they're already in lbs for inventory purposes
-      weightInLbs = weightInLbs;
+    // bodega_1 (Ransa) is in KG, others in LBS
+    let weightInUnits = parseFloat(weight);
+    if (bodegaCol === 'bodega_1') {
+      // Ransa: convert dispatch weight to KG if it came in Lbs
+      if (unit_type === 'Lbs') weightInUnits = weightInUnits / 2.20462;
+    } else {
+      // Other bodegas: convert to LBS if came in Kg
+      if (unit_type === 'Kg') weightInUnits = weightInUnits * 2.20462;
     }
 
-    await query(`UPDATE inventory SET ${bodegaCol} = ${bodegaCol} - ?, sold_stock = sold_stock + ? WHERE product_id = ?`, [weightInLbs, weightInLbs, product_id]);
-    await query('INSERT INTO movements (product_id, origin_warehouse, dest_warehouse, weight, type) VALUES (?, ?, ?, ?, ?)', [product_id, agroName, 'Dispatch', weight, 'DISPATCH']);
+    await query(`UPDATE inventory SET ${bodegaCol} = ${bodegaCol} - ?, sold_stock = sold_stock + ? WHERE product_id = ?`, [weightInUnits, weightInUnits, product_id]);
+    await query('INSERT INTO movements (product_id, origin_warehouse, dest_warehouse, weight, type) VALUES (?, ?, ?, ?, ?)', [product_id, origin_warehouse || 'Soyapango', 'Despacho', weight, 'DISPATCH']);
 
     res.json({ id: info.lastInsertRowid });
   } catch (err) {
