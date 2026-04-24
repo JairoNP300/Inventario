@@ -719,6 +719,33 @@ app.get('/api/production/logs', async (req, res) => {
   }
 });
 
+// POST /api/production/logs — usado por el formulario de producción del frontend
+app.post('/api/production/logs', async (req, res) => {
+  const { product_id, initial_weight, cut_weight, waste, storage_cost, transport_cost, labor_cost, other_costs } = req.body;
+  try {
+    const initKg = parseFloat(initial_weight) || 0;
+    const cutLbs = parseFloat(cut_weight) || 0;
+    const wasteVal = parseFloat(waste) || (initKg * 2.20462 - cutLbs);
+
+    await query(`
+      INSERT INTO production_logs (product_id, initial_weight, cut_weight, waste, storage_cost, transport_cost, labor_cost, other_costs)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `, [product_id, initKg, cutLbs, wasteVal, storage_cost || 0, transport_cost || 0, labor_cost || 0, other_costs || 0]);
+
+    // bodega_1 (Ransa) stores KG → deduct initKg
+    // bodega_2 (Soyapango) stores LBS → add cutLbs
+    await query('UPDATE inventory SET bodega_1 = bodega_1 - ? WHERE product_id = ?', [initKg, product_id]);
+    await query('UPDATE inventory SET bodega_2 = bodega_2 + ? WHERE product_id = ?', [cutLbs, product_id]);
+
+    await query('INSERT INTO movements (product_id, origin_warehouse, dest_warehouse, weight, type) VALUES (?, ?, ?, ?, ?)',
+      [product_id, 'Ransa (KG)', 'Soyapango (Lbs)', cutLbs, 'TRANSFER']);
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.delete('/api/production/logs/:id', async (req, res) => {
   const { id } = req.params;
   try {
