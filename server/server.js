@@ -509,14 +509,19 @@ app.post('/api/reports/ransa', async (req, res) => {
 });
 
 app.get('/api/reports/dispatches', async (req, res) => {
-  const { rows } = await query(`
-    SELECT d.*, p.name as product_name, a.name as agro_name 
-    FROM dispatches d
-    JOIN products p ON d.product_id = p.id
-    JOIN agros a ON d.agro_id = a.id
-    ORDER BY date DESC
-  `);
-  res.json(rows);
+  try {
+    const { rows } = await query(`
+      SELECT d.*, p.name as product_name, a.name as agro_name 
+      FROM dispatches d
+      LEFT JOIN products p ON d.product_id = p.id
+      LEFT JOIN agros a ON d.agro_id = a.id
+      ORDER BY d.date DESC
+    `);
+    res.json(rows);
+  } catch (err) {
+    console.error('Error fetching dispatches:', err.message);
+    res.json([]);
+  }
 });
 
 app.post('/api/dispatches', async (req, res) => {
