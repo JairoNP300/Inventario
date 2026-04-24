@@ -418,8 +418,16 @@ app.delete('/api/reports/ransa/:id', async (req, res) => {
     const { rows } = await query('SELECT * FROM ransa_requests WHERE id = ?', [id]);
     if (rows.length > 0) {
       const log = rows[0];
-      // Revert: Deduct from B1 (Ransa)
-      await query('UPDATE inventory SET bodega_1 = bodega_1 - ? WHERE product_id = ?', [log.scale_weight, log.product_id]);
+      const scaleKg = parseFloat(log.scale_weight) || 0;
+      const colMap = {
+        'Ransa': { col: 'bodega_1', factor: 1 },
+        'Lomas de San Francisco': { col: 'bodega_4', factor: 2.20462 },
+        'Central de abasto - Soyapango (Cuarto Frío)': { col: 'bodega_2', factor: 2.20462 },
+        'Central de abasto - Usulután (Cuarto Frío)': { col: 'bodega_3', factor: 2.20462 }
+      };
+      const target = colMap[log.distribution_details] || { col: 'bodega_1', factor: 1 };
+      const val = scaleKg * target.factor;
+      await query(`UPDATE inventory SET ${target.col} = ${target.col} - ? WHERE product_id = ?`, [val, log.product_id]);
       await query('DELETE FROM ransa_requests WHERE id = ?', [id]);
     }
     res.json({ success: true });
