@@ -1075,16 +1075,16 @@ const LogisticsHub = ({ products, agros, refreshTrigger, onUpdate, forceMode, in
           <div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px' }}>
               <div className="form-group">
-                <label>Peso según Viñeta (Lbs)</label>
+                <label>Peso según Viñeta (Kg)</label>
                 <input type="number" step="0.01" value={formData.tag_weight} onChange={e => setFormData({ ...formData, tag_weight: e.target.value })} required />
               </div>
               <div className="form-group">
-                <label>Peso según Báscula (Lbs)</label>
+                <label>Peso según Báscula (Kg)</label>
                 <input type="number" step="0.01" value={formData.scale_weight} onChange={e => setFormData({ ...formData, scale_weight: e.target.value })} required />
               </div>
               <div className="form-group">
                 <label>Unidad</label>
-                <input type="text" value="Libras (LBS)" readOnly style={{ background: 'rgba(15, 23, 42, 0.4)', borderColor: 'rgba(255,255,255,0.05)' }} />
+                <input type="text" value="Kilogramos (KG)" readOnly style={{ background: 'rgba(15, 23, 42, 0.4)', borderColor: 'rgba(255,255,255,0.05)' }} />
               </div>
             </div>
             <div className="form-group" style={{ background: 'rgba(255,255,255,0.03)', padding: '20px', borderRadius: '16px', border: '1px solid var(--border)' }}>
@@ -1815,7 +1815,7 @@ const App = () => {
           return (
             <div key={w.col} className="status-item">
               <div className="status-label">{w.label}</div>
-              <div className="status-value">{Math.round(val).toLocaleString()} <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>LBS</span></div>
+              <div className="status-value">{Math.round(val).toLocaleString()} <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>{w.label === 'Ransa' ? 'KG' : 'LBS'}</span></div>
             </div>
           );
         })}
