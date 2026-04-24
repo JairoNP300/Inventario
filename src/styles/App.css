@@ -756,240 +756,12 @@ tr:hover td {
 }
 
 /* ============================================
-   RESPONSIVE — Mobile First
-   ============================================ */
-
-/* Tablet y móvil grande (≤768px) */
-@media (max-width: 768px) {
-
-  body {
-    padding: 1rem;
-  }
-
-  header h1 {
-    font-size: 1.8rem;
-    letter-spacing: -0.5px;
-  }
-
-  .subtitle {
-    font-size: 0.65rem;
-    letter-spacing: 3px;
-  }
-
-  /* Banner superior — apilado en 2 columnas */
-  .global-status-banner {
-    grid-template-columns: repeat(2, 1fr);
-    border-radius: 16px;
-    margin-bottom: 2rem;
-  }
-
-  .status-item {
-    padding: 1.2rem 1rem;
-  }
-
-  .status-value {
-    font-size: 1.3rem;
-  }
-
-  .banner-actions {
-    grid-column: span 2;
-    display: flex;
-    justify-content: center;
-    padding: 1rem;
-    border-top: 1px solid var(--border-light);
-  }
-
-  /* Nav tabs — scroll horizontal */
-  .nav-tabs {
-    border-radius: 16px;
-    padding: 6px;
-    gap: 4px;
-    margin-bottom: 2rem;
-    overflow-x: auto;
-    flex-wrap: nowrap;
-    justify-content: flex-start;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-
-  .nav-tabs::-webkit-scrollbar {
-    display: none;
-  }
-
-  .nav-tabs button {
-    flex: 0 0 auto;
-    padding: 10px 14px;
-    font-size: 0.75rem;
-    white-space: nowrap;
-    border-radius: 12px;
-  }
-
-  .nav-tabs button.active {
-    transform: none;
-  }
-
-  /* Tarjetas de formulario */
-  .form-card {
-    padding: 1.5rem;
-    border-radius: 20px;
-    gap: 1.5rem;
-    margin-bottom: 1.5rem;
-  }
-
-  /* Grids de formulario — 1 columna en móvil */
-  .form-row.two-col,
-  .form-row.three-col,
-  .form-row.four-col {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-
-  /* Card grid — 1 columna */
-  .card-grid {
-    grid-template-columns: 1fr !important;
-  }
-
-  /* Tablas — scroll horizontal */
-  .grid-table-container {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  table {
-    table-layout: auto;
-    min-width: 500px;
-  }
-
-  th, td {
-    padding: 0.8rem 0.6rem;
-    font-size: 0.8rem;
-  }
-
-  /* Botones */
-  .btn-primary,
-  .btn-danger {
-    padding: 1rem;
-    font-size: 0.85rem;
-    letter-spacing: 1px;
-  }
-
-  /* Inputs y selects más grandes para touch */
-  .form-group input,
-  .form-group select {
-    padding: 0.9rem 1rem;
-    font-size: 1rem;
-  }
-
-  /* Audit report */
-  .report-screen-wrapper {
-    padding: 1rem;
-  }
-
-  .audit-dashboard-container {
-    padding: 1.5rem;
-    border-radius: 16px;
-  }
-
-  .header-company {
-    font-size: 1.4rem;
-  }
-
-  .metrics-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-  }
-
-  .two-column-audit {
-    grid-template-columns: 1fr;
-    gap: 20px;
-  }
-
-  .header-meta {
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-  }
-
-  .utility-value {
-    font-size: 2rem;
-  }
-
-  .report-actions-bar {
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  /* Process stepper — ocultar en móvil para ahorrar espacio */
-  .process-stepper {
-    display: none;
-  }
-}
-
-/* Móvil pequeño (≤480px) */
-@media (max-width: 480px) {
-
-  body {
-    padding: 0.75rem;
-  }
-
-  header {
-    margin-bottom: 1.5rem;
-  }
-
-  header h1 {
-    font-size: 1.4rem;
-  }
-
-  .global-status-banner {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .status-value {
-    font-size: 1.1rem;
-  }
-
-  .status-label {
-    font-size: 0.55rem;
-    letter-spacing: 1px;
-  }
-
-  .form-card {
-    padding: 1rem;
-    border-radius: 16px;
-    gap: 1rem;
-  }
-
-  .metrics-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .header-meta {
-    grid-template-columns: 1fr;
-  }
-
-  /* Tablas más compactas */
-  th, td {
-    padding: 0.6rem 0.5rem;
-    font-size: 0.75rem;
-  }
-}
-
-/* ============================================
    CARD GRID — Layout principal de tarjetas
    ============================================ */
 .card-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 2rem;
-}
-
-@media (max-width: 900px) {
-  .card-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .card-grid .form-card[style*="gridColumn"] {
-    grid-column: span 1 !important;
-  }
 }
 
 /* Grid de 3 columnas inline → clase reutilizable */
@@ -1022,10 +794,156 @@ tr:hover td {
   font-size: 0.85rem;
 }
 
+/* ============================================
+   RESPONSIVE — Tablet (≤900px)
+   ============================================ */
+@media (max-width: 900px) {
+  .card-grid {
+    grid-template-columns: 1fr;
+  }
+  .card-grid .form-card[style*="gridColumn"] {
+    grid-column: span 1 !important;
+  }
+  .form-row.four-col,
+  .form-row.three-col {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ============================================
+   RESPONSIVE — Móvil (≤768px)
+   ============================================ */
 @media (max-width: 768px) {
+
+  /* === LAYOUT BASE === */
+  body {
+    padding: 0.75rem;
+  }
+
+  .app-container {
+    padding: 0;
+  }
+
+  /* === HEADER === */
+  header {
+    margin-bottom: 1.5rem;
+    padding: 0 0.25rem;
+  }
+
+  header h1 {
+    font-size: 1.6rem;
+    letter-spacing: -0.5px;
+  }
+
+  .subtitle {
+    font-size: 0.6rem;
+    letter-spacing: 2px;
+  }
+
+  /* === BANNER SUPERIOR === */
+  .global-status-banner {
+    grid-template-columns: repeat(2, 1fr);
+    border-radius: 16px;
+    margin-bottom: 1.25rem;
+  }
+
+  .status-item {
+    padding: 1rem 0.75rem;
+    gap: 4px;
+  }
+
+  .status-item:not(:last-child)::after {
+    display: none;
+  }
+
+  .status-label {
+    font-size: 0.55rem;
+    letter-spacing: 1.5px;
+  }
+
+  .status-value {
+    font-size: 1.2rem;
+  }
+
+  .banner-actions {
+    grid-column: span 2;
+    display: flex;
+    justify-content: center;
+    padding: 0.75rem;
+    border-top: 1px solid var(--border-light);
+  }
+
+  /* === NAV TABS — scroll horizontal tipo chips === */
+  .nav-tabs {
+    border-radius: 14px;
+    padding: 5px;
+    gap: 4px;
+    margin-bottom: 1.5rem;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .nav-tabs::-webkit-scrollbar { display: none; }
+
+  .nav-tabs button {
+    flex: 0 0 auto;
+    padding: 9px 13px;
+    font-size: 0.72rem;
+    white-space: nowrap;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .nav-tabs button svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .nav-tabs button.active {
+    transform: none;
+    box-shadow: 0 4px 12px var(--accent-glow);
+  }
+
+  /* === PROCESS STEPPER — ocultar en móvil === */
+  .process-stepper,
+  [class*="ProcessStepper"] {
+    display: none !important;
+  }
+
+  /* === TARJETAS === */
+  .form-card {
+    padding: 1.25rem;
+    border-radius: 18px;
+    gap: 1.25rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .form-card h3 {
+    font-size: 1rem;
+    margin-bottom: 0;
+  }
+
+  .form-card h4 {
+    font-size: 0.9rem;
+  }
+
+  /* === GRIDS DE FORMULARIO — 1 columna === */
+  .form-row.two-col,
+  .form-row.three-col,
+  .form-row.four-col {
+    grid-template-columns: 1fr;
+    gap: 0.875rem;
+  }
+
   .grid-3col,
   .grid-2col {
     grid-template-columns: 1fr;
+    gap: 0.875rem;
   }
 
   .grid-food-sections {
@@ -1035,12 +953,189 @@ tr:hover td {
 
   .grid-food-summary {
     grid-template-columns: 1fr 1fr;
-    gap: 12px;
+    gap: 10px;
+    font-size: 0.8rem;
+  }
+
+  /* === INPUTS Y SELECTS — touch-friendly === */
+  .form-group {
+    gap: 0;
+  }
+
+  .form-group label {
+    font-size: 0.7rem;
+    margin-bottom: 6px;
+  }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    padding: 0.85rem 1rem;
+    font-size: 0.95rem;
+    border-radius: 10px;
+    min-height: 48px;
+  }
+
+  /* === BOTONES — full width en móvil === */
+  .btn-primary,
+  .btn-danger {
+    padding: 0.95rem 1rem;
+    font-size: 0.82rem;
+    letter-spacing: 1px;
+    border-radius: 12px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  /* === TABLAS — scroll horizontal === */
+  .grid-table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 12px;
+  }
+
+  table {
+    table-layout: auto;
+    min-width: 480px;
+  }
+
+  th {
+    padding: 0.75rem 0.6rem;
+    font-size: 0.65rem;
+    letter-spacing: 1px;
+  }
+
+  td {
+    padding: 0.75rem 0.6rem;
+    font-size: 0.82rem;
+  }
+
+  tr:hover td {
+    transform: none;
+  }
+
+  /* === PRODUCT INTELLIGENCE CARD === */
+  .product-intelligence-card-inner {
+    grid-template-columns: 1fr !important;
+    gap: 15px !important;
+  }
+
+  /* === AUDIT REPORT === */
+  .report-screen-wrapper {
+    padding: 0.75rem;
+  }
+
+  .report-actions-bar {
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 15px;
+  }
+
+  .report-actions-bar button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .audit-dashboard-container {
+    padding: 1.25rem;
+    border-radius: 14px;
+  }
+
+  .header-company { font-size: 1.3rem; }
+  .header-subtitle { font-size: 0.8rem; }
+
+  .header-meta {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-bottom: 15px;
+  }
+
+  .metric-card {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .metric-value { font-size: 14px; }
+
+  .utility-badge {
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .utility-value { font-size: 1.8rem; }
+
+  .two-column-audit {
+    grid-template-columns: 1fr;
+    gap: 15px;
+    margin-bottom: 20px;
+  }
+
+  .summary-card { padding: 15px; }
+
+  /* === CARD GRID === */
+  .card-grid {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
   }
 }
 
+/* ============================================
+   RESPONSIVE — Móvil pequeño (≤480px)
+   ============================================ */
 @media (max-width: 480px) {
+
+  body { padding: 0.5rem; }
+
+  header h1 { font-size: 1.3rem; }
+
+  .global-status-banner {
+    grid-template-columns: repeat(2, 1fr);
+    margin-bottom: 1rem;
+  }
+
+  .status-value { font-size: 1rem; }
+  .status-label { font-size: 0.5rem; }
+  .status-item { padding: 0.75rem 0.5rem; }
+
+  .nav-tabs {
+    margin-bottom: 1rem;
+    border-radius: 12px;
+  }
+
+  .nav-tabs button {
+    padding: 8px 10px;
+    font-size: 0.68rem;
+  }
+
+  .form-card {
+    padding: 1rem;
+    border-radius: 14px;
+    gap: 1rem;
+  }
+
   .grid-food-summary {
     grid-template-columns: 1fr;
+  }
+
+  .header-meta {
+    grid-template-columns: 1fr;
+  }
+
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  th, td {
+    padding: 0.6rem 0.5rem;
+    font-size: 0.72rem;
   }
 }
