@@ -334,23 +334,22 @@ const initDb = async () => {
     }
   }
 
-  // Ensure inventory exists for all products with initial stock in all warehouses
+  // Ensure inventory exists for all products — only insert if not exists, NEVER overwrite existing data
   const { rows: prods } = await query('SELECT id FROM products');
   for (const p of prods) {
     if (isProduction) {
       await query(`
         INSERT INTO inventory (product_id, bodega_1, bodega_2, bodega_3, bodega_4, initial_stock, sold_stock) 
-        VALUES (?, 100, 100, 100, 100, 400, 0)
+        VALUES (?, 0, 0, 0, 0, 0, 0)
         ON CONFLICT(product_id) DO NOTHING
       `, [p.id]);
     } else {
       await query(`
         INSERT OR IGNORE INTO inventory (product_id, bodega_1, bodega_2, bodega_3, bodega_4, initial_stock, sold_stock) 
-        VALUES (?, 100, 100, 100, 100, 400, 0)
+        VALUES (?, 0, 0, 0, 0, 0, 0)
       `, [p.id]);
     }
-    // Force update for existing ones if needed for this test phase
-    await query('UPDATE inventory SET bodega_1 = 100, bodega_2 = 100, bodega_3 = 100, bodega_4 = 100 WHERE product_id = ?', [p.id]);
+    // DO NOT force-update existing inventory — real data must be preserved
   }
 
   const agros = [
