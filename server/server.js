@@ -649,13 +649,17 @@ app.post('/api/inventory/adjust', async (req, res) => {
     };
     const targetCol = colMap[warehouse] || 'bodega_1';
 
-    // If initial_stock is provided, update initial. If current_stock is provided, update specific bodega.
     if (initial_stock !== undefined) {
       await query('UPDATE inventory SET initial_stock = ? WHERE product_id = ?', [initial_stock, product_id]);
     }
     if (current_stock !== undefined) {
       await query(`UPDATE inventory SET ${targetCol} = ? WHERE product_id = ?`, [current_stock, product_id]);
     }
+
+    const { rows: pRowsAdj } = await query('SELECT name FROM products WHERE id = ?', [product_id]);
+    const pNameAdj = pRowsAdj[0]?.name || `Producto #${product_id}`;
+    const unit = (warehouse === 'Ransa') ? 'KG' : 'Lbs';
+    await logActivity({ role: req.headers['x-role'] || 'desconocido', action: 'AJUSTE STOCK', entity: 'inventory', product_name: pNameAdj, quantity: current_stock ?? initial_stock, unit, location: warehouse || 'Bodega', details: `Nuevo stock: ${current_stock ?? initial_stock} ${unit} en ${warehouse}` });
 
     res.json({ success: true });
   } catch (err) {
