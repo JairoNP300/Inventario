@@ -896,20 +896,6 @@ const FoodReport = ({ data, products = [], onBack }) => {
 
       </div>
 
-      {items.length > 0 && (
-        <InvoiceLayout
-          company={'CARNES DEL PARAGUAY S.A.S DE C.V'}
-          address={'CALLE LA MASCOTA, CONDOMINIO GALICIA, COLONIA SAN BENITO, 18'}
-          nit={'0623-160725-114-6'}
-          nrc={'367641-0'}
-          recipient={recipient}
-          date={docDate}
-          items={items}
-          totals={{ subtotal, tax, total }}
-          onPrint={() => window.print()}
-        />
-      )}
-
       <style>{`
         @media print {
           .no-print, .btn-back, .report-actions-bar { display: none !important; }
