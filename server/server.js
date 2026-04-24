@@ -412,6 +412,38 @@ const initDb = async () => {
 
 initDb().catch(console.error);
 
+// ─── HELPER: registrar actividad ─────────────────────────────────────────────
+async function logActivity({ role = 'sistema', action, entity, details = '', product_name = '', quantity = null, unit = '', location = '' }) {
+  try {
+    await query(
+      `INSERT INTO activity_log (role, action, entity, details, product_name, quantity, unit, location) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [role, action, entity, details, product_name, quantity, unit, location]
+    );
+  } catch (e) {
+    console.warn('logActivity error:', e.message);
+  }
+}
+
+// ─── ENDPOINT: obtener log de actividad (solo admin) ─────────────────────────
+app.get('/api/admin/activity', async (req, res) => {
+  try {
+    const { rows } = await query(`SELECT * FROM activity_log ORDER BY created_at DESC LIMIT 200`);
+    res.json(rows);
+  } catch (err) {
+    res.json([]);
+  }
+});
+
+// ─── ENDPOINT: eliminar log de actividad ─────────────────────────────────────
+app.delete('/api/admin/activity', async (req, res) => {
+  try {
+    await query('DELETE FROM activity_log');
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // --- API ENDPOINTS ---
 
 app.get('/api/reports/ransa', async (req, res) => {
