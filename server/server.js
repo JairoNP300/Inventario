@@ -433,26 +433,33 @@ app.put('/api/reports/ransa/:id', async (req, res) => {
     const { rows } = await query('SELECT * FROM ransa_requests WHERE id = ?', [id]);
     if (rows.length > 0) {
       const old = rows[0];
+
+      // bodega_1 (Ransa) = KG, bodega_2/3/4 = LBS
+      const oldKg = parseFloat(old.scale_weight) || 0;
+      const newKg = parseFloat(scale_weight) || 0;
+
       const colMap = {
-        'Ransa': 'bodega_1',
-        'Lomas de San Francisco': 'bodega_4',
-        'Central de abasto - Soyapango (Cuarto Frío)': 'bodega_2',
-        'Central de abasto - Usulután (Cuarto Frío)': 'bodega_3'
+        'Ransa': { col: 'bodega_1', factor: 1 },
+        'Lomas de San Francisco': { col: 'bodega_4', factor: 2.20462 },
+        'Central de abasto - Soyapango (Cuarto Frío)': { col: 'bodega_2', factor: 2.20462 },
+        'Central de abasto - Usulután (Cuarto Frío)': { col: 'bodega_3', factor: 2.20462 }
       };
 
-      // 1. Revert OLD stock from OLD destination
-      const oldCol = colMap[old.distribution_details] || 'bodega_1';
-      await query(`UPDATE inventory SET ${oldCol} = ${oldCol} - ?, initial_stock = initial_stock - ? WHERE product_id = ?`, [old.scale_weight, old.scale_weight, old.product_id]);
+      // 1. Revert OLD stock
+      const oldTarget = colMap[old.distribution_details] || { col: 'bodega_1', factor: 1 };
+      const oldVal = oldKg * oldTarget.factor;
+      await query(`UPDATE inventory SET ${oldTarget.col} = ${oldTarget.col} - ?, initial_stock = initial_stock - ? WHERE product_id = ?`, [oldVal, oldVal, old.product_id]);
 
-      // 2. Apply NEW stock to NEW destination
-      const newCol = colMap[distribution_details] || 'bodega_1';
-      await query(`UPDATE inventory SET ${newCol} = ${newCol} + ?, initial_stock = initial_stock + ? WHERE product_id = ?`, [scale_weight, scale_weight, product_id]);
+      // 2. Apply NEW stock
+      const newTarget = colMap[distribution_details] || { col: 'bodega_1', factor: 1 };
+      const newVal = newKg * newTarget.factor;
+      await query(`UPDATE inventory SET ${newTarget.col} = ${newTarget.col} + ?, initial_stock = initial_stock + ? WHERE product_id = ?`, [newVal, newVal, product_id]);
 
       // 3. Update Record
       await query(`
         UPDATE ransa_requests SET product_id = ?, tag_weight = ?, scale_weight = ?, units_per_box = ?, unit_type = ?, distribution_details = ?
         WHERE id = ?
-      `, [product_id, tag_weight, scale_weight, units_per_box, unit_type, distribution_details, id]);
+      `, [product_id, tag_weight, newKg, units_per_box, 'Kg', distribution_details, id]);
     }
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
