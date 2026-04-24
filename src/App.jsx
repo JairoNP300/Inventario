@@ -1070,7 +1070,7 @@ const LogisticsHub = ({ products, agros, refreshTrigger, onUpdate, forceMode, in
 
         {activeSubTab === 'unified' && (
           <div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px' }}>
+            <div className="grid-3col">
               <div className="form-group">
                 <label>Peso según Viñeta (Kg)</label>
                 <input type="number" step="0.01" value={formData.tag_weight} onChange={e => setFormData({ ...formData, tag_weight: e.target.value })} required />
@@ -1098,7 +1098,7 @@ const LogisticsHub = ({ products, agros, refreshTrigger, onUpdate, forceMode, in
         )}
 
         {activeSubTab === 'dispatch' && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+          <div className="grid-2col">
             <div className="form-group">
               <label>Punto de Entrega (Destino)</label>
               <select value={formData.agro_id} onChange={e => setFormData({ ...formData, agro_id: e.target.value })} required>
