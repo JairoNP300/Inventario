@@ -706,8 +706,9 @@ app.delete('/api/production/logs/:id', async (req, res) => {
     const { rows } = await query('SELECT * FROM production_logs WHERE id = ?', [id]);
     if (rows.length > 0) {
       const log = rows[0];
-      // Revert: Give back KG, take away Result Lbs
-      await query('UPDATE inventory SET bodega_2 = bodega_2 + ? - ? WHERE product_id = ?', [log.initial_weight, log.cut_weight, log.product_id]);
+      // Revert: restore KG to bodega_1 (Ransa), remove LBS from bodega_2 (Soyapango)
+      await query('UPDATE inventory SET bodega_1 = bodega_1 + ? WHERE product_id = ?', [log.initial_weight, log.product_id]);
+      await query('UPDATE inventory SET bodega_2 = bodega_2 - ? WHERE product_id = ?', [log.cut_weight, log.product_id]);
       await query('DELETE FROM production_logs WHERE id = ?', [id]);
     }
     res.json({ success: true });
@@ -721,9 +722,12 @@ app.put('/api/production/logs/:id', async (req, res) => {
     const { rows } = await query('SELECT * FROM production_logs WHERE id = ?', [id]);
     if (rows.length > 0) {
       const old = rows[0];
-      // Revert old then apply new in single mathematical steps
-      await query('UPDATE inventory SET bodega_2 = bodega_2 + ? - ? WHERE product_id = ?', [old.initial_weight, old.cut_weight, old.product_id]);
-      await query('UPDATE inventory SET bodega_2 = bodega_2 - ? + ? WHERE product_id = ?', [initial_weight, cut_weight, old.product_id]);
+      // Revert old: restore KG to bodega_1, remove old LBS from bodega_2
+      await query('UPDATE inventory SET bodega_1 = bodega_1 + ? WHERE product_id = ?', [old.initial_weight, old.product_id]);
+      await query('UPDATE inventory SET bodega_2 = bodega_2 - ? WHERE product_id = ?', [old.cut_weight, old.product_id]);
+      // Apply new: deduct new KG from bodega_1, add new LBS to bodega_2
+      await query('UPDATE inventory SET bodega_1 = bodega_1 - ? WHERE product_id = ?', [initial_weight, old.product_id]);
+      await query('UPDATE inventory SET bodega_2 = bodega_2 + ? WHERE product_id = ?', [cut_weight, old.product_id]);
       await query('UPDATE production_logs SET initial_weight = ?, cut_weight = ?, waste = ? WHERE id = ?', [initial_weight, cut_weight, waste, id]);
     }
     res.json({ success: true });
