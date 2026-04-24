@@ -1017,8 +1017,8 @@ const LogisticsHub = ({ products, agros, refreshTrigger, onUpdate, forceMode, in
         if (isIncome) window.dispatchEvent(new CustomEvent('changeTab', { detail: 'production' }));
         else window.dispatchEvent(new CustomEvent('changeTab', { detail: 'invoice' }));
       }
-    });
-  };
+    })
+    .catch(err => { console.error('Error en handleAction:', err); alert('Error de conexión: ' + err.message); });
 
   const handleEdit = (log) => {
     setEditingId(log.id);
