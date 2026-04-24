@@ -801,6 +801,10 @@ app.post('/api/production/logs', async (req, res) => {
     await query('INSERT INTO movements (product_id, origin_warehouse, dest_warehouse, weight, type) VALUES (?, ?, ?, ?, ?)',
       [product_id, 'Ransa (KG)', 'Soyapango (Lbs)', cutLbs, 'TRANSFER']);
 
+    const { rows: pRowsProd } = await query('SELECT name FROM products WHERE id = ?', [product_id]);
+    const pNameProd = pRowsProd[0]?.name || `Producto #${product_id}`;
+    await logActivity({ role: req.headers['x-role'] || 'desconocido', action: 'PRODUCCIÓN', entity: 'production_logs', product_name: pNameProd, quantity: initKg, unit: 'KG', location: 'Ransa → Soyapango', details: `Entrada: ${initKg} kg | Salida: ${cutLbs} lbs | Merma: ${wasteVal.toFixed(2)} lbs` });
+
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
