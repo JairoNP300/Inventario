@@ -2096,21 +2096,12 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
         </div>
       </div>
 
-      {publicUrl && (
-        <div style={{ padding: 8, textAlign: 'center', background: '#0b2030', color: '#e5e7eb' }}>
-          URL pública: <a href={publicUrl} target="_blank" rel="noreferrer" style={{ color: '#93c5fd' }}>{publicUrl}</a>
-          <button onClick={() => window.open(publicUrl, '_blank')} style={{ marginLeft: 8, padding: '4px 8px', borderRadius: 6, border: '1px solid #334e68', background: '#1f2a3a', color: '#fff' }}>Abrir</button>
-        </div>
-      )}
       <nav className="nav-tabs">
-        <button className={activeTab === 'income' ? 'active' : ''} onClick={() => setActiveTab('income')}><Store size={18} /> Recepción</button>
-        <button className={activeTab === 'production' ? 'active' : ''} onClick={() => setActiveTab('production')}><Cpu size={18} /> Procesos</button>
-        <button className={activeTab === 'distribution' ? 'active' : ''} onClick={() => setActiveTab('distribution')}><Truck size={18} /> Despacho</button>
-        <button className={activeTab === 'invoice' ? 'active' : ''} onClick={() => setActiveTab('invoice')}><FileText size={18} /> Factura</button>
-        <button className={activeTab === 'status' ? 'active' : ''} onClick={() => setActiveTab('status')}><BarChart3 size={18} /> Stock</button>
-        <button className={activeTab === 'reports' ? 'active' : ''} onClick={() => setActiveTab('reports')}><DownloadCloud size={18} /> Export</button>
-        <button className={activeTab === 'comida' ? 'active' : ''} onClick={() => setActiveTab('comida')}><Utensils size={18} /> Comida</button>
-        <button className={activeTab === 'config' ? 'active' : ''} onClick={() => setActiveTab('config')}><ShieldCheck size={18} /> Admin</button>
+        {visibleTabs.map(t => (
+          <button key={t.id} className={activeTab === t.id ? 'active' : ''} onClick={() => safeSetTab(t.id)}>
+            {t.icon} {t.label}
+          </button>
+        ))}
       </nav>
 
       <main style={{ paddingBottom: '5rem' }}>
