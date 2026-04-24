@@ -189,6 +189,9 @@ const LoginScreen = ({ onLogin }) => {
     </div>
   );
 };
+
+// --- Componente Universal de Inteligencia de Producto ---
+const ProductIntelligenceCard = ({ product }) => {
   if (!product) return null;
   const n = (v) => Number(v) || 0;
   return (
