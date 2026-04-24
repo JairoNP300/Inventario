@@ -171,6 +171,26 @@ const migrateDatabase = async () => {
     }
   }
 
+  // Ensure activity_log table exists (migration for existing deployments)
+  try {
+    await exec(`
+      CREATE TABLE IF NOT EXISTS activity_log (
+        id ${isProduction ? 'SERIAL' : 'INTEGER'} PRIMARY KEY ${isProduction ? '' : 'AUTOINCREMENT'},
+        role TEXT,
+        action TEXT,
+        entity TEXT,
+        details TEXT,
+        product_name TEXT,
+        quantity DECIMAL(10,2),
+        unit TEXT,
+        location TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+  } catch(e) {
+    console.warn('activity_log migration:', e.message);
+  }
+
   console.log('Database migration completed successfully');
 };
 
