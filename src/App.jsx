@@ -59,7 +59,7 @@ const ROLES = {
     label: 'Administrador',
     group: 'Administración',
     password: 'admin2026',
-    tabs: ['income','production','distribution','invoice','status','reports','comida','config'],
+    tabs: ['income','production','distribution','invoice','status','reports','comida','monitor','config'],
     defaultTab: 'income'
   },
   // ── Soyapango ───────────────────────────────────────────────────────────────
@@ -2214,6 +2214,7 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
               {activeTab === 'status' && <StatusReport products={products} refreshTrigger={refresh} onUpdate={triggerRefresh} />}
               {activeTab === 'reports' && <ExportReport products={products} agros={agros} refreshTrigger={refresh} />}
               {activeTab === 'comida' && <FoodCostingSystem products={products} onUpdate={triggerRefresh} logs={foodCostingLogs} />}
+              {activeTab === 'monitor' && <AdminMonitor />}
               {activeTab === 'config' && <ConfigPanel products={products} onUpdate={triggerRefresh} />}
             </TabErrorBoundary>
           </motion.div>
