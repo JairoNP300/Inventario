@@ -39,15 +39,6 @@ import html2canvas from 'html2canvas';
 
 const API_BASE = '/api';
 
-// Helper fetch que incluye el rol activo en el header
-const apiFetch = (url, options = {}) => {
-  const role = sessionStorage.getItem('cp_role') || 'desconocido';
-  return fetch(url, {
-    ...options,
-    headers: { 'Content-Type': 'application/json', 'x-role': role, ...(options.headers || {}) }
-  });
-};
-
 // ─── ROLES & CREDENCIALES ────────────────────────────────────────────────────
 const ROLES = {
   // ── Administración ──────────────────────────────────────────────────────────
@@ -635,8 +626,8 @@ const StatusReport = ({ products, refreshTrigger, onUpdate }) => {
     const valueToStore = isRansa ? kg : kg * 2.20462;
     try {
       for (const pid of selectedProducts) {
-        const r = await apiFetch(`${API_BASE}/inventory/adjust`, {
-          method: 'POST',
+        const r = await fetch(`${API_BASE}/inventory/adjust`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ product_id: pid, current_stock: valueToStore, warehouse: quickWarehouse })
         });
         const d = await r.json();
