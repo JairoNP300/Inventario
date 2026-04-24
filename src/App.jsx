@@ -1003,10 +1003,13 @@ const LogisticsHub = ({ products, agros, refreshTrigger, onUpdate, forceMode, in
       body: JSON.stringify(isIncome ?
         { product_id: formData.product_id, tag_weight: formData.tag_weight, scale_weight: formData.scale_weight, units_per_box: formData.units_per_box, unit_type: formData.unit_type, distribution_details: formData.destination } :
         { product_id: formData.product_id, agro_id: formData.agro_id, weight: formData.weight, unit_type: formData.unit_type, value: formData.value, origin_warehouse: formData.origin })
-    }).then(() => {
-      onUpdate();
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.error) { alert('Error: ' + data.error); return; }
       setFormData({ product_id: '', origin: 'Ransa', destination: 'Lomas de San Francisco', weight: '', tag_weight: '', scale_weight: '', units_per_box: '', unit_type: 'Lbs', agro_id: '', value: '' });
       setEditingId(null);
+      onUpdate();
       alert(editingId ? 'Cambios actualizados correctamente' : 'Guardado correctamente');
 
       // Auto-navigation logic

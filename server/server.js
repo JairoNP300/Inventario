@@ -835,11 +835,16 @@ app.get('/api/orders', async (req, res) => {
 });
 
 app.get('/api/food-costing', async (req, res) => {
-  const { rows } = await query(`
-    SELECT * FROM food_costing 
-    ORDER BY date DESC
-  `);
-  res.json(rows);
+  try {
+    const { rows } = await query(`
+      SELECT * FROM food_costing 
+      ORDER BY date DESC
+    `);
+    res.json(rows);
+  } catch (err) {
+    console.error('Error fetching food costing:', err.message);
+    res.json([]);
+  }
 });
 
 app.post('/api/food-costing', async (req, res) => {
