@@ -754,3 +754,221 @@ tr:hover td {
     border: none !important;
   }
 }
+
+/* ============================================
+   RESPONSIVE — Mobile First
+   ============================================ */
+
+/* Tablet y móvil grande (≤768px) */
+@media (max-width: 768px) {
+
+  body {
+    padding: 1rem;
+  }
+
+  header h1 {
+    font-size: 1.8rem;
+    letter-spacing: -0.5px;
+  }
+
+  .subtitle {
+    font-size: 0.65rem;
+    letter-spacing: 3px;
+  }
+
+  /* Banner superior — apilado en 2 columnas */
+  .global-status-banner {
+    grid-template-columns: repeat(2, 1fr);
+    border-radius: 16px;
+    margin-bottom: 2rem;
+  }
+
+  .status-item {
+    padding: 1.2rem 1rem;
+  }
+
+  .status-value {
+    font-size: 1.3rem;
+  }
+
+  .banner-actions {
+    grid-column: span 2;
+    display: flex;
+    justify-content: center;
+    padding: 1rem;
+    border-top: 1px solid var(--border-light);
+  }
+
+  /* Nav tabs — scroll horizontal */
+  .nav-tabs {
+    border-radius: 16px;
+    padding: 6px;
+    gap: 4px;
+    margin-bottom: 2rem;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .nav-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .nav-tabs button {
+    flex: 0 0 auto;
+    padding: 10px 14px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    border-radius: 12px;
+  }
+
+  .nav-tabs button.active {
+    transform: none;
+  }
+
+  /* Tarjetas de formulario */
+  .form-card {
+    padding: 1.5rem;
+    border-radius: 20px;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  /* Grids de formulario — 1 columna en móvil */
+  .form-row.two-col,
+  .form-row.three-col,
+  .form-row.four-col {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  /* Card grid — 1 columna */
+  .card-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Tablas — scroll horizontal */
+  .grid-table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  table {
+    table-layout: auto;
+    min-width: 500px;
+  }
+
+  th, td {
+    padding: 0.8rem 0.6rem;
+    font-size: 0.8rem;
+  }
+
+  /* Botones */
+  .btn-primary,
+  .btn-danger {
+    padding: 1rem;
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+  }
+
+  /* Inputs y selects más grandes para touch */
+  .form-group input,
+  .form-group select {
+    padding: 0.9rem 1rem;
+    font-size: 1rem;
+  }
+
+  /* Audit report */
+  .report-screen-wrapper {
+    padding: 1rem;
+  }
+
+  .audit-dashboard-container {
+    padding: 1.5rem;
+    border-radius: 16px;
+  }
+
+  .header-company {
+    font-size: 1.4rem;
+  }
+
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .two-column-audit {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .header-meta {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .utility-value {
+    font-size: 2rem;
+  }
+
+  .report-actions-bar {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  /* Process stepper — ocultar en móvil para ahorrar espacio */
+  .process-stepper {
+    display: none;
+  }
+}
+
+/* Móvil pequeño (≤480px) */
+@media (max-width: 480px) {
+
+  body {
+    padding: 0.75rem;
+  }
+
+  header {
+    margin-bottom: 1.5rem;
+  }
+
+  header h1 {
+    font-size: 1.4rem;
+  }
+
+  .global-status-banner {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .status-value {
+    font-size: 1.1rem;
+  }
+
+  .status-label {
+    font-size: 0.55rem;
+    letter-spacing: 1px;
+  }
+
+  .form-card {
+    padding: 1rem;
+    border-radius: 16px;
+    gap: 1rem;
+  }
+
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .header-meta {
+    grid-template-columns: 1fr;
+  }
+
+  /* Tablas más compactas */
+  th, td {
+    padding: 0.6rem 0.5rem;
+    font-size: 0.75rem;
+  }
+}
