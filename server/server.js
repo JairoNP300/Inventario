@@ -450,6 +450,7 @@ app.put('/api/reports/ransa/:id', async (req, res) => {
       // bodega_1 (Ransa) = KG, bodega_2/3/4 = LBS
       const oldKg = parseFloat(old.scale_weight) || 0;
       const newKg = parseFloat(scale_weight) || 0;
+      const unitsPerBox = (units_per_box !== '' && units_per_box != null) ? parseInt(units_per_box) : null;
 
       const colMap = {
         'Ransa': { col: 'bodega_1', factor: 1 },
