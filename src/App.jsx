@@ -255,51 +255,55 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
       </div>
 
       <div className="form-card" style={{ marginTop: '2.5rem' }}>
-        <h3 style={{ marginBottom: '1.5rem' }}>Historial de Producción (Recientes)</h3>
+        <h3 style={{ marginBottom: '1.5rem' }}>Historial de Producción</h3>
         <div className="grid-table-container">
           <table>
             <thead>
               <tr>
                 <th className="col-date">Fecha</th>
                 <th className="col-carne">Producto</th>
-                <th className="col-qty">Entrada (Lbs)</th>
-                <th className="col-qty">Salida (Lbs)</th>
-                <th className="col-qty">Merma</th>
+                <th className="col-qty">Entrada Ransa (Kg)</th>
+                <th className="col-qty">Salida Proceso (Lbs)</th>
+                <th className="col-qty">Merma (Lbs)</th>
                 <th className="col-actions">Acciones</th>
               </tr>
             </thead>
             <tbody>
-              {productionLogs.slice().reverse().slice(0, 10).map(log => (
-                <tr key={log.id} className="fade-in">
-                  <td className="col-date" style={{ color: 'var(--text-muted)' }}>{new Date(log.date).toLocaleDateString()}</td>
-                  <td className="col-carne" style={{ fontWeight: 700, color: 'var(--text-main)' }}>{log.product_name}</td>
-                  <td className="col-qty" style={{ color: 'var(--accent)' }}>{log.initial_weight} <small>lbs</small></td>
-                  <td className="col-qty" style={{ color: 'var(--secondary)', fontWeight: 800 }}>{log.cut_weight} <small>lbs</small></td>
-                  <td className="col-qty" style={{ color: 'var(--danger)', fontWeight: 700 }}>-{log.waste} <small>lbs</small></td>
-                  <td className="col-actions">
-                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                      <motion.button
-                        whileHover={{ scale: 1.2 }}
-                        onClick={() => handleEdit(log)}
-                        style={{ background: 'none', border: 'none', color: '#f59e0b', cursor: 'pointer' }}
-                      >
-                        <Edit2 size={14} />
-                      </motion.button>
-                      <motion.button
-                        whileHover={{ scale: 1.2 }}
-                        onClick={() => {
-                          if (confirm('¿Eliminar registro y revertir inventario?')) {
-                            fetch(`${API_BASE}/production/logs/${log.id}`, { method: 'DELETE' }).then(onUpdate);
-                          }
-                        }}
-                        style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer' }}
-                      >
-                        <Trash2 size={14} />
-                      </motion.button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+              {productionLogs.length === 0 ? (
+                <tr><td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '20px' }}>Sin registros de producción</td></tr>
+              ) : (
+                productionLogs.slice().reverse().map(log => (
+                  <tr key={log.id} className="fade-in">
+                    <td className="col-date" style={{ color: 'var(--text-muted)' }}>{new Date(log.date).toLocaleDateString()}</td>
+                    <td className="col-carne" style={{ fontWeight: 700, color: 'var(--text-main)' }}>{log.product_name || '—'}</td>
+                    <td className="col-qty" style={{ color: 'var(--accent)' }}>{parseFloat(log.initial_weight || 0).toFixed(2)} <small>kg</small></td>
+                    <td className="col-qty" style={{ color: 'var(--secondary)', fontWeight: 800 }}>{parseFloat(log.cut_weight || 0).toFixed(2)} <small>lbs</small></td>
+                    <td className="col-qty" style={{ color: 'var(--danger)', fontWeight: 700 }}>-{parseFloat(log.waste || 0).toFixed(2)} <small>lbs</small></td>
+                    <td className="col-actions">
+                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                        <motion.button
+                          whileHover={{ scale: 1.2 }}
+                          onClick={() => handleEdit(log)}
+                          style={{ background: 'none', border: 'none', color: '#f59e0b', cursor: 'pointer' }}
+                        >
+                          <Edit2 size={14} />
+                        </motion.button>
+                        <motion.button
+                          whileHover={{ scale: 1.2 }}
+                          onClick={() => {
+                            if (confirm('¿Eliminar registro y revertir inventario?')) {
+                              fetch(`${API_BASE}/production/logs/${log.id}`, { method: 'DELETE' }).then(onUpdate);
+                            }
+                          }}
+                          style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer' }}
+                        >
+                          <Trash2 size={14} />
+                        </motion.button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
