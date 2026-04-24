@@ -1503,7 +1503,7 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginTop: '1rem' }}>
+          <div className="grid-food-sections">
             {/* SECTION: MEATS */}
             <div>
               <h4 style={{ borderBottom: '1px solid var(--border)', paddingBottom: '8px', fontSize: '1rem' }}>🛒 Materia Prima (Carnes)</h4>
@@ -1568,7 +1568,7 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1.5fr', gap: '20px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '20px', marginTop: '20px', fontSize: '0.85rem' }}>
+            <div className="grid-food-summary">
               <div style={{ display: 'flex', flexDirection: 'column' }}>
                 <span style={{ color: 'var(--text-muted)' }}>Materia Prima (Carnes):</span>
                 <b style={{ color: 'var(--text-main)' }}>${totalMeatCost.toFixed(2)}</b>
