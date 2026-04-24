@@ -2132,6 +2132,7 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
     { id: 'status',       label: 'Stock',      icon: <BarChart3 size={18} /> },
     { id: 'reports',      label: 'Export',     icon: <DownloadCloud size={18} /> },
     { id: 'comida',       label: 'Comida',     icon: <Utensils size={18} /> },
+    { id: 'monitor',      label: 'Monitor',    icon: <Activity size={18} /> },
     { id: 'config',       label: 'Admin',      icon: <ShieldCheck size={18} /> },
   ];
   const visibleTabs = allTabs.filter(t => roleCfg.tabs.includes(t.id));
