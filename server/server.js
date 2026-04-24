@@ -473,7 +473,7 @@ app.put('/api/reports/ransa/:id', async (req, res) => {
       await query(`
         UPDATE ransa_requests SET product_id = ?, tag_weight = ?, scale_weight = ?, units_per_box = ?, unit_type = ?, distribution_details = ?
         WHERE id = ?
-      `, [product_id, tag_weight, newKg, units_per_box, 'Kg', distribution_details, id]);
+      `, [product_id, parseFloat(tag_weight) || 0, newKg, unitsPerBox, 'Kg', distribution_details, id]);
     }
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
