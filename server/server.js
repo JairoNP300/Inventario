@@ -461,24 +461,26 @@ app.put('/api/reports/ransa/:id', async (req, res) => {
 app.post('/api/reports/ransa', async (req, res) => {
   const { product_id, tag_weight, scale_weight, units_per_box, unit_type, distribution_details } = req.body;
   try {
+    // Ransa always receives in KG. scale_weight is in KG.
+    const scaleKg = parseFloat(scale_weight) || 0;
+    const scaleLbs = scaleKg * 2.20462; // convert to lbs for non-Ransa bodegas
+
     const info = await query(`
       INSERT INTO ransa_requests (product_id, tag_weight, scale_weight, units_per_box, unit_type, distribution_details)
       VALUES (?, ?, ?, ?, ?, ?) RETURNING id
-    `, [product_id, tag_weight, scale_weight, units_per_box, unit_type || 'Lbs', distribution_details]);
+    `, [product_id, tag_weight, scaleKg, units_per_box, 'Kg', distribution_details]);
 
-    // Determine target warehouse column
+    // bodega_1 (Ransa) stores KG. bodega_2/3/4 store LBS.
     const colMap = {
-      'Ransa': 'bodega_1',
-      'Lomas de San Francisco': 'bodega_4',
-      'Central de abasto - Soyapango (Cuarto Frío)': 'bodega_2',
-      'Central de abasto - Usulután (Cuarto Frío)': 'bodega_3'
+      'Ransa': { col: 'bodega_1', value: scaleKg },
+      'Lomas de San Francisco': { col: 'bodega_4', value: scaleLbs },
+      'Central de abasto - Soyapango (Cuarto Frío)': { col: 'bodega_2', value: scaleLbs },
+      'Central de abasto - Usulután (Cuarto Frío)': { col: 'bodega_3', value: scaleLbs }
     };
-    const col = colMap[distribution_details] || 'bodega_1';
+    const target = colMap[distribution_details] || { col: 'bodega_1', value: scaleKg };
 
-    await query(`UPDATE inventory SET ${col} = ${col} + ?, initial_stock = initial_stock + ? WHERE product_id = ?`, [scale_weight, scale_weight, product_id]);
-
-    // Log Movement
-    await query('INSERT INTO movements (product_id, origin_warehouse, dest_warehouse, weight, type) VALUES (?, ?, ?, ?, ?)', [product_id, 'Origin', distribution_details, scale_weight, 'INCOME']);
+    await query(`UPDATE inventory SET ${target.col} = ${target.col} + ?, initial_stock = initial_stock + ? WHERE product_id = ?`, [target.value, target.value, product_id]);
+    await query('INSERT INTO movements (product_id, origin_warehouse, dest_warehouse, weight, type) VALUES (?, ?, ?, ?, ?)', [product_id, 'Ransa (Origen)', distribution_details, scaleKg, 'INCOME']);
 
     res.json({ id: info.lastInsertRowid });
   } catch (err) {
