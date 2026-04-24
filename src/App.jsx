@@ -347,75 +347,149 @@ const StatusReport = ({ products, refreshTrigger, onUpdate }) => {
   const productRows = Array.isArray(products) ? products : [];
   const [inventory, setInventory] = useState([]);
   const [viewUnit, setViewUnit] = useState('Lbs');
-  const [adjData, setAdjData] = useState({ product_id: '', current_stock: '', initial_stock: '', warehouse: 'Ransa' });
+  const [adjData, setAdjData] = useState({ product_id: '', current_stock: '', warehouse: 'Ransa' });
+  const [quickKg, setQuickKg] = useState('100');
+  const [quickWarehouse, setQuickWarehouse] = useState('Ransa');
+  const [selectedProducts, setSelectedProducts] = useState([]);
+  const [quickLoading, setQuickLoading] = useState(false);
   const inventoryRows = Array.isArray(inventory) ? inventory : [];
   const warehouseOptions = [
-    { label: 'Ransa', value: 'Ransa' },
-    { label: 'Soyapango', value: 'Central de abasto - Soyapango (Cuarto Frío)' },
-    { label: 'Usulután', value: 'Central de abasto - Usulután (Cuarto Frío)' },
-    { label: 'Lomas de San Francisco', value: 'Lomas de San Francisco' }
+    { label: 'Ransa (KG)', value: 'Ransa' },
+    { label: 'Soyapango (Lbs)', value: 'Central de abasto - Soyapango (Cuarto Frío)' },
+    { label: 'Usulután (Lbs)', value: 'Central de abasto - Usulután (Cuarto Frío)' },
+    { label: 'Lomas de San Francisco (Lbs)', value: 'Lomas de San Francisco' }
   ];
 
   useEffect(() => {
     let cancelled = false;
     fetch(`${API_BASE}/reports/inventory-status`)
-      .then(r => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        return r.json();
-      })
-      .then(data => {
-        if (!cancelled) setInventory(Array.isArray(data) ? data : []);
-      })
-      .catch(err => {
-        console.error('Error loading inventory status', err);
-        if (!cancelled) setInventory([]);
-      });
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(data => { if (!cancelled) setInventory(Array.isArray(data) ? data : []); })
+      .catch(err => { console.error('Error loading inventory status', err); if (!cancelled) setInventory([]); });
     return () => { cancelled = true; };
   }, [refreshTrigger]);
 
   const handleAdjust = (e) => {
     e.preventDefault();
+    const val = parseFloat(adjData.current_stock);
+    if (isNaN(val)) { alert('Ingresa una cantidad válida'); return; }
     fetch(`${API_BASE}/inventory/adjust`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(adjData)
-    }).then(() => { onUpdate(); setAdjData({ product_id: '', current_stock: '', initial_stock: '', warehouse: 'Ransa' }); alert('Ajuste realizado'); })
-      .catch(err => { console.error('Error adjusting inventory', err); alert('Error al ajustar inventario'); });
+      body: JSON.stringify({ product_id: adjData.product_id, current_stock: val, warehouse: adjData.warehouse })
+    })
+    .then(r => r.json())
+    .then(d => { if (d.error) { alert('Error: ' + d.error); return; } onUpdate(); setAdjData({ product_id: '', current_stock: '', warehouse: 'Ransa' }); alert('Ajuste guardado'); })
+    .catch(err => alert('Error de conexión: ' + err.message));
+  };
+
+  const toggleProduct = (id) => setSelectedProducts(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  const toggleAll = () => setSelectedProducts(selectedProducts.length === productRows.length ? [] : productRows.map(p => p.id));
+
+  const handleQuickLoad = async () => {
+    const kg = parseFloat(quickKg);
+    if (isNaN(kg) || kg <= 0) { alert('Ingresa una cantidad válida en KG'); return; }
+    if (selectedProducts.length === 0) { alert('Selecciona al menos un producto'); return; }
+    setQuickLoading(true);
+    const isRansa = quickWarehouse === 'Ransa';
+    const valueToStore = isRansa ? kg : kg * 2.20462;
+    try {
+      for (const pid of selectedProducts) {
+        const r = await fetch(`${API_BASE}/inventory/adjust`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ product_id: pid, current_stock: valueToStore, warehouse: quickWarehouse })
+        });
+        const d = await r.json();
+        if (d.error) throw new Error(d.error);
+      }
+      onUpdate(); setSelectedProducts([]);
+      alert(`✅ ${selectedProducts.length} producto(s) actualizados con ${kg} KG`);
+    } catch (err) { alert('Error: ' + err.message); }
+    setQuickLoading(false);
   };
 
   return (
     <div>
       <h3>Ajustes y Consolidado de Inventario</h3>
-      <div className="card-grid">
-        <form className="form-card" onSubmit={handleAdjust}>
-          <h4><Edit2 size={16} /> Ajustar Stock Manualmente</h4>
-          <div className="form-row two-col">
-            <div className="form-group">
-              <label>Producto a Ajustar</label>
-              <select value={adjData.product_id} onChange={e => setAdjData({ ...adjData, product_id: e.target.value })} required>
-                <option value="">Seleccione Producto...</option>
-                {productRows.map(p => {
-                  const inv = inventoryRows.find(i => i.name === p.name);
-                  return <option key={p.id} value={p.id}>{p.name} (B1:{toNum(inv?.bodega_1)} | B2:{toNum(inv?.bodega_2)} | B3:{toNum(inv?.bodega_3)})</option>
-                })}
-              </select>
-            </div>
-            <div className="form-group">
-              <label>Sede / Bodega a ajustar</label>
-              <select value={adjData.warehouse} onChange={e => setAdjData({ ...adjData, warehouse: e.target.value })} required>
-                {warehouseOptions.map(w => <option key={w.value} value={w.value}>{w.label}</option>)}
-              </select>
+
+      {/* === CARGA RÁPIDA === */}
+      <div className="form-card" style={{ marginBottom: '2rem', background: 'rgba(56,189,248,0.05)', border: '1px solid rgba(56,189,248,0.2)' }}>
+        <h4 style={{ color: 'var(--accent)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Package size={18} /> Carga Rápida por Lotes
+        </h4>
+        <div className="grid-3col" style={{ marginBottom: '1rem' }}>
+          <div className="form-group">
+            <label>Cantidad (KG)</label>
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+              {['100', '200', '300', '500'].map(v => (
+                <button key={v} type="button" onClick={() => setQuickKg(v)} style={{ padding: '8px 14px', borderRadius: '10px', border: 'none', cursor: 'pointer', fontWeight: 800, fontSize: '0.85rem', background: quickKg === v ? 'var(--accent)' : 'rgba(255,255,255,0.07)', color: quickKg === v ? '#020617' : 'var(--text-muted)' }}>{v} kg</button>
+              ))}
+              <input type="number" value={quickKg} onChange={e => setQuickKg(e.target.value)} placeholder="Otro..." style={{ width: '90px', padding: '8px 10px', borderRadius: '10px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border-light)', color: '#fff', fontSize: '0.9rem' }} />
             </div>
           </div>
-          <div className="form-row two-col">
-            <div className="form-group">
-              <label>Nuevo Stock Inicial (lbs)</label>
-              <input type="number" value={adjData.initial_stock} onChange={e => setAdjData({ ...adjData, initial_stock: e.target.value })} placeholder="Meta inicial" required />
-            </div>
-            <div className="form-group">
-              <label>Nuevo Stock Actual (lbs)</label>
-              <input type="number" value={adjData.current_stock} onChange={e => setAdjData({ ...adjData, current_stock: e.target.value })} placeholder="Físico capturado" required />
-            </div>
+          <div className="form-group">
+            <label>Bodega Destino</label>
+            <select value={quickWarehouse} onChange={e => setQuickWarehouse(e.target.value)}>
+              {warehouseOptions.map(w => <option key={w.value} value={w.value}>{w.label}</option>)}
+            </select>
+          </div>
+          <div className="form-group" style={{ justifyContent: 'flex-end' }}>
+            <label style={{ opacity: 0 }}>.</label>
+            <button type="button" onClick={handleQuickLoad} disabled={quickLoading} className="btn-primary" style={{ background: 'linear-gradient(135deg, var(--success), #059669)' }}>
+              {quickLoading ? 'Guardando...' : `Aplicar a ${selectedProducts.length} producto(s)`}
+            </button>
+          </div>
+        </div>
+        <div style={{ background: 'rgba(0,0,0,0.15)', borderRadius: '14px', padding: '1rem', border: '1px solid var(--border-light)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Seleccionar Productos</span>
+            <button type="button" onClick={toggleAll} style={{ padding: '5px 12px', borderRadius: '8px', border: '1px solid var(--border-light)', background: 'rgba(255,255,255,0.05)', color: 'var(--accent)', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}>
+              {selectedProducts.length === productRows.length ? 'Deseleccionar todos' : 'Seleccionar todos'}
+            </button>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '8px' }}>
+            {productRows.map(p => {
+              const inv = inventoryRows.find(i => i.name === p.name);
+              const isSelected = selectedProducts.includes(p.id);
+              return (
+                <div key={p.id} onClick={() => toggleProduct(p.id)} style={{ padding: '10px 12px', borderRadius: '10px', cursor: 'pointer', border: `1px solid ${isSelected ? 'var(--accent)' : 'var(--border-light)'}`, background: isSelected ? 'rgba(56,189,248,0.1)' : 'rgba(255,255,255,0.02)', display: 'flex', alignItems: 'center', gap: '8px', transition: 'all 0.2s' }}>
+                  <div style={{ width: '16px', height: '16px', borderRadius: '4px', border: `2px solid ${isSelected ? 'var(--accent)' : 'var(--border-light)'}`, background: isSelected ? 'var(--accent)' : 'transparent', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {isSelected && <span style={{ color: '#020617', fontSize: '10px', fontWeight: 900 }}>✓</span>}
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-main)', lineHeight: 1.2 }}>{p.code}: {p.name.length > 22 ? p.name.slice(0, 22) + '…' : p.name}</div>
+                    <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Ransa: {toNum(inv?.bodega_1).toFixed(1)} kg</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* === AJUSTE INDIVIDUAL + TABLA === */}
+      <div className="card-grid">
+        <form className="form-card" onSubmit={handleAdjust}>
+          <h4><Edit2 size={16} /> Ajuste Individual</h4>
+          <div className="form-group">
+            <label>Producto</label>
+            <select value={adjData.product_id} onChange={e => setAdjData({ ...adjData, product_id: e.target.value })} required>
+              <option value="">Seleccione Producto...</option>
+              {productRows.map(p => {
+                const inv = inventoryRows.find(i => i.name === p.name);
+                return <option key={p.id} value={p.id}>{p.code}: {p.name} — {toNum(inv?.bodega_1).toFixed(1)} kg</option>;
+              })}
+            </select>
+          </div>
+          <div className="form-group">
+            <label>Bodega</label>
+            <select value={adjData.warehouse} onChange={e => setAdjData({ ...adjData, warehouse: e.target.value })} required>
+              {warehouseOptions.map(w => <option key={w.value} value={w.value}>{w.label}</option>)}
+            </select>
+          </div>
+          <div className="form-group">
+            <label>Nuevo Stock ({adjData.warehouse === 'Ransa' ? 'KG' : 'Lbs'})</label>
+            <input type="number" step="0.01" value={adjData.current_stock} onChange={e => setAdjData({ ...adjData, current_stock: e.target.value })} placeholder={adjData.warehouse === 'Ransa' ? 'Ej: 150 kg' : 'Ej: 330 lbs'} required />
           </div>
           <button type="submit" className="btn-primary">Guardar Ajuste</button>
         </form>
@@ -423,9 +497,7 @@ const StatusReport = ({ products, refreshTrigger, onUpdate }) => {
         <div className="form-card" style={{ gridColumn: 'span 2' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
             <h4 style={{ margin: 0 }}>Balance Consolidado por Bodega</h4>
-            <div style={{ width: '200px' }}>
-              <UnitSelector value={viewUnit} onChange={setViewUnit} />
-            </div>
+            <div style={{ width: '200px' }}><UnitSelector value={viewUnit} onChange={setViewUnit} /></div>
           </div>
           <div className="grid-table-container">
             <table>
@@ -436,49 +508,32 @@ const StatusReport = ({ products, refreshTrigger, onUpdate }) => {
                   <th className="col-qty">Soyapango ({viewUnit})</th>
                   <th className="col-qty">Usulután ({viewUnit})</th>
                   <th className="col-qty">Lomas ({viewUnit})</th>
-                  <th className="col-qty">Venta Global ({viewUnit})</th>
+                  <th className="col-qty">Total ({viewUnit})</th>
                 </tr>
               </thead>
               <tbody>
-                {inventoryRows.length > 0 ? (
-                  inventoryRows.map(i => {
-                    const isKg = viewUnit === 'Kg';
-                    const factor = 2.20462;
-
-                    // B1, B2, B3 are stored as KG. B4 is stored as LBS.
-                    const b1Base = toNum(i.bodega_1);
-                    const b2Base = toNum(i.bodega_2);
-                    const b3Base = toNum(i.bodega_3);
-                    const b4Base = toNum(i.bodega_4);
-                    const b1 = isKg ? b1Base : (b1Base * factor);
-                    const b2 = isKg ? b2Base : (b2Base * factor);
-                    const b3 = isKg ? b3Base : (b3Base * factor);
-                    const b4 = isKg ? (b4Base / factor) : b4Base;
-
-                    const total = b1 + b2 + b3 + b4;
-
-                    return (
-                      <tr key={i.name}>
-                        <td className="col-carne" style={{ fontWeight: 700, color: 'var(--text-main)' }}>{i.name}</td>
-                        <td className="col-qty" style={{ color: 'var(--accent)' }}>{b1.toFixed(1)}</td>
-                        <td className="col-qty" style={{ color: 'var(--success)' }}>{b2.toFixed(1)}</td>
-                        <td className="col-qty" style={{ color: 'var(--success)' }}>{b3.toFixed(1)}</td>
-                        <td className="col-qty" style={{ color: 'var(--secondary)' }}>{b4.toFixed(1)}</td>
-                        <td className="col-qty" style={{ background: 'rgba(14, 165, 233, 0.05)', fontWeight: 800 }}>
-                          <span style={{
-                            color: (isKg ? total * factor : total) < 20 ? 'var(--danger)' : 'var(--accent)'
-                          }}>
-                            {total.toFixed(1)} <small>{viewUnit.toLowerCase()}</small>
-                          </span>
-                        </td>
-                      </tr>
-                    );
-                  })
-                ) : (
-                  <tr>
-                    <td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>Sin datos de inventario</td>
-                  </tr>
-                )}
+                {inventoryRows.length > 0 ? inventoryRows.map(i => {
+                  const isKg = viewUnit === 'Kg';
+                  const factor = 2.20462;
+                  // bodega_1 = KG, bodega_2/3/4 = LBS
+                  const b1 = isKg ? toNum(i.bodega_1) : toNum(i.bodega_1) * factor;
+                  const b2 = isKg ? toNum(i.bodega_2) / factor : toNum(i.bodega_2);
+                  const b3 = isKg ? toNum(i.bodega_3) / factor : toNum(i.bodega_3);
+                  const b4 = isKg ? toNum(i.bodega_4) / factor : toNum(i.bodega_4);
+                  const total = b1 + b2 + b3 + b4;
+                  return (
+                    <tr key={i.name}>
+                      <td className="col-carne" style={{ fontWeight: 700, color: 'var(--text-main)' }}>{i.name}</td>
+                      <td className="col-qty" style={{ color: 'var(--accent)' }}>{b1.toFixed(1)}</td>
+                      <td className="col-qty" style={{ color: 'var(--success)' }}>{b2.toFixed(1)}</td>
+                      <td className="col-qty" style={{ color: 'var(--success)' }}>{b3.toFixed(1)}</td>
+                      <td className="col-qty" style={{ color: 'var(--secondary)' }}>{b4.toFixed(1)}</td>
+                      <td className="col-qty" style={{ background: 'rgba(14,165,233,0.05)', fontWeight: 800 }}>
+                        <span style={{ color: total < 20 ? 'var(--danger)' : 'var(--accent)' }}>{total.toFixed(1)} <small>{viewUnit.toLowerCase()}</small></span>
+                      </td>
+                    </tr>
+                  );
+                }) : <tr><td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '20px' }}>Sin datos de inventario</td></tr>}
               </tbody>
             </table>
           </div>
@@ -499,8 +554,7 @@ const StatusReport = ({ products, refreshTrigger, onUpdate }) => {
               }
             }
           }}
-          className="btn-danger"
-          style={{ width: 'auto' }}
+          className="btn-danger" style={{ width: 'auto' }}
         >
           <Trash2 size={20} /> Vaciar Sistema
         </button>
