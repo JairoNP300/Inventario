@@ -603,14 +603,19 @@ app.post('/api/inventory/adjust', async (req, res) => {
 });
 
 app.get('/api/reports/inventory-status', async (req, res) => {
-  const { rows } = await query(`
-    SELECT p.code, p.name, i.initial_stock, i.sold_stock, i.bodega_1, i.bodega_2, i.bodega_3, i.bodega_4,
-           (i.bodega_1 + i.bodega_2 + i.bodega_3 + i.bodega_4) as final_stock
-    FROM inventory i
-    JOIN products p ON i.product_id = p.id
-    ORDER BY CAST(p.code AS INTEGER) ASC
-  `);
-  res.json(rows);
+  try {
+    const { rows } = await query(`
+      SELECT p.code, p.name, i.initial_stock, i.sold_stock, i.bodega_1, i.bodega_2, i.bodega_3, i.bodega_4,
+             (i.bodega_1 + i.bodega_2 + i.bodega_3 + i.bodega_4) as final_stock
+      FROM inventory i
+      LEFT JOIN products p ON i.product_id = p.id
+      ORDER BY CAST(p.code AS INTEGER) ASC
+    `);
+    res.json(rows);
+  } catch (err) {
+    console.error('Error fetching inventory status:', err.message);
+    res.json([]);
+  }
 });
 
 app.get('/api/reports/agro-sales', async (req, res) => {
@@ -701,12 +706,17 @@ app.post('/api/production/process', async (req, res) => {
 });
 
 app.get('/api/production/logs', async (req, res) => {
-  const { rows } = await query(`
-    SELECT l.*, p.name as product_name FROM production_logs l
-    JOIN products p ON l.product_id = p.id
-    ORDER BY date DESC
-  `);
-  res.json(rows);
+  try {
+    const { rows } = await query(`
+      SELECT l.*, p.name as product_name FROM production_logs l
+      LEFT JOIN products p ON l.product_id = p.id
+      ORDER BY l.date DESC
+    `);
+    res.json(rows);
+  } catch (err) {
+    console.error('Error fetching production logs:', err.message);
+    res.json([]);
+  }
 });
 
 app.delete('/api/production/logs/:id', async (req, res) => {
