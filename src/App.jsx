@@ -1022,6 +1022,7 @@ const LogisticsHub = ({ products, agros, refreshTrigger, onUpdate, forceMode, in
       }
     })
     .catch(err => { console.error('Error en handleAction:', err); alert('Error de conexión: ' + err.message); });
+  };
 
   const handleEdit = (log) => {
     setEditingId(log.id);
