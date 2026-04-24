@@ -1973,7 +1973,7 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
   useEffect(() => {
     fetch('/api/public-url').then(r => r.json()).then(d => setPublicUrl(d?.url ?? null)).catch(() => setPublicUrl(null));
   }, []);
-  const [activeTab, setActiveTab] = useState('income');
+  const [activeTab, setActiveTab] = useState(roleCfg.defaultTab);
   const [products, setProducts] = useState([]);
   const [agros, setAgros] = useState([]);
   const [refresh, setRefresh] = useState(0);
@@ -1983,8 +1983,13 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
   const [inventorySummary, setInventorySummary] = useState([]);
   const [foodCostingLogs, setFoodCostingLogs] = useState([]);
 
+  // Solo navegar a tabs permitidas
+  const safeSetTab = (tab) => {
+    if (roleCfg.tabs.includes(tab)) setActiveTab(tab);
+  };
+
   useEffect(() => {
-    const handleTabChange = (e) => setActiveTab(e.detail);
+    const handleTabChange = (e) => safeSetTab(e.detail);
     window.addEventListener('changeTab', handleTabChange);
     return () => window.removeEventListener('changeTab', handleTabChange);
   }, []);
