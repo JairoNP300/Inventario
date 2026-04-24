@@ -483,12 +483,14 @@ app.post('/api/reports/ransa', async (req, res) => {
   try {
     // Ransa always receives in KG. scale_weight is in KG.
     const scaleKg = parseFloat(scale_weight) || 0;
+    const tagKg = parseFloat(tag_weight) || 0;
     const scaleLbs = scaleKg * 2.20462; // convert to lbs for non-Ransa bodegas
+    const unitsPerBox = (units_per_box !== '' && units_per_box != null) ? parseInt(units_per_box) : null;
 
     const info = await query(`
       INSERT INTO ransa_requests (product_id, tag_weight, scale_weight, units_per_box, unit_type, distribution_details)
       VALUES (?, ?, ?, ?, ?, ?) RETURNING id
-    `, [product_id, tag_weight, scaleKg, units_per_box, 'Kg', distribution_details]);
+    `, [product_id, tagKg, scaleKg, unitsPerBox, 'Kg', distribution_details]);
 
     // bodega_1 (Ransa) stores KG. bodega_2/3/4 store LBS.
     const colMap = {
