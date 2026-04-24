@@ -1954,6 +1954,21 @@ const ProcessStepper = ({ currentTab }) => {
 };
 
 const App = () => {
+  // ── Sesión ──────────────────────────────────────────────────────────────────
+  const [currentRole, setCurrentRole] = useState(() => sessionStorage.getItem('cp_role') || null);
+
+  const handleLogin = (role) => setCurrentRole(role);
+  const handleLogout = () => { sessionStorage.removeItem('cp_role'); setCurrentRole(null); };
+
+  if (!currentRole) return <LoginScreen onLogin={handleLogin} />;
+
+  const roleCfg = ROLES[currentRole];
+
+  return <AppShell role={currentRole} roleCfg={roleCfg} onLogout={handleLogout} />;
+};
+
+// ─── APP SHELL (contenido principal) ─────────────────────────────────────────
+const AppShell = ({ role, roleCfg, onLogout }) => {
   const [publicUrl, setPublicUrl] = useState(null);
   useEffect(() => {
     fetch('/api/public-url').then(r => r.json()).then(d => setPublicUrl(d?.url ?? null)).catch(() => setPublicUrl(null));
