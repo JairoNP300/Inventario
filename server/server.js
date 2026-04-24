@@ -678,10 +678,12 @@ app.post('/api/production/process', async (req, res) => {
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       `, [product_id, initial_kg, cut_weight, waste, storage_cost || 0, transport_cost || 0, labor_cost || 0, other_costs || 0]);
 
-    // Corrected: Subtract KG and Add Lbs in a single operation
-    await query('UPDATE inventory SET bodega_2 = bodega_2 - ? + ? WHERE product_id = ?', [initial_kg, cut_weight, product_id]);
+    // bodega_1 (Ransa) stores KG → deduct initial_kg in KG
+    // bodega_2 (Soyapango) stores LBS → add cut_weight in LBS
+    await query('UPDATE inventory SET bodega_1 = bodega_1 - ? WHERE product_id = ?', [initial_kg, product_id]);
+    await query('UPDATE inventory SET bodega_2 = bodega_2 + ? WHERE product_id = ?', [cut_weight, product_id]);
 
-    await query('INSERT INTO movements (product_id, origin_warehouse, dest_warehouse, weight, type) VALUES (?, ?, ?, ?, ?)', [product_id, 'Bodega 1', 'Bodega 2 (Processed)', cut_weight, 'TRANSFER']);
+    await query('INSERT INTO movements (product_id, origin_warehouse, dest_warehouse, weight, type) VALUES (?, ?, ?, ?, ?)', [product_id, 'Ransa (KG)', 'Soyapango (Lbs)', cut_weight, 'TRANSFER']);
 
     res.json({ success: true });
   } catch (err) {
