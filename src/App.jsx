@@ -41,25 +41,89 @@ const API_BASE = '/api';
 
 // ─── ROLES & CREDENCIALES ────────────────────────────────────────────────────
 const ROLES = {
+  // ── Administración ──────────────────────────────────────────────────────────
   admin: {
     label: 'Administrador',
+    group: 'Administración',
     password: 'admin2026',
     tabs: ['income','production','distribution','invoice','status','reports','comida','config'],
     defaultTab: 'income'
   },
-  soyapango: {
-    label: 'Puesto Soyapango',
+  // ── Soyapango ───────────────────────────────────────────────────────────────
+  soyapango_puesto: {
+    label: 'Soyapango — Puesto',
+    group: 'Soyapango',
     password: 'soyapango',
     tabs: ['distribution'],
     defaultTab: 'distribution'
   },
-  usulutan: {
-    label: 'Puesto Usulután',
+  soyapango_bodega: {
+    label: 'Soyapango — Bodega',
+    group: 'Soyapango',
+    password: 'soyapangobodega',
+    tabs: ['distribution','status'],
+    defaultTab: 'distribution'
+  },
+  // ── Usulután ────────────────────────────────────────────────────────────────
+  usulutan_puesto: {
+    label: 'Usulután — Puesto',
+    group: 'Usulután',
     password: 'usulutan',
     tabs: ['distribution'],
     defaultTab: 'distribution'
+  },
+  usulutan_bodega: {
+    label: 'Usulután — Bodega',
+    group: 'Usulután',
+    password: 'usulutanbodega',
+    tabs: ['distribution','status'],
+    defaultTab: 'distribution'
+  },
+  // ── Agromercados ────────────────────────────────────────────────────────────
+  agro_quezaltepeque: {
+    label: 'Agro Quezaltepeque',
+    group: 'Agromercados',
+    password: 'quezaltepeque',
+    tabs: ['distribution'],
+    defaultTab: 'distribution'
+  },
+  agro_aguilares: {
+    label: 'Agro Aguilares',
+    group: 'Agromercados',
+    password: 'aguilares',
+    tabs: ['distribution'],
+    defaultTab: 'distribution'
+  },
+  agro_opico: {
+    label: 'Agro Opico',
+    group: 'Agromercados',
+    password: 'opico',
+    tabs: ['distribution'],
+    defaultTab: 'distribution'
+  },
+  // ── Lomas de San Francisco ──────────────────────────────────────────────────
+  lomas_ventas: {
+    label: 'Lomas — Ventas',
+    group: 'Lomas de San Francisco',
+    password: 'lomasventas',
+    tabs: ['status','comida'],
+    defaultTab: 'status'
+  },
+  lomas_bodega: {
+    label: 'Lomas — Bodega',
+    group: 'Lomas de San Francisco',
+    password: 'lomasbodega',
+    tabs: ['status'],
+    defaultTab: 'status'
   }
 };
+
+// Agrupar roles para mostrarlos en el login
+const ROLE_GROUPS = Object.entries(ROLES).reduce((acc, [key, cfg]) => {
+  if (!acc[cfg.group]) acc[cfg.group] = [];
+  acc[cfg.group].push({ key, ...cfg });
+  return acc;
+}, {});
 
 // ─── PANTALLA DE LOGIN ────────────────────────────────────────────────────────
 const LoginScreen = ({ onLogin }) => {
