@@ -1180,7 +1180,8 @@ const LogisticsHub = ({ products, agros, refreshTrigger, onUpdate, forceMode, in
                 <tr>
                   <th className="col-date">Fecha</th>
                   <th className="col-carne">Producto</th>
-                  <th className="col-qty">Lbs</th>
+                  <th className="col-qty">Peso Viñeta (Kg)</th>
+                  <th className="col-qty">Peso Báscula (Kg)</th>
                   <th className="col-carne">Destino</th>
                   <th className="col-actions">Acciones</th>
                 </tr>
@@ -1196,24 +1197,38 @@ const LogisticsHub = ({ products, agros, refreshTrigger, onUpdate, forceMode, in
               )}
             </thead>
             <tbody>
-              {(activeSubTab === 'unified' ? incomeLogs : dispatchLogs).slice().reverse().slice(0, 10).map(log => (
-                <tr key={log.id} className="fade-in">
-                  <td className="col-date">{new Date(log.date).toLocaleDateString()}</td>
-                  <td className="col-carne" style={{ fontWeight: 700 }}>{log.product_name}</td>
-                  <td className="col-qty">{activeSubTab === 'unified' ? log.scale_weight : log.weight} <small>{log.unit_type || 'Lbs'}</small></td>
-                  <td className="col-carne" style={{ color: 'var(--accent)', fontWeight: 700 }}>{log.destination || log.agro_name || 'Central'}</td>
-                  {activeSubTab !== 'unified' && <td className="col-qty">${(log.value || 0).toFixed(2)}</td>}
-                  <td className="col-actions">
-                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                      <motion.button whileHover={{ scale: 1.2 }} onClick={() => handleEdit(log)} style={{ background: 'none', border: 'none', color: '#f59e0b', cursor: 'pointer' }}><Edit2 size={14} /></motion.button>
-                      <motion.button whileHover={{ scale: 1.2 }} onClick={() => {
-                        const type = activeSubTab === 'unified' ? 'ransa' : 'dispatches';
-                        if (confirm('¿Eliminar?')) { fetch(`${API_BASE}/${type === 'ransa' ? 'reports/ransa' : 'dispatches'}/${log.id}`, { method: 'DELETE' }).then(onUpdate); }
-                      }} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer' }}><Trash2 size={14} /></motion.button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+              {(activeSubTab === 'unified' ? incomeLogs : dispatchLogs).length === 0 ? (
+                <tr><td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '20px' }}>Sin movimientos registrados</td></tr>
+              ) : (
+                (activeSubTab === 'unified' ? incomeLogs : dispatchLogs).slice().reverse().map(log => (
+                  <tr key={log.id} className="fade-in">
+                    <td className="col-date">{new Date(log.date).toLocaleDateString()}</td>
+                    <td className="col-carne" style={{ fontWeight: 700 }}>{log.product_name || '—'}</td>
+                    {activeSubTab === 'unified' ? (
+                      <>
+                        <td className="col-qty">{parseFloat(log.tag_weight || 0).toFixed(2)} <small>Kg</small></td>
+                        <td className="col-qty">{parseFloat(log.scale_weight || 0).toFixed(2)} <small>Kg</small></td>
+                        <td className="col-carne" style={{ color: 'var(--accent)', fontWeight: 700 }}>{log.distribution_details || log.destination || 'Central'}</td>
+                      </>
+                    ) : (
+                      <>
+                        <td className="col-qty">{parseFloat(log.weight || 0).toFixed(2)} <small>{log.unit_type || 'Lbs'}</small></td>
+                        <td className="col-carne" style={{ color: 'var(--accent)', fontWeight: 700 }}>{log.agro_name || log.destination || '—'}</td>
+                        <td className="col-qty">${parseFloat(log.value || 0).toFixed(2)}</td>
+                      </>
+                    )}
+                    <td className="col-actions">
+                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                        <motion.button whileHover={{ scale: 1.2 }} onClick={() => handleEdit(log)} style={{ background: 'none', border: 'none', color: '#f59e0b', cursor: 'pointer' }}><Edit2 size={14} /></motion.button>
+                        <motion.button whileHover={{ scale: 1.2 }} onClick={() => {
+                          const type = activeSubTab === 'unified' ? 'ransa' : 'dispatches';
+                          if (confirm('¿Eliminar?')) { fetch(`${API_BASE}/${type === 'ransa' ? 'reports/ransa' : 'dispatches'}/${log.id}`, { method: 'DELETE' }).then(onUpdate); }
+                        }} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer' }}><Trash2 size={14} /></motion.button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
