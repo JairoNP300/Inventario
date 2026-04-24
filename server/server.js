@@ -207,11 +207,24 @@ const initDb = async () => {
     CREATE TABLE IF NOT EXISTS movements (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       product_id INTEGER,
-      origin_warehouse TEXT, -- Source, Bodega 1, 2, 3, 4
-      dest_warehouse TEXT,   -- Bodega 1, 2, 3, 4, Sale, Agro
+      origin_warehouse TEXT,
+      dest_warehouse TEXT,
       weight DECIMAL(10,2),
-      type TEXT, -- INCOME, TRANSFER, DISPATCH
+      type TEXT,
       date DATE DEFAULT (date('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS activity_log (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      role TEXT,
+      action TEXT,
+      entity TEXT,
+      details TEXT,
+      product_name TEXT,
+      quantity DECIMAL(10,2),
+      unit TEXT,
+      location TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
 
     CREATE TABLE IF NOT EXISTS production_logs (
