@@ -147,12 +147,16 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
           const body = { ...formData, product_name: p?.name || 'Unknown', date: new Date().toISOString() };
           const method = editingId ? 'PUT' : 'POST';
           const url = editingId ? `${API_BASE}/production/logs/${editingId}` : `${API_BASE}/production/logs`;
-          fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(() => {
-            setFormData({ product_id: '', initial_weight: '', cut_weight: '', waste: '', storage_cost: '', transport_cost: '', labor_cost: '', other_costs: '' });
-            setEditingId(null);
-            onUpdate();
-            if (!editingId) window.dispatchEvent(new CustomEvent('changeTab', { detail: 'distribution' }));
-          });
+          fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+            .then(r => r.json())
+            .then(data => {
+              if (data.error) { alert('Error: ' + data.error); return; }
+              setFormData({ product_id: '', initial_weight: '', cut_weight: '', waste: '', storage_cost: '', transport_cost: '', labor_cost: '', other_costs: '' });
+              setEditingId(null);
+              onUpdate();
+              if (!editingId) window.dispatchEvent(new CustomEvent('changeTab', { detail: 'distribution' }));
+            })
+            .catch(err => { console.error('Error producción:', err); alert('Error de conexión'); });
         }} className="form-card">
           <h3>Panel de Conversión & Proceso</h3>
 
