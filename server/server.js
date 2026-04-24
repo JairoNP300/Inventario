@@ -403,13 +403,18 @@ initDb().catch(console.error);
 // --- API ENDPOINTS ---
 
 app.get('/api/reports/ransa', async (req, res) => {
-  const { rows } = await query(`
-    SELECT r.*, p.name as product_name 
-    FROM ransa_requests r 
-    JOIN products p ON r.product_id = p.id
-    ORDER BY date DESC
-  `);
-  res.json(rows);
+  try {
+    const { rows } = await query(`
+      SELECT r.*, p.name as product_name 
+      FROM ransa_requests r 
+      LEFT JOIN products p ON r.product_id = p.id
+      ORDER BY r.date DESC
+    `);
+    res.json(rows);
+  } catch (err) {
+    console.error('Error fetching ransa logs:', err.message);
+    res.json([]);
+  }
 });
 
 app.delete('/api/reports/ransa/:id', async (req, res) => {
