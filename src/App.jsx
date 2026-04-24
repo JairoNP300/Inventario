@@ -106,8 +106,8 @@ const ROLES = {
     label: 'Lomas — Ventas',
     group: 'Lomas de San Francisco',
     password: 'lomasventas',
-    tabs: ['status','comida'],
-    defaultTab: 'status'
+    tabs: ['distribution','comida'],
+    defaultTab: 'distribution'
   },
   lomas_bodega: {
     label: 'Lomas — Bodega',
