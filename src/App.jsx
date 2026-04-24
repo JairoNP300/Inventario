@@ -391,7 +391,7 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
           const body = { ...formData, product_name: p?.name || 'Unknown', date: new Date().toISOString() };
           const method = editingId ? 'PUT' : 'POST';
           const url = editingId ? `${API_BASE}/production/logs/${editingId}` : `${API_BASE}/production/logs`;
-          fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+          apiFetch(url, { method, body: JSON.stringify(body) })
             .then(r => r.json())
             .then(data => {
               if (data.error) { alert('Error: ' + data.error); return; }
@@ -617,9 +617,8 @@ const StatusReport = ({ products, refreshTrigger, onUpdate }) => {
     e.preventDefault();
     const val = parseFloat(adjData.current_stock);
     if (isNaN(val)) { alert('Ingresa una cantidad válida'); return; }
-    fetch(`${API_BASE}/inventory/adjust`, {
+    apiFetch(`${API_BASE}/inventory/adjust`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ product_id: adjData.product_id, current_stock: val, warehouse: adjData.warehouse })
     })
     .then(r => r.json())
