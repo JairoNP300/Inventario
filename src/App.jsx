@@ -638,8 +638,8 @@ const StatusReport = ({ products, refreshTrigger, onUpdate }) => {
     const valueToStore = isRansa ? kg : kg * 2.20462;
     try {
       for (const pid of selectedProducts) {
-        const r = await fetch(`${API_BASE}/inventory/adjust`, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
+        const r = await apiFetch(`${API_BASE}/inventory/adjust`, {
+          method: 'POST',
           body: JSON.stringify({ product_id: pid, current_stock: valueToStore, warehouse: quickWarehouse })
         });
         const d = await r.json();
