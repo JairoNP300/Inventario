@@ -1989,6 +1989,173 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
   );
 };
 
+// --- AdminMonitor Component ---
+const ACTION_COLORS = {
+  'RECEPCIÓN':   { bg: 'rgba(56,189,248,0.12)',  border: 'rgba(56,189,248,0.35)',  text: '#38bdf8'  },
+  'DESPACHO':    { bg: 'rgba(167,139,250,0.12)', border: 'rgba(167,139,250,0.35)', text: '#a78bfa'  },
+  'PRODUCCIÓN':  { bg: 'rgba(251,191,36,0.12)',  border: 'rgba(251,191,36,0.35)',  text: '#fbbf24'  },
+  'AJUSTE STOCK':{ bg: 'rgba(16,185,129,0.12)',  border: 'rgba(16,185,129,0.35)',  text: '#10b981'  },
+  'LOTE COMIDA': { bg: 'rgba(244,114,182,0.12)', border: 'rgba(244,114,182,0.35)', text: '#f472b6'  },
+};
+
+const ROLE_LABELS = {
+  admin: 'Administrador',
+  soyapango_puesto: 'Soyapango — Puesto',
+  soyapango_bodega: 'Soyapango — Bodega',
+  usulutan_puesto: 'Usulután — Puesto',
+  usulutan_bodega: 'Usulután — Bodega',
+  agro_quezaltepeque: 'Agro Quezaltepeque',
+  agro_aguilares: 'Agro Aguilares',
+  agro_opico: 'Agro Opico',
+  lomas_ventas: 'Lomas — Ventas',
+  lomas_bodega: 'Lomas — Bodega',
+};
+
+const AdminMonitor = () => {
+  const [logs, setLogs] = useState([]);
+  const [filter, setFilter] = useState('all');
+  const [newCount, setNewCount] = useState(0);
+  const [lastSeen, setLastSeen] = useState(0);
+
+  const fetchLogs = async () => {
+    try {
+      const r = await fetch(`${API_BASE}/admin/activity`);
+      const data = await r.json();
+      if (Array.isArray(data)) {
+        setLogs(data);
+        // Contar nuevos desde la última vez que se vio
+        const newOnes = data.filter(l => l.id > lastSeen).length;
+        if (newOnes > 0 && lastSeen > 0) setNewCount(prev => prev + newOnes);
+      }
+    } catch(e) {}
+  };
+
+  useEffect(() => {
+    fetchLogs();
+    const iv = setInterval(fetchLogs, 8000);
+    return () => clearInterval(iv);
+  }, []);
+
+  const handleClear = async () => {
+    if (!confirm('¿Limpiar todo el historial de actividad?')) return;
+    await fetch(`${API_BASE}/admin/activity`, { method: 'DELETE' });
+    setLogs([]); setNewCount(0);
+  };
+
+  const markSeen = () => {
+    if (logs.length > 0) setLastSeen(logs[0].id);
+    setNewCount(0);
+  };
+
+  const filtered = filter === 'all' ? logs : logs.filter(l => l.action === filter || l.role === filter);
+  const actions = [...new Set(logs.map(l => l.action))];
+  const roles = [...new Set(logs.map(l => l.role))];
+
+  const formatTime = (ts) => {
+    if (!ts) return '—';
+    const d = new Date(ts);
+    return d.toLocaleString('es-SV', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+  };
+
+  return (
+    <div className="report-content">
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '12px' }}>
+        <div>
+          <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <Activity size={22} color="var(--accent)" />
+            Monitor de Actividad
+            {newCount > 0 && (
+              <span style={{ background: '#ef4444', color: '#fff', borderRadius: '20px', padding: '2px 10px', fontSize: '0.72rem', fontWeight: 900 }}>
+                +{newCount} nuevos
+              </span>
+            )}
+          </h3>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', margin: '4px 0 0 0' }}>
+            Todos los movimientos registrados en tiempo real — {logs.length} eventos
+          </p>
+        </div>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button onClick={() => { fetchLogs(); markSeen(); }} className="btn-primary"
+            style={{ width: 'auto', padding: '8px 16px', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <RefreshCcw size={14} /> Actualizar
+          </button>
+          <button onClick={handleClear} className="btn-primary"
+            style={{ width: 'auto', padding: '8px 16px', fontSize: '0.78rem', background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', boxShadow: 'none' }}>
+            <Trash2 size={14} /> Limpiar
+          </button>
+        </div>
+      </div>
+
+      {/* Filtros */}
+      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
+        <button onClick={() => setFilter('all')} style={{ padding: '6px 14px', borderRadius: '20px', border: 'none', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 800, background: filter === 'all' ? 'var(--accent)' : 'rgba(255,255,255,0.06)', color: filter === 'all' ? '#020617' : 'var(--text-muted)' }}>
+          Todos
+        </button>
+        {actions.map(a => {
+          const c = ACTION_COLORS[a] || { bg: 'rgba(255,255,255,0.06)', border: 'transparent', text: 'var(--text-muted)' };
+          return (
+            <button key={a} onClick={() => setFilter(a)} style={{ padding: '6px 14px', borderRadius: '20px', border: `1px solid ${filter === a ? c.border : 'transparent'}`, cursor: 'pointer', fontSize: '0.75rem', fontWeight: 800, background: filter === a ? c.bg : 'rgba(255,255,255,0.04)', color: filter === a ? c.text : 'var(--text-muted)' }}>
+              {a}
+            </button>
+          );
+        })}
+        <div style={{ width: '1px', background: 'var(--border-light)', margin: '0 4px' }} />
+        {roles.map(r => (
+          <button key={r} onClick={() => setFilter(r)} style={{ padding: '6px 14px', borderRadius: '20px', border: `1px solid ${filter === r ? 'rgba(167,139,250,0.4)' : 'transparent'}`, cursor: 'pointer', fontSize: '0.75rem', fontWeight: 800, background: filter === r ? 'rgba(167,139,250,0.1)' : 'rgba(255,255,255,0.04)', color: filter === r ? '#a78bfa' : 'var(--text-muted)' }}>
+            {ROLE_LABELS[r] || r}
+          </button>
+        ))}
+      </div>
+
+      {/* Lista de eventos */}
+      {filtered.length === 0 ? (
+        <div className="form-card" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
+          <Activity size={40} style={{ opacity: 0.2, marginBottom: '1rem' }} />
+          <p>Sin actividad registrada aún.</p>
+          <p style={{ fontSize: '0.8rem', marginTop: '8px' }}>Los movimientos aparecerán aquí en tiempo real.</p>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {filtered.map(log => {
+            const c = ACTION_COLORS[log.action] || { bg: 'rgba(255,255,255,0.04)', border: 'rgba(255,255,255,0.08)', text: 'var(--text-muted)' };
+            return (
+              <div key={log.id} style={{ background: 'var(--glass-surface)', border: `1px solid var(--border-light)`, borderLeft: `3px solid ${c.text}`, borderRadius: '14px', padding: '14px 18px', display: 'grid', gridTemplateColumns: 'auto 1fr auto', gap: '14px', alignItems: 'center' }}>
+                {/* Badge acción */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', minWidth: '80px' }}>
+                  <span style={{ padding: '4px 10px', borderRadius: '8px', background: c.bg, border: `1px solid ${c.border}`, color: c.text, fontSize: '0.65rem', fontWeight: 900, letterSpacing: '1px', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
+                    {log.action}
+                  </span>
+                  <span style={{ fontSize: '0.62rem', color: 'var(--text-muted)', textAlign: 'center' }}>
+                    {ROLE_LABELS[log.role] || log.role}
+                  </span>
+                </div>
+
+                {/* Contenido */}
+                <div>
+                  <div style={{ fontWeight: 800, color: 'var(--text-main)', fontSize: '0.9rem', marginBottom: '3px' }}>
+                    {log.product_name || '—'}
+                    {log.quantity && <span style={{ color: c.text, marginLeft: '8px', fontWeight: 900 }}>{parseFloat(log.quantity).toFixed(1)} {log.unit}</span>}
+                  </div>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                    {log.location && <span style={{ marginRight: '10px' }}>📍 {log.location}</span>}
+                    {log.details && <span>{log.details}</span>}
+                  </div>
+                </div>
+
+                {/* Timestamp */}
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                  {formatTime(log.created_at)}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // --- Process Stepper Component ---
 const ProcessStepper = ({ currentTab }) => {
   const steps = [
