@@ -27,17 +27,168 @@ import {
   Printer,
   Save,
   Utensils,
-  Coins
+  Coins,
+  LogOut,
+  Lock,
+  MapPin
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import InvoiceLayout from './components/InvoiceLayout.jsx';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 
-const API_BASE = '/api'; // Unified single-port API access for enterprise production
+const API_BASE = '/api';
 
-// --- Componente Universal de Inteligencia de Producto ---
-const ProductIntelligenceCard = ({ product }) => {
+// ─── ROLES & CREDENCIALES ────────────────────────────────────────────────────
+const ROLES = {
+  admin: {
+    label: 'Administrador',
+    password: 'admin2026',
+    tabs: ['income','production','distribution','invoice','status','reports','comida','config'],
+    defaultTab: 'income'
+  },
+  soyapango: {
+    label: 'Puesto Soyapango',
+    password: 'soyapango',
+    tabs: ['distribution'],
+    defaultTab: 'distribution'
+  },
+  usulutan: {
+    label: 'Puesto Usulután',
+    password: 'usulutan',
+    tabs: ['distribution'],
+    defaultTab: 'distribution'
+  }
+};
+
+// ─── PANTALLA DE LOGIN ────────────────────────────────────────────────────────
+const LoginScreen = ({ onLogin }) => {
+  const [role, setRole] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [showPass, setShowPass] = useState(false);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!role) { setError('Selecciona un lugar de acceso'); return; }
+    const cfg = ROLES[role];
+    if (!cfg) { setError('Rol inválido'); return; }
+    if (password !== cfg.password) { setError('Contraseña incorrecta'); return; }
+    sessionStorage.setItem('cp_role', role);
+    onLogin(role);
+  };
+
+  return (
+    <div style={{
+      minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: 'radial-gradient(circle at 20% 50%, rgba(56,189,248,0.08), transparent 50%), radial-gradient(circle at 80% 30%, rgba(167,139,250,0.1), transparent 50%), #0f172a'
+    }}>
+      <motion.div
+        initial={{ opacity: 0, y: 30, scale: 0.96 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+        style={{
+          width: '100%', maxWidth: '420px', margin: '1rem',
+          background: 'rgba(30,41,59,0.8)', backdropFilter: 'blur(20px)',
+          borderRadius: '28px', border: '1px solid rgba(255,255,255,0.08)',
+          padding: '3rem 2.5rem', boxShadow: '0 40px 80px rgba(0,0,0,0.5)'
+        }}
+      >
+        {/* Logo / Header */}
+        <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+          <div style={{
+            width: '64px', height: '64px', borderRadius: '18px', margin: '0 auto 1.25rem',
+            background: 'linear-gradient(135deg, #38bdf8, #0284c7)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 10px 30px rgba(56,189,248,0.35)'
+          }}>
+            <ShieldCheck size={32} color="#fff" />
+          </div>
+          <div style={{ fontSize: '0.7rem', fontWeight: 800, letterSpacing: '4px', color: '#38bdf8', textTransform: 'uppercase', marginBottom: '6px' }}>
+            Carnes del Paraguay
+          </div>
+          <h2 style={{ fontSize: '1.6rem', fontWeight: 900, color: '#f8fafc', margin: 0, letterSpacing: '-0.5px' }}>
+            Acceso al Sistema
+          </h2>
+          <p style={{ color: '#64748b', fontSize: '0.85rem', marginTop: '6px' }}>Logística & Control de Inventario</p>
+        </div>
+
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          {/* Selector de lugar */}
+          <div>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.72rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>
+              <MapPin size={12} /> Lugar de Acceso
+            </label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {Object.entries(ROLES).map(([key, cfg]) => (
+                <div key={key} onClick={() => { setRole(key); setPassword(''); setError(''); }}
+                  style={{
+                    padding: '12px 16px', borderRadius: '12px', cursor: 'pointer',
+                    border: `1.5px solid ${role === key ? '#38bdf8' : 'rgba(255,255,255,0.07)'}`,
+                    background: role === key ? 'rgba(56,189,248,0.1)' : 'rgba(255,255,255,0.02)',
+                    display: 'flex', alignItems: 'center', gap: '10px', transition: 'all 0.2s'
+                  }}>
+                  <div style={{
+                    width: '18px', height: '18px', borderRadius: '50%', flexShrink: 0,
+                    border: `2px solid ${role === key ? '#38bdf8' : 'rgba(255,255,255,0.2)'}`,
+                    background: role === key ? '#38bdf8' : 'transparent',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                  }}>
+                    {role === key && <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#020617' }} />}
+                  </div>
+                  <span style={{ fontSize: '0.9rem', fontWeight: 700, color: role === key ? '#f8fafc' : '#94a3b8' }}>{cfg.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Contraseña */}
+          <div>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.72rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>
+              <Lock size={12} /> Contraseña
+            </label>
+            <div style={{ position: 'relative' }}>
+              <input
+                type={showPass ? 'text' : 'password'}
+                value={password}
+                onChange={e => { setPassword(e.target.value); setError(''); }}
+                placeholder="Ingresa tu contraseña"
+                style={{
+                  width: '100%', padding: '0.9rem 3rem 0.9rem 1rem', borderRadius: '12px',
+                  background: 'rgba(0,0,0,0.25)', border: '1.5px solid rgba(255,255,255,0.08)',
+                  color: '#fff', fontSize: '1rem', outline: 'none', boxSizing: 'border-box'
+                }}
+                onFocus={e => e.target.style.borderColor = '#38bdf8'}
+                onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
+              />
+              <button type="button" onClick={() => setShowPass(p => !p)}
+                style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700 }}>
+                {showPass ? 'OCULTAR' : 'VER'}
+              </button>
+            </div>
+          </div>
+
+          {/* Error */}
+          {error && (
+            <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }}
+              style={{ padding: '10px 14px', borderRadius: '10px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#fca5a5', fontSize: '0.85rem', fontWeight: 600 }}>
+              ⚠ {error}
+            </motion.div>
+          )}
+
+          <button type="submit" style={{
+            padding: '1rem', borderRadius: '14px', border: 'none', cursor: 'pointer', fontWeight: 800,
+            fontSize: '0.9rem', letterSpacing: '1.5px', textTransform: 'uppercase', marginTop: '0.5rem',
+            background: 'linear-gradient(135deg, #38bdf8, #0284c7)',
+            color: '#fff', boxShadow: '0 8px 25px rgba(56,189,248,0.35)'
+          }}>
+            Ingresar al Sistema
+          </button>
+        </form>
+      </motion.div>
+    </div>
+  );
+};
   if (!product) return null;
   const n = (v) => Number(v) || 0;
   return (
