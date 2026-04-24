@@ -39,6 +39,15 @@ import html2canvas from 'html2canvas';
 
 const API_BASE = '/api';
 
+// Helper fetch que incluye el rol activo en el header
+const apiFetch = (url, options = {}) => {
+  const role = sessionStorage.getItem('cp_role') || 'desconocido';
+  return fetch(url, {
+    ...options,
+    headers: { 'Content-Type': 'application/json', 'x-role': role, ...(options.headers || {}) }
+  });
+};
+
 // ─── ROLES & CREDENCIALES ────────────────────────────────────────────────────
 const ROLES = {
   // ── Administración ──────────────────────────────────────────────────────────
