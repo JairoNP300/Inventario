@@ -1298,9 +1298,8 @@ const LogisticsHub = ({ products, agros, refreshTrigger, onUpdate, forceMode, in
     const endpoint = isIncome ? '/reports/ransa' : '/dispatches';
     const url = editingId ? `${API_BASE}${endpoint}/${editingId}` : `${API_BASE}${endpoint}`;
 
-    fetch(url, {
+    apiFetch(url, {
       method: editingId ? 'PUT' : 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(isIncome ?
         { product_id: formData.product_id, tag_weight: formData.tag_weight, scale_weight: formData.scale_weight, units_per_box: formData.units_per_box, unit_type: formData.unit_type, distribution_details: formData.destination } :
         { product_id: formData.product_id, agro_id: formData.agro_id, weight: formData.weight, unit_type: formData.unit_type, value: formData.value, origin_warehouse: formData.origin })
