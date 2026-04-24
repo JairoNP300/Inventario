@@ -657,6 +657,12 @@ app.post('/api/inventory/adjust', async (req, res) => {
       await query(`UPDATE inventory SET ${targetCol} = ? WHERE product_id = ?`, [current_stock, product_id]);
     }
 
+    // Log actividad
+    const { rows: pRowsAdj } = await query('SELECT name FROM products WHERE id = ?', [product_id]);
+    const pNameAdj = pRowsAdj[0]?.name || `Producto #${product_id}`;
+    const unitAdj = warehouse === 'Ransa' ? 'KG' : 'Lbs';
+    await logActivity({ role: req.headers['x-role'] || 'desconocido', action: 'AJUSTE STOCK', entity: 'inventory', product_name: pNameAdj, quantity: parseFloat(current_stock) || 0, unit: unitAdj, location: warehouse, details: `Stock ajustado a ${current_stock} ${unitAdj} en ${warehouse}` });
+
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -946,6 +952,12 @@ app.post('/api/food-costing', async (req, res) => {
       INSERT INTO food_costing (product_id, gross_weight, gross_cost, cooked_weight, json_data, date)
       VALUES (?, ?, ?, ?, ?, ?) RETURNING id
     `, [product_id, gross_weight, gross_cost, cooked_weight, json_data, new Date().toISOString()]);
+
+    // Log actividad
+    let eventName = '';
+    try { eventName = JSON.parse(json_data)?.event_name || ''; } catch(e) {}
+    await logActivity({ role: req.headers['x-role'] || 'desconocido', action: 'LOTE COMIDA', entity: 'food_costing', product_name: eventName || 'Lote', quantity: parseFloat(gross_weight) || 0, unit: 'Lbs', location: 'Lomas', details: `Costo: $${gross_cost} | Balance: $${cooked_weight}` });
+
     res.json({ id: info.lastInsertRowid });
   } catch (err) {
     res.status(500).json({ error: err.message });
