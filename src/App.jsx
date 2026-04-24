@@ -1801,7 +1801,7 @@ const App = () => {
         .catch(() => setFoodCostingLogs([]));
     };
     fetchData();
-    const inv = setInterval(fetchData, 30000);
+    const inv = setInterval(fetchData, 8000);
     return () => clearInterval(inv);
   }, [refresh]);
 
