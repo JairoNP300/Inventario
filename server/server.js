@@ -549,6 +549,12 @@ app.post('/api/reports/ransa', async (req, res) => {
     await query(`UPDATE inventory SET ${target.col} = ${target.col} + ?, initial_stock = initial_stock + ? WHERE product_id = ?`, [target.value, target.value, product_id]);
     await query('INSERT INTO movements (product_id, origin_warehouse, dest_warehouse, weight, type) VALUES (?, ?, ?, ?, ?)', [product_id, 'Ransa (Origen)', distribution_details, scaleKg, 'INCOME']);
 
+    // Obtener nombre del producto para el log
+    const { rows: pRows } = await query('SELECT name FROM products WHERE id = ?', [product_id]);
+    const pName = pRows[0]?.name || `Producto #${product_id}`;
+    const role = req.headers['x-role'] || 'desconocido';
+    await logActivity({ role, action: 'RECEPCIÓN', entity: 'ransa_requests', product_name: pName, quantity: scaleKg, unit: 'KG', location: distribution_details, details: `Viñeta: ${tagKg} kg → Báscula: ${scaleKg} kg → ${distribution_details}` });
+
     res.json({ id: info.lastInsertRowid });
   } catch (err) {
     res.status(500).json({ error: err.message });
