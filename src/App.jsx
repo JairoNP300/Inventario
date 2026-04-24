@@ -1706,7 +1706,7 @@ const ProcessStepper = ({ currentTab }) => {
   if (currentIdx === -1) return null;
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '3rem', gap: '15px' }}>
+    <div className="process-stepper" style={{ display: 'flex', justifyContent: 'center', marginBottom: '3rem', gap: '15px' }}>
       {steps.map((step, idx) => {
         const isCompleted = idx < currentIdx;
         const isActive = idx === currentIdx;
