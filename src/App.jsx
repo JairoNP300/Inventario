@@ -172,7 +172,7 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
           <div className="form-row two-col">
             <div className="form-group">
               <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>Entrada Técnica (Lbs)</span>
+                <span>Entrada desde Ransa (Kg)</span>
               </label>
               <input type="number" step="0.01" value={formData.initial_weight} onChange={e => {
                 const w = e.target.value;
@@ -185,8 +185,7 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
                 <span style={{ color: 'var(--danger)', fontSize: '0.9rem', fontWeight: 900, textShadow: '0 0 10px rgba(239, 68, 68, 0.3)' }}>
                   MERMA: {formData.waste || '0.00'} LBS
                 </span>
-              </label>
-              <input type="number" step="0.01" value={formData.cut_weight} onChange={e => {
+              </label>              <input type="number" step="0.01" value={formData.cut_weight} onChange={e => {
                 const c = e.target.value;
                 setFormData(prev => ({ ...prev, cut_weight: c, waste: (parseFloat(prev.initial_weight || 0) - parseFloat(c || 0)).toFixed(2) }));
               }} placeholder="0.00" required />
