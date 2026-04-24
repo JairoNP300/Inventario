@@ -950,6 +950,15 @@ app.post('/api/food-costing', async (req, res) => {
       INSERT INTO food_costing (product_id, gross_weight, gross_cost, cooked_weight, json_data, date)
       VALUES (?, ?, ?, ?, ?, ?) RETURNING id
     `, [product_id, gross_weight, gross_cost, cooked_weight, json_data, new Date().toISOString()]);
+
+    // Parse json_data for better log details
+    let eventName = 'Lote de comida';
+    try {
+      const parsed = typeof json_data === 'string' ? JSON.parse(json_data) : json_data;
+      if (parsed?.event_name) eventName = parsed.event_name;
+    } catch(e) {}
+    await logActivity({ role: req.headers['x-role'] || 'desconocido', action: 'LOTE COMIDA', entity: 'food_costing', product_name: eventName, quantity: parseFloat(gross_weight) || 0, unit: 'Lbs', location: 'Lomas', details: `Costo: $${gross_cost} | Balance: $${cooked_weight}` });
+
     res.json({ id: info.lastInsertRowid });
   } catch (err) {
     res.status(500).json({ error: err.message });
