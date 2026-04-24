@@ -310,6 +310,7 @@ const initDb = async () => {
 
   const products = [
     ['1618', 'Posta Negra / Nalga de Adentro', 'Cortes', 4.25, 9.37, 85.00],
+    ['1619', 'Cajas Tortuguita', 'Cortes', 4.65, 10.25, 90.00],
     ['1620', 'HUESO DE YUGO / COGOTE CON HUESO', 'Cortes', 2.00, 4.41, 40.00],
     ['1621', 'NEW YORK / BIEF ANGOSTO', 'Prime', 6.75, 14.88, 130.00],
     ['1622', 'TRIMING 80/20 especial', 'Industrial', 3.10, 6.83, 60.00],
