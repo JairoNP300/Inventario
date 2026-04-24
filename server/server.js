@@ -609,6 +609,14 @@ app.post('/api/dispatches', async (req, res) => {
     await query(`UPDATE inventory SET ${bodegaCol} = ${bodegaCol} - ?, sold_stock = sold_stock + ? WHERE product_id = ?`, [weightInUnits, weightInUnits, product_id]);
     await query('INSERT INTO movements (product_id, origin_warehouse, dest_warehouse, weight, type) VALUES (?, ?, ?, ?, ?)', [product_id, origin_warehouse || 'Soyapango', 'Despacho', weight, 'DISPATCH']);
 
+    // Log actividad
+    const { rows: pRows2 } = await query('SELECT name FROM products WHERE id = ?', [product_id]);
+    const pName2 = pRows2[0]?.name || `Producto #${product_id}`;
+    const { rows: aRows } = await query('SELECT name FROM agros WHERE id = ?', [agro_id]);
+    const aName = aRows[0]?.name || `Destino #${agro_id}`;
+    const role2 = req.headers['x-role'] || 'desconocido';
+    await logActivity({ role: role2, action: 'DESPACHO', entity: 'dispatches', product_name: pName2, quantity: parseFloat(weight), unit: unit_type || 'Lbs', location: origin_warehouse || 'Bodega', details: `${weight} ${unit_type} → ${aName} | $${value}` });
+
     res.json({ id: info.lastInsertRowid });
   } catch (err) {
     res.status(500).json({ error: err.message });
