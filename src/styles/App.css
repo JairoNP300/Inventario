@@ -972,3 +972,75 @@ tr:hover td {
     font-size: 0.75rem;
   }
 }
+
+/* ============================================
+   CARD GRID — Layout principal de tarjetas
+   ============================================ */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+}
+
+@media (max-width: 900px) {
+  .card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .card-grid .form-card[style*="gridColumn"] {
+    grid-column: span 1 !important;
+  }
+}
+
+/* Grid de 3 columnas inline → clase reutilizable */
+.grid-3col {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 15px;
+}
+
+.grid-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.grid-food-sections {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-top: 1rem;
+}
+
+.grid-food-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1.5fr;
+  gap: 20px;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  padding-top: 20px;
+  margin-top: 20px;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 768px) {
+  .grid-3col,
+  .grid-2col {
+    grid-template-columns: 1fr;
+  }
+
+  .grid-food-sections {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .grid-food-summary {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .grid-food-summary {
+    grid-template-columns: 1fr;
+  }
+}
