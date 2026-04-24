@@ -2032,17 +2032,33 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
 
   const triggerRefresh = () => setRefresh(prev => prev + 1);
 
+  // Definición de todas las tabs disponibles
+  const allTabs = [
+    { id: 'income',       label: 'Recepción',  icon: <Store size={18} /> },
+    { id: 'production',   label: 'Procesos',   icon: <Cpu size={18} /> },
+    { id: 'distribution', label: 'Despacho',   icon: <Truck size={18} /> },
+    { id: 'invoice',      label: 'Factura',    icon: <FileText size={18} /> },
+    { id: 'status',       label: 'Stock',      icon: <BarChart3 size={18} /> },
+    { id: 'reports',      label: 'Export',     icon: <DownloadCloud size={18} /> },
+    { id: 'comida',       label: 'Comida',     icon: <Utensils size={18} /> },
+    { id: 'config',       label: 'Admin',      icon: <ShieldCheck size={18} /> },
+  ];
+  const visibleTabs = allTabs.filter(t => roleCfg.tabs.includes(t.id));
+
   return (
     <div className="app-container">
-      {publicUrl && (
-        <div style={{ padding: 8, background: '#0b2030', color: '#e5e7eb', textAlign: 'center' }}>
-          URL pública: <a href={publicUrl} target="_blank" rel="noreferrer" style={{ color: '#93c5fd' }}>{publicUrl}</a>
-          <button onClick={() => window.open(publicUrl, '_blank')} style={{ marginLeft: 8, padding: '4px 8px', borderRadius: 6, border: '1px solid #334e68', background: '#1f2a3a', color: '#fff' }}>Abrir</button>
-        </div>
-      )}
       <header>
         <div className="subtitle">Carnes del Paraguay</div>
         <h1>Logística & Control de Inventario</h1>
+        {/* Badge de sesión */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginTop: '12px' }}>
+          <div style={{ padding: '5px 14px', borderRadius: '20px', background: 'rgba(56,189,248,0.12)', border: '1px solid rgba(56,189,248,0.25)', fontSize: '0.72rem', fontWeight: 800, color: '#38bdf8', letterSpacing: '1px', textTransform: 'uppercase' }}>
+            {roleCfg.label}
+          </div>
+          <button onClick={onLogout} style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 12px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: '#94a3b8', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '1px' }}>
+            <LogOut size={12} /> Salir
+          </button>
+        </div>
       </header>
 
       <div className="global-status-banner">
