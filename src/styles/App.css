@@ -50,10 +50,6 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
 }
-  padding: 3rem;
-  overflow-x: hidden;
-  animation: bgBreathing 15s infinite alternate ease-in-out;
-}
 
 @keyframes bgBreathing {
   0% {
