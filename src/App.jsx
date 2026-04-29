@@ -1809,18 +1809,26 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
       }
     } catch (e) { }
 
+    // Clean and convert the value based on field type
+    let cleanValue = newValue;
+    if (field === 'total_cost' || field === 'sale_price' || field === 'leftover_value' || field === 'unit_price_per_sale') {
+      cleanValue = parseFloat(newValue.replace('$', '')) || 0;
+    } else if (field === 'leftover_weight') {
+      cleanValue = parseFloat(newValue) || 0;
+    }
+
     // Update the specific field
-    details[field] = newValue;
+    details[field] = cleanValue;
 
     // Automatic calculations
     if (field === 'leftover_weight' || field === 'unit_price_per_sale') {
-      const weight = parseFloat(field === 'leftover_weight' ? newValue : details.leftover_weight) || 0;
-      const unitPrice = parseFloat(field === 'unit_price_per_sale' ? newValue : details.unit_price_per_sale) || 0;
+      const weight = parseFloat(details.leftover_weight) || 0;
+      const unitPrice = parseFloat(details.unit_price_per_sale) || 0;
       details.leftover_value = (weight * unitPrice).toFixed(2);
     }
 
-    // Recalculate balance if sale_price or costs changed
-    if (field === 'sale_price' || field === 'leftover_value') {
+    // Recalculate balance if sale_price, leftover_value, or total_cost changed
+    if (field === 'sale_price' || field === 'leftover_value' || field === 'total_cost') {
       const totalCost = parseFloat(details.total_cost) || 0;
       const salePrice = parseFloat(details.sale_price) || 0;
       const leftoverValue = parseFloat(details.leftover_value) || 0;
