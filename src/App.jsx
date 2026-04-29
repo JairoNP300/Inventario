@@ -1277,7 +1277,9 @@ const LogisticsHub = ({ products, agros, refreshTrigger, onUpdate, forceMode, in
     product_id: '', origin: 'Ransa', destination: 'Lomas de San Francisco',
     weight: '', tag_weight: '', scale_weight: '', units_per_box: '',
     unit_type: 'Lbs', value: '', agro_id: '',
-    total_to_distribute: '', distributions: {}
+    total_to_distribute: '', distributions: {},
+    // Client data for invoice
+    client_name: '', client_nit: '', client_nrc: '', client_address: ''
   });
 
   // Auto-calculate total value based on unit type and specific prices
@@ -1441,10 +1443,35 @@ const LogisticsHub = ({ products, agros, refreshTrigger, onUpdate, forceMode, in
         )}
 
         {activeSubTab === 'dispatch' && (
-          <div className="form-group">
-            <label>Valor Monetario Total ($)</label>
-            <input type="number" step="0.01" value={formData.value} onChange={e => setFormData({ ...formData, value: e.target.value })} required />
-          </div>
+          <>
+            <div className="form-group">
+              <label>Valor Monetario Total ($)</label>
+              <input type="number" step="0.01" value={formData.value} onChange={e => setFormData({ ...formData, value: e.target.value })} required />
+            </div>
+            
+            <hr style={{ opacity: 0.1, margin: '2rem 0' }} />
+            
+            <h4 style={{ color: 'var(--accent)', marginBottom: '1rem' }}>Datos del Cliente para Factura</h4>
+            
+            <div className="form-group">
+              <label>Razón Social / Nombre Cliente</label>
+              <input type="text" placeholder="Ej: INDUSTRIAS BENDEK S.A DE C.V" value={formData.client_name} onChange={e => setFormData({ ...formData, client_name: e.target.value })} />
+            </div>
+            <div className="form-row two-col">
+              <div className="form-group">
+                <label>NIT / DUI</label>
+                <input type="text" placeholder="0000-000000-000-0" value={formData.client_nit} onChange={e => setFormData({ ...formData, client_nit: e.target.value })} />
+              </div>
+              <div className="form-group">
+                <label>NRC</label>
+                <input type="text" placeholder="367641-0" value={formData.client_nrc} onChange={e => setFormData({ ...formData, client_nrc: e.target.value })} />
+              </div>
+            </div>
+            <div className="form-group">
+              <label>Dirección Completa</label>
+              <input type="text" placeholder="Colonia San Benito..." value={formData.client_address} onChange={e => setFormData({ ...formData, client_address: e.target.value })} />
+            </div>
+          </>
         )}
 
         {activeSubTab === 'mass' && (
