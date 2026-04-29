@@ -1651,6 +1651,8 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
     notes: ''
   });
   const [selectedReport, setSelectedReport] = useState(null);
+  const [editingRecord, setEditingRecord] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(() => sessionStorage.getItem('cp_role') === 'admin');
 
   if (selectedReport) return <FoodReport data={selectedReport} onBack={() => { setSelectedReport(null); onUpdate(); }} />;
 
