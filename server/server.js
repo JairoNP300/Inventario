@@ -52,6 +52,7 @@ if (isProduction) {
   
   try {
     let connectionString = process.env.DATABASE_URL;
+    let ipv4Resolved = false;
     
     // Force IPv4 by resolving hostname and replacing in connection string
     try {
@@ -65,23 +66,29 @@ if (isProduction) {
         console.log('✅ IPv4 resuelto:', ipv4);
         url.hostname = ipv4;
         connectionString = url.toString();
+        ipv4Resolved = true;
       }
     } catch (dnsError) {
-      console.warn('⚠️ No se pudo resolver IPv4, usando URL original:', dnsError.message);
+      console.warn('⚠️ No se pudo resolver IPv4:', dnsError.message);
+      console.log('⚠️ Fallback a SQLite debido a error de DNS...');
+      pool = null;
     }
     
-    pool = new Pool({
-      connectionString: connectionString,
-      ssl: { rejectUnauthorized: false },
-      family: 4, // Force IPv4
-      connectionTimeoutMillis: 10000,
-      idleTimeoutMillis: 30000
-    });
-    
-    // Test the connection
-    const client = await pool.connect();
-    console.log('✅ PostgreSQL conectado exitosamente');
-    client.release();
+    // Only try to connect if IPv4 was resolved
+    if (ipv4Resolved && pool !== null) {
+      pool = new Pool({
+        connectionString: connectionString,
+        ssl: { rejectUnauthorized: false },
+        family: 4, // Force IPv4
+        connectionTimeoutMillis: 10000,
+        idleTimeoutMillis: 30000
+      });
+      
+      // Test the connection
+      const client = await pool.connect();
+      console.log('✅ PostgreSQL conectado exitosamente');
+      client.release();
+    }
   } catch (e) {
     console.error('❌ Error conectando PostgreSQL:', e.message);
     console.log('⚠️ Fallback a SQLite...');
