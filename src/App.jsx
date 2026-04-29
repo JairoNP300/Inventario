@@ -893,8 +893,15 @@ const InvoicingSystem = ({ products, agros, onUpdate }) => {
     const p = products.find(prod => String(prod.id) === String(selectedProduct));
     if (!p || !qty || !agroId) return alert('Complete los datos: Producto, Cantidad y Ubicación');
     let price = unit === 'Lbs' ? p.price_per_lb : p.price_per_kg;
-    setCart([...cart, { id: Date.now(), product_id: p.id, agro_id: parseInt(agroId), name: p.name, qty: parseFloat(qty), unit, price: price || 0, total: parseFloat(qty) * (price || 0) }]);
+    const newItem = { id: Date.now(), product_id: p.id, agro_id: parseInt(agroId), name: p.name, qty: parseFloat(qty), unit, price: price || 0, total: parseFloat(qty) * (price || 0) };
+    setCart([...cart, newItem]);
+    console.log('Added to cart:', newItem);
+    console.log('Cart now:', [...cart, newItem]);
     setSelectedProduct(''); setQty('');
+  };
+
+  const removeFromCart = (id) => {
+    setCart(cart.filter(item => item.id !== id));
   };
 
   const sumatoriaVentas = cart.reduce((acc, i) => acc + i.total, 0);
@@ -1075,6 +1082,56 @@ const InvoicingSystem = ({ products, agros, onUpdate }) => {
               <PlusCircle size={16} /> Agregar al detalle
             </button>
           </div>
+
+          {/* Carrito Preview */}
+          {cart.length > 0 && (
+            <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'rgba(16, 185, 129, 0.05)', borderRadius: '8px', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+              <h4 style={{ margin: '0 0 12px 0', fontSize: '0.9rem', color: '#10b981', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <ShoppingCart size={16} /> Productos en el Carrito ({cart.length})
+              </h4>
+              <table style={{ width: '100%', fontSize: '0.85rem', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                    <th style={{ textAlign: 'left', padding: '8px', color: '#10b981' }}>Producto</th>
+                    <th style={{ textAlign: 'center', padding: '8px', color: '#10b981' }}>Cantidad</th>
+                    <th style={{ textAlign: 'center', padding: '8px', color: '#10b981' }}>Unidad</th>
+                    <th style={{ textAlign: 'right', padding: '8px', color: '#10b981' }}>Precio</th>
+                    <th style={{ textAlign: 'right', padding: '8px', color: '#10b981' }}>Total</th>
+                    <th style={{ textAlign: 'center', padding: '8px', color: '#10b981' }}>Acción</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {cart.map((item) => (
+                    <tr key={item.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                      <td style={{ padding: '8px', color: 'var(--text-main)' }}>{item.name}</td>
+                      <td style={{ padding: '8px', textAlign: 'center', color: 'var(--text-main)' }}>{item.qty.toFixed(2)}</td>
+                      <td style={{ padding: '8px', textAlign: 'center', color: 'var(--text-main)' }}>{item.unit}</td>
+                      <td style={{ padding: '8px', textAlign: 'right', color: 'var(--text-main)' }}>${item.price.toFixed(2)}</td>
+                      <td style={{ padding: '8px', textAlign: 'right', color: '#10b981', fontWeight: 600 }}>${item.total.toFixed(2)}</td>
+                      <td style={{ padding: '8px', textAlign: 'center' }}>
+                        <button
+                          type="button"
+                          onClick={() => removeFromCart(item.id)}
+                          style={{ background: '#ef4444', border: 'none', borderRadius: '4px', padding: '4px 8px', color: 'white', cursor: 'pointer', fontSize: '0.75rem' }}
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr style={{ borderTop: '2px solid rgba(16, 185, 129, 0.3)' }}>
+                    <td colSpan="4" style={{ padding: '8px', textAlign: 'right', fontWeight: 700, color: '#10b981' }}>Total Carrito:</td>
+                    <td style={{ padding: '8px', textAlign: 'right', fontWeight: 800, color: '#10b981', fontSize: '1rem' }}>
+                      ${cart.reduce((sum, item) => sum + item.total, 0).toFixed(2)}
+                    </td>
+                    <td></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          )}
         </div>
       </div>
       <InvoiceLayout
