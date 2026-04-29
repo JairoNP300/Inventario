@@ -1645,6 +1645,8 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
     batch_purpose: '', // Contains the "10 lbs for tacos" text
     sale_price: '',
     leftover_value: '',
+    unit_price_per_sale: '',
+    leftover_weight: '',
     payment_status: 'Crédito',
     notes: ''
   });
