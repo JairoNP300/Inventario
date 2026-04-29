@@ -937,7 +937,7 @@ const InvoicingSystem = ({ products, agros, onUpdate }) => {
             </div>
             <div className="form-group">
               <div style={{ display: 'flex', gap: '10px' }}>
-                <div style={{ flex: 1 }}>
+                <div style={{ flex: 2 }}>
                   <label style={{ fontSize: '0.65rem' }}>Cant</label>
                   <input type="number" value={qty} onChange={e => setQty(e.target.value)} />
                 </div>
@@ -1138,7 +1138,7 @@ const FoodReport = ({ data, products = [], onBack }) => {
               </thead>
               <tbody>
                 {(details.meats || []).map((m, i) => {
-                  const pName = m.product_name || products.find(p => String(p.id) === String(m.product_id))?.name || `Lote #${i + 1} - Carne`;
+                  const pName = m.product_name || products.find(p => String(p.id) === String(m.product_id))?.name || 'Producto no especificado';
                   return (
                     <tr key={i}>
                       <td>{pName}</td>
