@@ -2771,7 +2771,15 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
                           style={{ padding: '6px 12px', fontSize: '0.7rem', width: 'auto', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)' }}
                           title="Ver Reporte"
                         >
-                          <Printer size={14} />
+                          <FileText size={14} />
+                        </button>
+                        <button
+                          onClick={() => handlePrintPDF(lg)}
+                          className="btn-primary"
+                          style={{ padding: '6px 12px', fontSize: '0.7rem', width: 'auto', background: 'rgba(34, 197, 94, 0.1)', border: '1px solid #10b981', color: '#10b981' }}
+                          title="Imprimir PDF"
+                        >
+                          <Download size={14} />
                         </button>
                         {isAdmin ? (
                           <button
