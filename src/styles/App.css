@@ -1137,3 +1137,277 @@ tr:hover td {
     font-size: 0.72rem;
   }
 }
+
+/* --- Responsive Design for All Screen Sizes --- */
+
+/* Tablets and Small Laptops */
+@media (max-width: 1024px) {
+  .app-container {
+    max-width: 95%;
+    padding: 1.5rem;
+  }
+  
+  .card-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .form-row.two-col {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-row.three-col {
+    grid-template-columns: 1fr;
+  }
+  
+  .grid-table-container {
+    overflow-x: auto;
+  }
+  
+  .grid-food-sections {
+    grid-template-columns: 1fr;
+  }
+  
+  .btn-primary {
+    padding: 12px 16px;
+    font-size: 0.9rem;
+  }
+}
+
+/* Large Tablets and Small Desktops */
+@media (max-width: 768px) {
+  .app-container {
+    padding: 1rem;
+  }
+  
+  .tab-nav {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  
+  .tab-nav button {
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    min-width: auto;
+  }
+  
+  .form-card {
+    padding: 1.5rem;
+  }
+  
+  .form-group {
+    margin-bottom: 1rem;
+  }
+  
+  .form-group label {
+    font-size: 0.85rem;
+  }
+  
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    font-size: 0.9rem;
+    padding: 10px;
+  }
+  
+  .grid-table-container table {
+    font-size: 0.8rem;
+  }
+  
+  th, td {
+    padding: 0.5rem 0.3rem;
+    font-size: 0.7rem;
+  }
+  
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .header-meta {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+}
+
+/* Mobile Phones */
+@media (max-width: 480px) {
+  .app-container {
+    padding: 0.5rem;
+  }
+  
+  .tab-nav {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .tab-nav button {
+    width: 100%;
+    justify-content: center;
+    padding: 12px;
+  }
+  
+  .form-card {
+    padding: 1rem;
+    border-radius: 12px;
+  }
+  
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    padding: 8px;
+    font-size: 0.85rem;
+  }
+  
+  .btn-primary {
+    padding: 10px 14px;
+    font-size: 0.85rem;
+    width: 100%;
+  }
+  
+  .grid-table-container {
+    border-radius: 8px;
+  }
+  
+  .grid-table-container table {
+    font-size: 0.7rem;
+  }
+  
+  th, td {
+    padding: 0.4rem 0.2rem;
+    font-size: 0.65rem;
+  }
+  
+  /* Hide some columns on very small screens */
+  .grid-table-container th:nth-child(4),
+  .grid-table-container td:nth-child(4),
+  .grid-table-container th:nth-child(6),
+  .grid-table-container td:nth-child(6) {
+    display: none;
+  }
+  
+  /* Action buttons for mobile */
+  .grid-table-container td:last-child {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  
+  .grid-table-container td:last-child button {
+    padding: 4px 6px;
+    font-size: 0.7rem;
+  }
+  
+  /* Help modal responsive */
+  .help-modal {
+    width: 95%;
+    margin: 1rem;
+    padding: 1rem;
+  }
+  
+  .help-modal h3 {
+    font-size: 1rem;
+  }
+  
+  .help-modal input,
+  .help-modal select,
+  .help-modal textarea {
+    font-size: 0.85rem;
+  }
+}
+
+/* Ultra-small mobile devices */
+@media (max-width: 320px) {
+  .app-container {
+    padding: 0.25rem;
+  }
+  
+  .form-card {
+    padding: 0.75rem;
+  }
+  
+  .form-group label {
+    font-size: 0.8rem;
+  }
+  
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    padding: 6px;
+    font-size: 0.8rem;
+  }
+  
+  th, td {
+    padding: 0.3rem 0.1rem;
+    font-size: 0.6rem;
+  }
+  
+  /* Reduce button sizes */
+  .btn-primary {
+    padding: 8px 12px;
+    font-size: 0.8rem;
+  }
+  
+  .grid-table-container td:last-child button {
+    padding: 3px 4px;
+    font-size: 0.6rem;
+  }
+}
+
+/* Landscape orientations for mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+  .app-container {
+    padding: 0.5rem 1rem;
+  }
+  
+  .card-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+  
+  .form-row.two-col {
+    grid-template-columns: 1fr 1fr;
+  }
+  
+  .form-row.three-col {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .form-card {
+    border: 0.5px solid var(--border);
+  }
+  
+  .btn-primary {
+    border: 0.5px solid transparent;
+  }
+}
+
+/* Print styles */
+@media print {
+  body {
+    background: white;
+    color: black;
+  }
+  
+  .app-container {
+    max-width: 100%;
+    padding: 0;
+  }
+  
+  .tab-nav,
+  .btn-primary:not(.btn-print),
+  .help-modal {
+    display: none !important;
+  }
+  
+  .form-card {
+    border: 1px solid #ccc;
+    page-break-inside: avoid;
+  }
+  
+  .grid-table-container {
+    page-break-inside: avoid;
+  }
+}
