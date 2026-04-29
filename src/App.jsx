@@ -2419,7 +2419,7 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
       }, 500);
     }).catch(err => {
       console.error('Error saving food costing:', err);
-      alert('Error al guardar contabilidad de lote');
+      alert('Error al guardar contabilidad de lote: ' + err.message);
     });
   };
 
