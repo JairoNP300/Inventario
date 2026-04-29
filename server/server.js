@@ -48,7 +48,7 @@ if (isProduction) {
       connectionString: process.env.DATABASE_URL,
       ssl: { rejectUnauthorized: false },
       // Force IPv4 to avoid ENETUNREACH error on Render
-      host: process.env.DATABASE_URL.match(/@([^:]+)/)?.[1] || undefined
+      family: 4
     });
     console.log('✅ PostgreSQL conectado');
   } catch (e) {
