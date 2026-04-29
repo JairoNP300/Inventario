@@ -35,30 +35,36 @@ app.get('/api/public-url', async (req, res) => {
 });
 
 // --- DATABASE CONFIGURATION ---
-const isProduction = !!process.env.DATABASE_URL || !!process.env.RENDER;
+// Production only if DATABASE_URL is actually set
+const isProduction = !!process.env.DATABASE_URL;
 let pool;
 let sqliteDb;
 
 if (isProduction) {
   console.log('🌐 Conectando a PostgreSQL (Producción)...');
   
-  if (!process.env.DATABASE_URL) {
-    console.error('❌ CRÍTICO: La variable DATABASE_URL no está configurada en Render.');
-    console.log('Por favor, crea una base de datos PostgreSQL en Render y añade su URL en Environment.');
-  } else {
+  try {
     pool = new Pool({
       connectionString: process.env.DATABASE_URL,
       ssl: { rejectUnauthorized: false }
     });
+    console.log('✅ PostgreSQL conectado');
+  } catch (e) {
+    console.error('❌ Error conectando PostgreSQL:', e.message);
+    console.log('⚠️ Fallback a SQLite...');
   }
-} else {
-  console.log('📂 Iniciando SQLite local...');
+}
+
+// Use SQLite if not in production or if PostgreSQL failed
+if (!pool) {
+  console.log('📂 Iniciando SQLite...');
   try {
     const Database = (await import('better-sqlite3')).default;
     const dbPath = join(__dirname, '../inventario_oficial.db');
     console.log('📁 Database path:', dbPath);
     sqliteDb = new Database(dbPath);
     sqliteDb.pragma('journal_mode = WAL');
+    console.log('✅ SQLite inicializado');
   } catch (e) {
     console.error('❌ Error cargando SQLite:', e.message);
     process.exit(1);
