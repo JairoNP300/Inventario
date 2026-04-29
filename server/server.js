@@ -45,11 +45,29 @@ if (isProduction) {
   console.log('🌐 Conectando a PostgreSQL (Producción)...');
   
   try {
+    // Parse DATABASE_URL and force IPv4 resolution
+    let connectionString = process.env.DATABASE_URL;
+    
+    try {
+      const url = new URL(connectionString);
+      const hostname = url.hostname;
+      console.log('🔍 Resolviendo hostname a IPv4:', hostname);
+      
+      // Force DNS resolution to IPv4
+      const ipv4Addresses = await resolve4(hostname);
+      if (ipv4Addresses.length > 0) {
+        const ipv4 = ipv4Addresses[0];
+        console.log('✅ IPv4 resuelto:', ipv4);
+        url.hostname = ipv4;
+        connectionString = url.toString();
+      }
+    } catch (dnsError) {
+      console.warn('⚠️ No se pudo resolver IPv4, usando URL original:', dnsError.message);
+    }
+    
     pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
-      ssl: { rejectUnauthorized: false },
-      // Force IPv4 to avoid ENETUNREACH error on Render
-      family: 4
+      connectionString: connectionString,
+      ssl: { rejectUnauthorized: false }
     });
     console.log('✅ PostgreSQL conectado');
   } catch (e) {
