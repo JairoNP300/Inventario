@@ -1882,9 +1882,17 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
       </div>
       <div className="card-grid">
         <form onSubmit={handleSubmit} className="form-card" style={{ gridColumn: 'span 2' }}>
-          <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Utensils size={24} color="var(--accent)" /> Calculadora de Lotes / Eventos
-          </h3>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '1rem' }}>
+            <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+              <Utensils size={24} color={editingRecord ? '#059669' : 'var(--accent)'} /> 
+              {editingRecord ? 'Editando Lote / Evento' : 'Calculadora de Lotes / Eventos'}
+            </h3>
+            {editingRecord && (
+              <span style={{ background: 'rgba(5, 150, 105, 0.1)', color: '#059669', padding: '4px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 600 }}>
+                MODO EDICIÓN - ID: {editingRecord.id}
+              </span>
+            )}
+          </div>
 
           <div className="form-row two-col">
             <div className="form-group">
