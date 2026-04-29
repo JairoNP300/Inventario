@@ -2363,9 +2363,13 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
         json_data: JSON.stringify(data)
       })
     }).then(res => res.json()).then(saved => {
+      console.log('Data saved successfully:', saved);
       setMeats([{ product_id: '', weight: '', cost: '' }]);
       setInputs([{ description: '', cost: '' }]);
       setExtraData({ event_name: '', batch_purpose: '', sale_price: '', leftover_value: '', unit_price_per_sale: '', leftover_weight: '', notes: '' });
+      
+      // Force refresh to update the history table
+      console.log('Calling onUpdate to refresh data...');
       onUpdate();
       
       // Show confirmation dialog with details
