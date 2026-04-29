@@ -5,12 +5,9 @@ import cors from 'cors';
 import { fileURLToPath } from 'url';
 import { promises as fs } from 'fs';
 import { dirname, join } from 'path';
-import { setDefaultResultOrder } from 'dns';
+import { resolve4 } from 'dns/promises';
 import pkg from 'pg';
 const { Pool } = pkg;
-
-// Force IPv4 DNS resolution globally
-setDefaultResultOrder('ipv4first');
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
