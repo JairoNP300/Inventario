@@ -1086,6 +1086,10 @@ const InvoicingSystem = ({ products, agros, onUpdate }) => {
         date={new Date().toISOString()}
         items={printableItems}
         totals={{ subtotal: sumatoriaVentas, tax: iva, total: totalPagar }}
+        paymentCondition={client.paymentCondition}
+        observations={client.observations}
+        deliverer={client.deliverer}
+        receiver={client.receiver}
         onPrint={() => window.print()}
         onSave={saveAndPrint}
         onCancel={() => setCart([])}
