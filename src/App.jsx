@@ -1712,6 +1712,8 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
       total_cost: totalCost,
       sale_price: extraData.sale_price,
       leftover_value: extraData.leftover_value,
+      unit_price_per_sale: extraData.unit_price_per_sale,
+      leftover_weight: extraData.leftover_weight,
       balance: netBalance,
       date: new Date().toISOString()
     };
@@ -1730,7 +1732,7 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
     }).then(res => res.json()).then(saved => {
       setMeats([{ product_id: '', weight: '', cost: '' }]);
       setInputs([{ description: '', cost: '' }]);
-      setExtraData({ event_name: '', batch_purpose: '', sale_price: '', leftover_value: '', notes: '' });
+      setExtraData({ event_name: '', batch_purpose: '', sale_price: '', leftover_value: '', unit_price_per_sale: '', leftover_weight: '', notes: '' });
       onUpdate();
       setSelectedReport({
         id: saved.id,
@@ -1843,14 +1845,36 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
               </h4>
             </div>
 
-            <div className="form-row three-col">
+            <div className="form-row">
               <div className="form-group">
                 <label>Precio Venta / Crédito ($)</label>
                 <input type="number" step="0.01" value={extraData.sale_price} onChange={e => setExtraData({ ...extraData, sale_price: e.target.value })} placeholder="0.00" style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--accent)' }} />
               </div>
               <div className="form-group">
+                <label>Precio Unitario por Venta ($)</label>
+                <input type="number" step="0.01" value={extraData.unit_price_per_sale} onChange={e => setExtraData({ ...extraData, unit_price_per_sale: e.target.value })} placeholder="0.00" style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-main)' }} />
+              </div>
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Peso Restante (lbs)</label>
+                <input type="number" step="0.01" value={extraData.leftover_weight} onChange={e => {
+                  const newWeight = e.target.value;
+                  const unitPrice = parseFloat(extraData.unit_price_per_sale) || 0;
+                  const calculatedValue = newWeight && unitPrice ? (parseFloat(newWeight) * unitPrice).toFixed(2) : '';
+                  setExtraData({ 
+                    ...extraData, 
+                    leftover_weight: newWeight,
+                    leftover_value: calculatedValue
+                  });
+                }} placeholder="Ej: 2.10" style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-main)' }} />
+              </div>
+              <div className="form-group">
                 <label>Valor de comida que sobró ($)</label>
                 <input type="number" step="0.01" value={extraData.leftover_value} onChange={e => setExtraData({ ...extraData, leftover_value: e.target.value })} placeholder="0.00" style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--success)' }} />
+                <small style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>
+                  Calculado automáticamente: {extraData.leftover_weight} lbs × ${extraData.unit_price_per_sale || '0.00'} = ${extraData.leftover_value || '0.00'}
+                </small>
               </div>
               <div className="form-group" style={{ textAlign: 'center' }}>
                 <motion.div
