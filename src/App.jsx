@@ -2238,15 +2238,28 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
       setInputs([{ description: '', cost: '' }]);
       setExtraData({ event_name: '', batch_purpose: '', sale_price: '', leftover_value: '', unit_price_per_sale: '', leftover_weight: '', notes: '' });
       onUpdate();
-      setSelectedReport({
-        id: saved.id,
-        gross_weight: data.meats.reduce((acc, m) => acc + (parseFloat(m.weight) || 0), 0),
-        gross_cost: data.total_cost,
-        cooked_weight: data.balance,
-        json_data: JSON.stringify(data),
-        date: data.date
-      });
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      
+      // Show confirmation dialog with details
+      const confirmation = confirm(
+        `✅ Lote guardado exitosamente!\n\n` +
+        `📋 Detalles del Registro:\n` +
+        `• ID: ${saved.id}\n` +
+        `• Fecha: ${new Date(data.date).toLocaleDateString()}\n` +
+        `• Destino: ${data.event_name}\n` +
+        `• Propósito: ${data.batch_purpose}\n` +
+        `• Costo Total: $${data.total_cost.toFixed(2)}\n` +
+        `• Precio Venta: $${data.sale_price || '0.00'}\n` +
+        `• Utilidad: $${data.balance.toFixed(2)}\n\n` +
+        `¿Desea ver los detalles en el historial para corroborar los datos antes de imprimir el documento de auditoría operacional?`
+      );
+      
+      if (confirmation) {
+        // Scroll to history section
+        const historySection = document.querySelector('.form-card');
+        if (historySection) {
+          historySection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
     }).catch(err => {
       console.error('Error saving food costing:', err);
       alert('Error al guardar contabilidad de lote');
