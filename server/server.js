@@ -222,9 +222,12 @@ const migrateDatabase = async () => {
 
 // --- INITIALIZATION ---
 const initDb = async () => {
+  const idType = isProduction ? 'SERIAL' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
+  const dateDefault = isProduction ? 'CURRENT_DATE' : "(date('now'))";
+
   await exec(`
     CREATE TABLE IF NOT EXISTS products (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id ${idType},
       code TEXT,
       name TEXT NOT NULL UNIQUE,
       category TEXT,
@@ -234,7 +237,7 @@ const initDb = async () => {
     );
 
     CREATE TABLE IF NOT EXISTS agros (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id ${idType},
       name TEXT NOT NULL UNIQUE
     );
 
@@ -251,17 +254,17 @@ const initDb = async () => {
     );
 
     CREATE TABLE IF NOT EXISTS movements (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id ${idType},
       product_id INTEGER,
       origin_warehouse TEXT,
       dest_warehouse TEXT,
       weight DECIMAL(10,2),
       type TEXT,
-      date DATE DEFAULT (date('now'))
+      date DATE DEFAULT ${dateDefault}
     );
 
     CREATE TABLE IF NOT EXISTS activity_log (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id ${idType},
       role TEXT,
       action TEXT,
       entity TEXT,
@@ -274,7 +277,7 @@ const initDb = async () => {
     );
 
     CREATE TABLE IF NOT EXISTS production_logs (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id ${idType},
       product_id INTEGER,
       initial_weight DECIMAL(10,2),
       cut_weight DECIMAL(10,2),
@@ -284,48 +287,48 @@ const initDb = async () => {
       labor_cost DECIMAL(10,2) DEFAULT 0,
       other_costs DECIMAL(10,2) DEFAULT 0,
       warehouse TEXT DEFAULT 'Bodega 2',
-      date DATE DEFAULT (date('now'))
+      date DATE DEFAULT ${dateDefault}
     );
 
     CREATE TABLE IF NOT EXISTS ransa_requests (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id ${idType},
       product_id INTEGER,
       tag_weight DECIMAL(10,2),
       scale_weight DECIMAL(10,2),
       units_per_box INTEGER,
       unit_type TEXT DEFAULT 'Lbs',
       distribution_details TEXT,
-      date DATE DEFAULT (date('now'))
+      date DATE DEFAULT ${dateDefault}
     );
 
     CREATE TABLE IF NOT EXISTS dispatches (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id ${idType},
       product_id INTEGER,
       agro_id INTEGER,
       weight DECIMAL(10,2),
       unit_type TEXT DEFAULT 'Lbs',
       value DECIMAL(10,2),
-      date DATE DEFAULT (date('now'))
+      date DATE DEFAULT ${dateDefault}
     );
 
     CREATE TABLE IF NOT EXISTS sales (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id ${idType},
       agro_id INTEGER,
       amount_received DECIMAL(10,2),
-      date DATE DEFAULT (date('now'))
+      date DATE DEFAULT ${dateDefault}
     );
 
     CREATE TABLE IF NOT EXISTS orders (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id ${idType},
       product_id INTEGER,
       requested_qty DECIMAL(10,2),
       unit_type TEXT DEFAULT 'Lbs',
       status TEXT DEFAULT 'PENDING',
-      date DATE DEFAULT (date('now'))
+      date DATE DEFAULT ${dateDefault}
     );
 
     CREATE TABLE IF NOT EXISTS food_costing (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id ${idType},
       date TEXT,
       event_name TEXT,
       details TEXT, 
