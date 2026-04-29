@@ -2381,12 +2381,13 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
       setInputs([{ description: '', cost: '' }]);
       setExtraData({ event_name: '', batch_purpose: '', sale_price: '', leftover_value: '', unit_price_per_sale: '', leftover_weight: '', notes: '' });
       
-      // Force refresh to update the history table
+      // Force refresh to update the history table immediately
       console.log('Calling onUpdate to refresh data...');
       onUpdate();
       
-      // Simple success message and automatic scroll to history
-      alert(`¡Lote guardado exitosamente! ID: ${saved.id}`);
+      // Simple success message with ID validation
+      const savedId = saved?.id || 'N/A';
+      alert(`¡Lote guardado exitosamente! ID: ${savedId}`);
       
       // Scroll to history section to see the saved data
       setTimeout(() => {
