@@ -992,6 +992,36 @@ app.delete('/api/food-costing-all', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+app.put('/api/food-costing/:id', async (req, res) => {
+  const { id } = req.params;
+  const { gross_weight, gross_cost, cooked_weight, json_data } = req.body;
+  try {
+    await query(`
+      UPDATE food_costing 
+      SET gross_weight = ?, gross_cost = ?, cooked_weight = ?, json_data = ?
+      WHERE id = ?
+    `, [gross_weight, gross_cost, cooked_weight, json_data, id]);
+    
+    // Log the update activity
+    const details = JSON.parse(json_data);
+    const eventName = details.event_name || 'Evento desconocido';
+    await logActivity({ 
+      role: req.headers['x-role'] || 'desconocido', 
+      action: 'LOTE COMIDA', 
+      entity: 'food_costing', 
+      product_name: eventName, 
+      quantity: parseFloat(gross_weight) || 0, 
+      unit: 'Lbs', 
+      location: 'Lomas', 
+      details: `Actualizado: Costo: $${gross_cost} | Balance: $${cooked_weight}` 
+    });
+
+    res.json({ success: true, message: 'Registro actualizado correctamente' });
+  } catch (err) { 
+    res.status(500).json({ error: err.message }); 
+  }
+});
+
 app.delete('/api/food-costing/:id', async (req, res) => {
   const { id } = req.params;
   try {
