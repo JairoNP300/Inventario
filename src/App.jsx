@@ -2238,6 +2238,9 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
                 <th>Destino / Institución</th>
                 <th>Costo Op. ($)</th>
                 <th>Venta ($)</th>
+                <th>Precio Unitario ($)</th>
+                <th>Peso Restante (lbs)</th>
+                <th>Valor Sobrante ($)</th>
                 <th>Rend. %</th>
                 <th>Utilidad ($)</th>
                 <th>Acción</th>
