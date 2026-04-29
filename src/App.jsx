@@ -1778,6 +1778,174 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
     console.log('Help requested for record:', record.id);
   };
 
+  const startInlineEdit = (recordId, field, currentValue) => {
+    setInlineEditing({ ...inlineEditing, [`${recordId}-${field}`]: true });
+    setEditingData({ ...editingData, [`${recordId}-${field}`]: currentValue });
+  };
+
+  const saveInlineEdit = (recordId, field) => {
+    const newValue = editingData[`${recordId}-${field}`];
+    
+    // Get the current record
+    const record = logs.find(lg => lg.id === recordId);
+    if (!record) return;
+
+    // Parse existing data
+    let details = {
+      event_name: record.event_name || '---',
+      batch_purpose: record.details || '---',
+      total_cost: parseFloat(record.gross_cost) || 0,
+      sale_price: 0,
+      leftover_value: 0,
+      unit_price_per_sale: 0,
+      leftover_weight: 0,
+      balance: parseFloat(record.cooked_weight) || 0
+    };
+    
+    try {
+      if (record.json_data) {
+        const parsed = typeof record.json_data === 'string' ? JSON.parse(record.json_data) : record.json_data;
+        details = { ...details, ...parsed };
+      }
+    } catch (e) { }
+
+    // Update the specific field
+    details[field] = newValue;
+
+    // Automatic calculations
+    if (field === 'leftover_weight' || field === 'unit_price_per_sale') {
+      const weight = parseFloat(field === 'leftover_weight' ? newValue : details.leftover_weight) || 0;
+      const unitPrice = parseFloat(field === 'unit_price_per_sale' ? newValue : details.unit_price_per_sale) || 0;
+      details.leftover_value = (weight * unitPrice).toFixed(2);
+    }
+
+    // Recalculate balance if sale_price or costs changed
+    if (field === 'sale_price' || field === 'leftover_value') {
+      const totalCost = parseFloat(details.total_cost) || 0;
+      const salePrice = parseFloat(details.sale_price) || 0;
+      const leftoverValue = parseFloat(details.leftover_value) || 0;
+      details.balance = (salePrice - totalCost + leftoverValue).toFixed(2);
+    }
+
+    // Update the record
+    fetch(`${API_BASE}/food-costing/${recordId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        gross_weight: record.gross_weight,
+        gross_cost: details.total_cost,
+        cooked_weight: details.balance,
+        json_data: JSON.stringify(details)
+      })
+    }).then(res => res.json()).then(() => {
+      // Clear editing state
+      const newEditing = { ...inlineEditing };
+      delete newEditing[`${recordId}-${field}`];
+      setInlineEditing(newEditing);
+      
+      const newEditingData = { ...editingData };
+      delete newEditingData[`${recordId}-${field}`];
+      setEditingData(newEditingData);
+      
+      onUpdate();
+      alert('Campo actualizado exitosamente');
+    }).catch(err => {
+      console.error('Error updating field:', err);
+      alert('Error al actualizar el campo');
+    });
+  };
+
+  const cancelInlineEdit = (recordId, field) => {
+    const newEditing = { ...inlineEditing };
+    delete newEditing[`${recordId}-${field}`];
+    setInlineEditing(newEditing);
+    
+    const newEditingData = { ...editingData };
+    delete newEditingData[`${recordId}-${field}`];
+    setEditingData(newEditingData);
+  };
+
+  const EditableCell = ({ recordId, field, value, type = 'text', editable = true }) => {
+    const editKey = `${recordId}-${field}`;
+    const isEditing = inlineEditing[editKey];
+    const editValue = editingData[editKey] || value;
+
+    if (!isAdmin || !editable) {
+      return <span>{value}</span>;
+    }
+
+    if (isEditing) {
+      return (
+        <div style={{ display: 'flex', gap: '2px', alignItems: 'center' }}>
+          <input
+            type={type}
+            step={type === 'number' ? '0.01' : undefined}
+            value={editValue}
+            onChange={(e) => setEditingData({ ...editingData, [editKey]: e.target.value })}
+            style={{ 
+              width: type === 'number' ? '80px' : '120px', 
+              padding: '2px 4px', 
+              fontSize: '0.8rem',
+              border: '1px solid var(--accent)',
+              borderRadius: '4px',
+              background: 'rgba(255,255,255,0.1)',
+              color: 'white'
+            }}
+            autoFocus
+          />
+          <button
+            onClick={() => saveInlineEdit(recordId, field)}
+            style={{ 
+              padding: '2px 6px', 
+              fontSize: '0.6rem', 
+              background: '#059669', 
+              border: 'none', 
+              borderRadius: '2px',
+              color: 'white',
+              cursor: 'pointer'
+            }}
+            title="Guardar"
+          >
+            <Save size={10} />
+          </button>
+          <button
+            onClick={() => cancelInlineEdit(recordId, field)}
+            style={{ 
+              padding: '2px 6px', 
+              fontSize: '0.6rem', 
+              background: '#ef4444', 
+              border: 'none', 
+              borderRadius: '2px',
+              color: 'white',
+              cursor: 'pointer'
+            }}
+            title="Cancelar"
+          >
+            <RotateCcw size={10} />
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <span 
+        onClick={() => editable && startInlineEdit(recordId, field, value)}
+        style={{ 
+          cursor: editable ? 'pointer' : 'default',
+          padding: '2px 4px',
+          borderRadius: '4px',
+          transition: 'background 0.2s'
+        }}
+        onMouseEnter={(e) => editable && (e.target.style.background = 'rgba(255,255,255,0.1)')}
+        onMouseLeave={(e) => editable && (e.target.style.background = 'transparent')}
+        title={editable ? "Clic para editar" : ""}
+      >
+        {value}
+        {editable && <Edit2 size={10} style={{ marginLeft: '4px', opacity: 0.5 }} />}
+      </span>
+    );
+  };
+
   const totalMeatCost = meats.reduce((acc, m) => acc + (parseFloat(m.cost) || 0), 0);
   const totalInputCost = inputs.reduce((acc, i) => acc + (parseFloat(i.cost) || 0), 0);
   const totalWeight = meats.reduce((acc, m) => acc + (parseFloat(m.weight) || 0), 0);
