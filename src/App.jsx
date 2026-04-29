@@ -1655,6 +1655,15 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
   const [isAdmin, setIsAdmin] = useState(() => sessionStorage.getItem('cp_role') === 'admin');
   const [inlineEditing, setInlineEditing] = useState({});
   const [editingData, setEditingData] = useState({});
+  const [helpRequestModal, setHelpRequestModal] = useState(false);
+  const [helpRequestData, setHelpRequestData] = useState({
+    recordId: null,
+    issueType: '',
+    description: '',
+    contactInfo: '',
+    urgency: 'normal'
+  });
+  const [helpRequests, setHelpRequests] = useState([]);
 
   if (selectedReport) return <FoodReport data={selectedReport} onBack={() => { setSelectedReport(null); onUpdate(); }} />;
 
