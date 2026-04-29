@@ -88,7 +88,7 @@ const archivosRecientes = archivosConTimestamp.filter(item =>
 );
 
 if (archivosRecientes.length > 0) {
-  console.log('\n## ARCHIVOS MODIFICADOS DESDE 11:08 AM:');
+  console.log('\n## ARCHIVOS MODIFICADOS DESDE 11:08 AM:');r
   archivosRecientes.forEach(item => {
     console.log(`## ${item.archivo}`);
     console.log(`   ${item.timestampStr}`);
