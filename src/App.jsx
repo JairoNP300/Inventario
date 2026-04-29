@@ -829,6 +829,56 @@ const InvoicingSystem = ({ products, agros, onUpdate }) => {
   const [unit, setUnit] = useState('Lbs');
   const [client, setClient] = useState({ name: '', nrc: '', nit: '', address: '', activity: '' });
 
+  // Auto-load dispatch data from sessionStorage
+  useEffect(() => {
+    const pendingInvoice = sessionStorage.getItem('pending_invoice');
+    if (pendingInvoice) {
+      try {
+        const dispatchData = JSON.parse(pendingInvoice);
+        
+        // Set client data
+        if (dispatchData.client) {
+          setClient({
+            name: dispatchData.client.name || '',
+            nrc: dispatchData.client.nrc || '',
+            nit: dispatchData.client.nit || '',
+            address: dispatchData.client.address || '',
+            activity: ''
+          });
+        }
+        
+        // Set product and quantity
+        if (dispatchData.product_id) {
+          setSelectedProduct(dispatchData.product_id);
+          setQty(dispatchData.weight || '');
+          setUnit(dispatchData.unit_type || 'Lbs');
+          setAgroId(dispatchData.destination || '');
+          
+          // Auto-add to cart
+          const p = products.find(prod => String(prod.id) === String(dispatchData.product_id));
+          if (p && dispatchData.weight) {
+            let price = dispatchData.unit_type === 'Lbs' ? p.price_per_lb : p.price_per_kg;
+            setCart([{
+              id: Date.now(),
+              product_id: p.id,
+              agro_id: parseInt(dispatchData.destination) || 1,
+              name: p.name,
+              qty: parseFloat(dispatchData.weight),
+              unit: dispatchData.unit_type || 'Lbs',
+              price: price || 0,
+              total: parseFloat(dispatchData.weight) * (price || 0)
+            }]);
+          }
+        }
+        
+        // Clear sessionStorage after loading
+        sessionStorage.removeItem('pending_invoice');
+      } catch (e) {
+        console.error('Error loading dispatch data:', e);
+      }
+    }
+  }, [products]);
+
   const addToCart = () => {
     const p = products.find(prod => String(prod.id) === String(selectedProduct));
     if (!p || !qty || !agroId) return alert('Complete los datos: Producto, Cantidad y Ubicación');
