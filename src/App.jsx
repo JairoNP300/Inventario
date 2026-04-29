@@ -2267,6 +2267,69 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
                   const histWeightMatch = pText.match(/(\d+(\.\d+)?)/);
                   const hWeight = histWeightMatch ? parseFloat(histWeightMatch[0]) : (parseFloat(lg.cooked_weight) || 0);
                   const hRawTotal = (details.meats || []).reduce((acc, m) => acc + (parseFloat(m.weight) || 0), 0) || (parseFloat(lg.gross_weight) || 0);
+                  const hYield = hRawTotal > 0 ? (hWeight / hRawTotal) * 100 : 0;
+                  const balance = parseFloat(details.balance) || 0;
+
+                  return (
+                    <tr key={lg.id}>
+                      <td style={{ color: 'var(--text-muted)' }}>
+                        <EditableCell 
+                          recordId={lg.id} 
+                          field="date" 
+                          value={new Date(lg.date).toLocaleDateString()} 
+                          editable={false}
+                        />
+                      </td>
+                      <td style={{ fontWeight: 600, color: 'var(--accent)' }}>
+                        <EditableCell 
+                          recordId={lg.id} 
+                          field="batch_purpose" 
+                          value={details.batch_purpose || '---'} 
+                        />
+                      </td>
+                      <td style={{ fontWeight: 800 }}>
+                        <EditableCell 
+                          recordId={lg.id} 
+                          field="event_name" 
+                          value={details.event_name || '---'} 
+                        />
+                      </td>
+                      <td>
+                        <EditableCell 
+                          recordId={lg.id} 
+                          field="total_cost" 
+                          value={`$${(details.total_cost || 0).toFixed(2)}`} 
+                          type="number"
+                        />
+                      </td>
+                      <td style={{ color: 'var(--accent)' }}>
+                        <EditableCell 
+                          recordId={lg.id} 
+                          field="sale_price" 
+                          value={`$${parseFloat(details.sale_price || 0).toFixed(2)}`} 
+                          type="number"
+                        />
+                      </td>
+                      <td style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                        {hYield > 0 ? hYield.toFixed(0) + '%' : '---'}
+                      </td>
+                      <td style={{
+                        fontWeight: 900,
+                        color: balance >= 0 ? 'var(--success)' : '#ef4444',
+                        background: balance >= 0 ? 'rgba(34, 197, 94, 0.05)' : 'rgba(239, 68, 68, 0.05)'
+                      }}>
+                        <EditableCell 
+                          recordId={lg.id} 
+                          field="balance" 
+                          value={`$${balance.toFixed(2)}`} 
+                          type="number"
+                          editable={false}
+                        />
+                      </td>
+                      <td style={{ textAlign: 'center', display: 'flex', gap: '5px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                        <button
+                          onClick={() => { setSelectedReport(lg); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                          className="btn-primary"
                           style={{ padding: '6px 12px', fontSize: '0.7rem', width: 'auto', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)' }}
                           title="Ver Reporte"
                         >
