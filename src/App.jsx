@@ -1857,6 +1857,9 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
       doc.setFontSize(11);
       doc.text(`Destino/Institución: ${details.event_name || 'N/A'}`, 20, 80);
       doc.text(`Propósito: ${details.batch_purpose || 'N/A'}`, 20, 90);
+      if (details.payment_status) {
+        doc.text(`Estado de Pago: ${details.payment_status}`, 20, 100);
+      }
       
       // Financial details
       doc.setFontSize(14);
