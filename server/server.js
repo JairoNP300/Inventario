@@ -979,7 +979,10 @@ app.post('/api/food-costing', async (req, res) => {
     } catch(e) {}
     await logActivity({ role: req.headers['x-role'] || 'desconocido', action: 'LOTE COMIDA', entity: 'food_costing', product_name: eventName, quantity: parseFloat(gross_weight) || 0, unit: 'Lbs', location: 'Lomas', details: `Costo: $${gross_cost} | Balance: $${cooked_weight}` });
 
-    res.json({ id: info.lastInsertRowid });
+    // Return ID from lastInsertRowid or from rows[0].id as fallback
+    const returnedId = info.lastInsertRowid || (info.rows && info.rows[0] && info.rows[0].id) || null;
+    console.log('Food costing saved with ID:', returnedId);
+    res.json({ id: returnedId });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
