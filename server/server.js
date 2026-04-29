@@ -5,6 +5,7 @@ import cors from 'cors';
 import { fileURLToPath } from 'url';
 import { promises as fs } from 'fs';
 import { dirname, join } from 'path';
+import { resolve4 } from 'dns/promises';
 import pkg from 'pg';
 const { Pool } = pkg;
 
