@@ -1850,8 +1850,8 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
       doc.text('Información General', 20, 65);
       
       doc.setFontSize(11);
-      doc.text(`Destino/Institución: ${details.event_name}`, 20, 80);
-      doc.text(`Propósito: ${details.batch_purpose}`, 20, 90);
+      doc.text(`Destino/Institución: ${details.event_name || 'N/A'}`, 20, 80);
+      doc.text(`Propósito: ${details.batch_purpose || 'N/A'}`, 20, 90);
       
       // Financial details
       doc.setFontSize(14);
@@ -1870,48 +1870,79 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
       doc.setFontSize(12);
       doc.text(`Utilidad: $${balance.toFixed(2)}`, 20, 185);
       
-      // Calculate yield
+      // Calculate yield and margin
       const pText = String(details.batch_purpose || '');
       const histWeightMatch = pText.match(/(\d+(\.\d+)?)/);
       const hWeight = histWeightMatch ? parseFloat(histWeightMatch[0]) : (parseFloat(record.cooked_weight) || 0);
       const hRawTotal = (details.meats || []).reduce((acc, m) => acc + (parseFloat(m.weight) || 0), 0) || (parseFloat(record.gross_weight) || 0);
       const hYield = hRawTotal > 0 ? (hWeight / hRawTotal) * 100 : 0;
+      const hMargin = details.total_cost > 0 ? (balance / details.total_cost) * 100 : 0;
       
       doc.setTextColor(0);
       doc.setFontSize(11);
       doc.text(`Rendimiento: ${hYield > 0 ? hYield.toFixed(1) + '%' : 'N/A'}`, 20, 200);
+      doc.text(`Margen Bruto: ${hMargin.toFixed(1)}%`, 20, 210);
+      
+      // Cost breakdown
+      const totalMeatCost = (details.meats || []).reduce((acc, m) => acc + (parseFloat(m.cost) || 0), 0);
+      const totalInputCost = (details.inputs || []).reduce((acc, i) => acc + (parseFloat(i.cost) || 0), 0);
+      const unitCost = hWeight > 0 ? (details.total_cost / hWeight) : 0;
+      
+      doc.setFontSize(14);
+      doc.text('Desglose de Costos', 20, 235);
+      
+      doc.setFontSize(11);
+      doc.text(`Materia Prima (Carnes): $${totalMeatCost.toFixed(2)}`, 20, 250);
+      doc.text(`Insumos Operativos: $${totalInputCost.toFixed(2)}`, 20, 260);
+      doc.text(`Costo Unitario: $${unitCost.toFixed(2)}/lb fina`, 20, 270);
       
       // Meat details if available
       if (details.meats && details.meats.length > 0) {
+        doc.addPage();
         doc.setFontSize(14);
-        doc.text('Materias Primas (Carnes)', 20, 225);
+        doc.text('Materias Primas (Carnes)', 20, 20);
         
         doc.setFontSize(10);
-        let meatY = 240;
+        let meatY = 35;
         details.meats.forEach((meat, index) => {
           if (meatY > 270) {
             doc.addPage();
             meatY = 20;
           }
-          doc.text(`${index + 1}. ${meat.name || 'Producto'}: ${meat.weight || '0'} lbs - $${(meat.cost || '0').toFixed(2)}`, 20, meatY);
+          const productName = meat.product_name || meat.name || 'Producto';
+          doc.text(`${index + 1}. ${productName}: ${meat.weight || '0'} lbs - $${(meat.cost || '0').toFixed(2)}`, 20, meatY);
           meatY += 10;
         });
       }
       
       // Input details if available
       if (details.inputs && details.inputs.length > 0) {
-        const currentY = doc.internal.pageSize.height - 60;
-        if (currentY > 100) {
-          doc.setFontSize(14);
-          doc.text('Insumos Adicionales', 20, currentY - 20);
-          
-          doc.setFontSize(10);
-          let inputY = currentY - 10;
-          details.inputs.slice(0, 3).forEach((input, index) => {
-            doc.text(`${index + 1}. ${input.description || 'Insumo'}: $${(input.cost || '0').toFixed(2)}`, 20, inputY);
-            inputY += 8;
-          });
-        }
+        doc.addPage();
+        doc.setFontSize(14);
+        doc.text('Insumos Adicionales', 20, 20);
+        
+        doc.setFontSize(10);
+        let inputY = 35;
+        details.inputs.forEach((input, index) => {
+          if (inputY > 270) {
+            doc.addPage();
+            inputY = 20;
+          }
+          doc.text(`${index + 1}. ${input.description || 'Insumo'}: $${(input.cost || '0').toFixed(2)}`, 20, inputY);
+          inputY += 10;
+        });
+      }
+      
+      // Notes if available
+      if (details.notes && details.notes.trim()) {
+        doc.addPage();
+        doc.setFontSize(14);
+        doc.text('Observaciones y Detalles Finales', 20, 20);
+        
+        doc.setFontSize(10);
+        doc.setTextColor(50);
+        const splitNotes = doc.splitTextToSize(details.notes, 170);
+        doc.text(splitNotes, 20, 35);
       }
       
       // Footer
