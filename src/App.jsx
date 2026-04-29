@@ -1682,6 +1682,100 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
     setInputs(newInputs);
   };
 
+  const handleEditRecord = (record) => {
+    setEditingRecord(record);
+    const details = record.json_data ? (typeof record.json_data === 'string' ? JSON.parse(record.json_data) : record.json_data) : {};
+    
+    setExtraData({
+      event_name: details.event_name || '',
+      batch_purpose: details.batch_purpose || '',
+      sale_price: details.sale_price || '',
+      leftover_value: details.leftover_value || '',
+      unit_price_per_sale: details.unit_price_per_sale || '',
+      leftover_weight: details.leftover_weight || '',
+      payment_status: details.payment_status || 'Crédito',
+      notes: details.notes || ''
+    });
+    
+    setMeats(details.meats || [{ product_id: '', weight: '', cost: '' }]);
+    setInputs(details.inputs || [{ description: '', cost: '' }]);
+    
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSaveEdit = () => {
+    if (!editingRecord) return;
+    
+    const enrichedMeats = meats.map(m => {
+      const product = products.find(p => p.id === parseInt(m.product_id));
+      return {
+        ...m,
+        name: product ? product.name : 'Producto desconocido'
+      };
+    });
+
+    const totalMeatCost = meats.reduce((acc, m) => acc + (parseFloat(m.cost) || 0), 0);
+    const totalInputCost = inputs.reduce((acc, i) => acc + (parseFloat(i.cost) || 0), 0);
+    const totalCost = totalMeatCost + totalInputCost;
+    const netBalance = (parseFloat(extraData.sale_price) || 0) - totalCost + (parseFloat(extraData.leftover_value) || 0);
+
+    const data = {
+      event_name: extraData.event_name,
+      batch_purpose: extraData.batch_purpose,
+      payment_status: extraData.payment_status,
+      notes: extraData.notes,
+      meats: enrichedMeats,
+      inputs,
+      total_cost: totalCost,
+      sale_price: extraData.sale_price,
+      leftover_value: extraData.leftover_value,
+      unit_price_per_sale: extraData.unit_price_per_sale,
+      leftover_weight: extraData.leftover_weight,
+      balance: netBalance,
+      date: editingRecord.date
+    };
+
+    fetch(`${API_BASE}/food-costing/${editingRecord.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        gross_weight: meats.reduce((acc, m) => acc + (parseFloat(m.weight) || 0), 0),
+        gross_cost: totalCost,
+        cooked_weight: netBalance,
+        json_data: JSON.stringify(data)
+      })
+    }).then(res => res.json()).then(() => {
+      setEditingRecord(null);
+      setMeats([{ product_id: '', weight: '', cost: '' }]);
+      setInputs([{ description: '', cost: '' }]);
+      setExtraData({ event_name: '', batch_purpose: '', sale_price: '', leftover_value: '', unit_price_per_sale: '', leftover_weight: '', notes: '' });
+      onUpdate();
+      alert('Registro actualizado exitosamente');
+    }).catch(err => {
+      console.error('Error updating record:', err);
+      alert('Error al actualizar el registro');
+    });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingRecord(null);
+    setMeats([{ product_id: '', weight: '', cost: '' }]);
+    setInputs([{ description: '', cost: '' }]);
+    setExtraData({ event_name: '', batch_purpose: '', sale_price: '', leftover_value: '', unit_price_per_sale: '', leftover_weight: '', notes: '' });
+  };
+
+  const handleRequestHelp = (record) => {
+    const message = `Usuario solicita ayuda para editar el registro ID: ${record.id}\n` +
+                   `Fecha: ${new Date(record.date).toLocaleDateString()}\n` +
+                   `Propósito: ${record.json_data ? (typeof record.json_data === 'string' ? JSON.parse(record.json_data).batch_purpose : record.json_data.batch_purpose) : 'N/A'}\n` +
+                   `Por favor contacte al administrador para asistencia.`;
+    
+    alert(message);
+    
+    // Here you could also send this to a notification system or log it
+    console.log('Help requested for record:', record.id);
+  };
+
   const totalMeatCost = meats.reduce((acc, m) => acc + (parseFloat(m.cost) || 0), 0);
   const totalInputCost = inputs.reduce((acc, i) => acc + (parseFloat(i.cost) || 0), 0);
   const totalWeight = meats.reduce((acc, m) => acc + (parseFloat(m.weight) || 0), 0);
@@ -1699,9 +1793,17 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
+    if (editingRecord) {
+      handleSaveEdit();
+      return;
+    }
+
     const enrichedMeats = meats.map(m => {
-      const p = products.find(p => String(p.id) === String(m.product_id));
-      return { ...m, product_name: p ? p.name : 'Carne / Producto Desconocido' };
+      const product = products.find(p => p.id === parseInt(m.product_id));
+      return {
+        ...m,
+        name: product ? product.name : 'Producto desconocido'
+      };
     });
 
     const data = {
@@ -1745,7 +1847,10 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
         date: data.date
       });
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    }).catch(e => console.error(e));
+    }).catch(err => {
+      console.error('Error saving food costing:', err);
+      alert('Error al guardar contabilidad de lote');
+    });
   };
 
   if (selectedReport) return <FoodReport data={selectedReport} products={products} onBack={() => { setSelectedReport(null); onUpdate(); }} />;
@@ -1923,9 +2028,25 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
             />
           </div>
 
-          <button type="submit" className="btn-primary" style={{ marginTop: '25px', width: '100%', padding: '18px', fontSize: '1rem', background: 'linear-gradient(to right, var(--accent), var(--secondary))' }}>
-            Finalizar y Guardar Contabilidad de Lote
-          </button>
+          <div style={{ marginTop: '25px', display: 'flex', gap: '10px' }}>
+            {editingRecord && (
+              <button 
+                type="button" 
+                onClick={handleCancelEdit}
+                className="btn-primary" 
+                style={{ padding: '18px', fontSize: '1rem', background: '#ef4444', flex: 1 }}
+              >
+                Cancelar Edición
+              </button>
+            )}
+            <button 
+              type="submit" 
+              className="btn-primary" 
+              style={{ padding: '18px', fontSize: '1rem', background: editingRecord ? '#059669' : 'linear-gradient(to right, var(--accent), var(--secondary))', flex: editingRecord ? 2 : 1 }}
+            >
+              {editingRecord ? 'Guardar Cambios' : 'Finalizar y Guardar Contabilidad de Lote'}
+            </button>
+          </div>
         </form>
       </div>
 
