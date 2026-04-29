@@ -51,8 +51,27 @@ if (isProduction) {
   console.log('🌐 Conectando a PostgreSQL (Producción)...');
   
   try {
+    let connectionString = process.env.DATABASE_URL;
+    
+    // Force IPv4 by resolving hostname and replacing in connection string
+    try {
+      const url = new URL(connectionString);
+      const hostname = url.hostname;
+      console.log('🔍 Resolviendo hostname a IPv4:', hostname);
+      
+      const ipv4Addresses = await resolve4(hostname);
+      if (ipv4Addresses.length > 0) {
+        const ipv4 = ipv4Addresses[0];
+        console.log('✅ IPv4 resuelto:', ipv4);
+        url.hostname = ipv4;
+        connectionString = url.toString();
+      }
+    } catch (dnsError) {
+      console.warn('⚠️ No se pudo resolver IPv4, usando URL original:', dnsError.message);
+    }
+    
     pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
+      connectionString: connectionString,
       ssl: { rejectUnauthorized: false }
     });
     console.log('✅ PostgreSQL conectado');
