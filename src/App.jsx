@@ -2267,28 +2267,6 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
                   const histWeightMatch = pText.match(/(\d+(\.\d+)?)/);
                   const hWeight = histWeightMatch ? parseFloat(histWeightMatch[0]) : (parseFloat(lg.cooked_weight) || 0);
                   const hRawTotal = (details.meats || []).reduce((acc, m) => acc + (parseFloat(m.weight) || 0), 0) || (parseFloat(lg.gross_weight) || 0);
-                  const hYield = hRawTotal > 0 ? (hWeight / hRawTotal) * 100 : 0;
-                  const balance = parseFloat(details.balance) || 0;
-
-                  return (
-                    <tr key={lg.id}>
-                      <td style={{ color: 'var(--text-muted)' }}>{new Date(lg.date).toLocaleDateString()}</td>
-                      <td style={{ fontWeight: 600, color: 'var(--accent)' }}>{details.batch_purpose || '—'}</td>
-                      <td style={{ fontWeight: 800 }}>{details.event_name || '—'}</td>
-                      <td>${(details.total_cost || 0).toFixed(2)}</td>
-                      <td style={{ color: 'var(--accent)' }}>${parseFloat(details.sale_price || 0).toFixed(2)}</td>
-                      <td style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{hYield > 0 ? hYield.toFixed(0) + '%' : '—'}</td>
-                      <td style={{
-                        fontWeight: 900,
-                        color: balance >= 0 ? 'var(--success)' : '#ef4444',
-                        background: balance >= 0 ? 'rgba(34, 197, 94, 0.05)' : 'rgba(239, 68, 68, 0.05)'
-                      }}>
-                        ${balance.toFixed(2)}
-                      </td>
-                      <td style={{ textAlign: 'center', display: 'flex', gap: '5px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                        <button
-                          onClick={() => { setSelectedReport(lg); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                          className="btn-primary"
                           style={{ padding: '6px 12px', fontSize: '0.7rem', width: 'auto', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)' }}
                           title="Ver Reporte"
                         >
