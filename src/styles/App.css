@@ -48,6 +48,8 @@ body {
     radial-gradient(circle at 85% 30%, rgba(167, 139, 250, 0.08), transparent 50%);
   color: var(--text-main);
   min-height: 100vh;
+  overflow-x: hidden;
+}
   padding: 3rem;
   overflow-x: hidden;
   animation: bgBreathing 15s infinite alternate ease-in-out;
