@@ -1863,20 +1863,20 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
       
       // Financial details
       doc.setFontSize(14);
-      doc.text('Detalles Financieros', 20, 115);
+      doc.text('Detalles Financieros', 20, 125);
       
       doc.setFontSize(11);
-      doc.text(`Costo Operacional: $${(details.total_cost || 0).toFixed(2)}`, 20, 130);
-      doc.text(`Precio Venta: $${parseFloat(details.sale_price || 0).toFixed(2)}`, 20, 140);
-      doc.text(`Precio Unitario: $${parseFloat(details.unit_price_per_sale || 0).toFixed(2)}`, 20, 150);
-      doc.text(`Peso Restante: ${details.leftover_weight || '0.00'} lbs`, 20, 160);
-      doc.text(`Valor Sobrante: $${parseFloat(details.leftover_value || 0).toFixed(2)}`, 20, 170);
+      doc.text(`Costo Operacional: $${(details.total_cost || 0).toFixed(2)}`, 20, 140);
+      doc.text(`Precio Venta: $${parseFloat(details.sale_price || 0).toFixed(2)}`, 20, 150);
+      doc.text(`Precio Unitario: $${parseFloat(details.unit_price_per_sale || 0).toFixed(2)}`, 20, 160);
+      doc.text(`Peso Restante: ${details.leftover_weight || '0.00'} lbs`, 20, 170);
+      doc.text(`Valor Sobrante: $${parseFloat(details.leftover_value || 0).toFixed(2)}`, 20, 180);
       
       // Balance with color
       const balance = parseFloat(details.balance) || 0;
       doc.setTextColor(balance >= 0 ? 16 : 239, balance >= 0 ? 185 : 68, balance >= 0 ? 129 : 68);
       doc.setFontSize(12);
-      doc.text(`Utilidad: $${balance.toFixed(2)}`, 20, 185);
+      doc.text(`Utilidad: $${balance.toFixed(2)}`, 20, 195);
       
       // Calculate yield and margin
       const pText = String(details.batch_purpose || '');
@@ -1888,8 +1888,8 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
       
       doc.setTextColor(0);
       doc.setFontSize(11);
-      doc.text(`Rendimiento: ${hYield > 0 ? hYield.toFixed(1) + '%' : 'N/A'}`, 20, 200);
-      doc.text(`Margen Bruto: ${hMargin.toFixed(1)}%`, 20, 210);
+      doc.text(`Rendimiento: ${hYield > 0 ? hYield.toFixed(1) + '%' : 'N/A'}`, 20, 210);
+      doc.text(`Margen Bruto: ${hMargin.toFixed(1)}%`, 20, 220);
       
       // Cost breakdown
       const totalMeatCost = (details.meats || []).reduce((acc, m) => acc + (parseFloat(m.cost) || 0), 0);
@@ -1897,12 +1897,12 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
       const unitCost = hWeight > 0 ? (details.total_cost / hWeight) : 0;
       
       doc.setFontSize(14);
-      doc.text('Desglose de Costos', 20, 235);
+      doc.text('Desglose de Costos', 20, 245);
       
       doc.setFontSize(11);
-      doc.text(`Materia Prima (Carnes): $${totalMeatCost.toFixed(2)}`, 20, 250);
-      doc.text(`Insumos Operativos: $${totalInputCost.toFixed(2)}`, 20, 260);
-      doc.text(`Costo Unitario: $${unitCost.toFixed(2)}/lb fina`, 20, 270);
+      doc.text(`Materia Prima (Carnes): $${totalMeatCost.toFixed(2)}`, 20, 260);
+      doc.text(`Insumos Operativos: $${totalInputCost.toFixed(2)}`, 20, 270);
+      doc.text(`Costo Unitario: $${unitCost.toFixed(2)}/lb fina`, 20, 280);
       
       // Meat details if available
       if (details.meats && details.meats.length > 0) {
