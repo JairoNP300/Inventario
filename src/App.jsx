@@ -3323,7 +3323,7 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
           
           if (serverVersion !== localVersion) {
             localStorage.setItem('app_version', serverVersion);
-            alert('✅ Aplicación actualizada exitosamente. Recargando...');
+            // Silent reload without alert
             window.location.reload();
           }
         }
