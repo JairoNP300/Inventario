@@ -2374,6 +2374,14 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
     };
 
     // We send it as a unified 'batch' to the food-costing endpoint
+    console.log('Saving food costing data:', {
+      product_id: meats[0]?.product_id || 0,
+      gross_weight: meats.reduce((acc, m) => acc + (parseFloat(m.weight) || 0), 0),
+      gross_cost: totalCost,
+      cooked_weight: netBalance,
+      data_summary: { event_name: data.event_name, batch_purpose: data.batch_purpose }
+    });
+    
     fetch(`${API_BASE}/food-costing`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -2384,7 +2392,11 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
         cooked_weight: netBalance,
         json_data: JSON.stringify(data)
       })
-    }).then(res => res.json()).then(saved => {
+    }).then(res => {
+      console.log('Server response status:', res.status);
+      if (!res.ok) throw new Error('Server returned ' + res.status);
+      return res.json();
+    }).then(saved => {
       console.log('Data saved successfully:', saved);
       setMeats([{ product_id: '', weight: '', cost: '' }]);
       setInputs([{ description: '', cost: '' }]);
