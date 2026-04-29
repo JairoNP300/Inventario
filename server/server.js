@@ -42,9 +42,11 @@ app.get('/api/version', (req, res) => {
 });
 
 // --- DATABASE CONFIGURATION ---
-// TEMPORARY: Force SQLite on Render due to IPv6 connection issues with Supabase
-// TODO: Re-enable PostgreSQL when IPv6 is resolved or use a different database provider
-const isProduction = false; // Force SQLite for now
+// Force IPv4 DNS resolution globally before any network operations
+import { setDefaultResultOrder } from 'dns';
+setDefaultResultOrder('ipv4first');
+
+const isProduction = !!process.env.DATABASE_URL;
 let pool;
 let sqliteDb;
 
