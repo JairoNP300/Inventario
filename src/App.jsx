@@ -3186,7 +3186,13 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
       </div>
       
       {/* Help Request Modal */}
-      {useMemo(() => <HelpRequestModal />, [helpRequestModal, helpRequestData])}
+      <HelpRequestModalComponent
+        isOpen={helpRequestModal}
+        helpRequestData={helpRequestData}
+        setHelpRequestData={setHelpRequestData}
+        setHelpRequestModal={setHelpRequestModal}
+        submitHelpRequest={submitHelpRequest}
+      />
     </div>
   );
 };
