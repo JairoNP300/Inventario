@@ -3196,6 +3196,34 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
     return () => clearInterval(inv);
   }, [refresh]);
 
+  // Auto-refresh on version change
+  useEffect(() => {
+    const checkForUpdates = async () => {
+      try {
+        const response = await fetch(`${API_BASE}/version`);
+        if (response.ok) {
+          const serverVersion = await response.text();
+          const localVersion = localStorage.getItem('app_version') || 'v1.0.0';
+          
+          if (serverVersion !== localVersion) {
+            localStorage.setItem('app_version', serverVersion);
+            alert('✅ Aplicación actualizada exitosamente. Recargando...');
+            window.location.reload();
+          }
+        }
+      } catch (e) {
+        // Version check failed, ignore
+      }
+    };
+
+    checkForUpdates();
+    updateCheckInterval = setInterval(checkForUpdates, 30000); // Check every 30 seconds
+
+    return () => {
+      if (updateCheckInterval) clearInterval(updateCheckInterval);
+    };
+  }, []);
+
   const triggerRefresh = () => setRefresh(prev => prev + 1);
 
   // Definición de todas las tabs disponibles
