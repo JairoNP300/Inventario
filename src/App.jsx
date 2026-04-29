@@ -827,7 +827,13 @@ const InvoicingSystem = ({ products, agros, onUpdate }) => {
   const [agroId, setAgroId] = useState('');
   const [qty, setQty] = useState('');
   const [unit, setUnit] = useState('Lbs');
-  const [client, setClient] = useState({ name: '', nrc: '', nit: '', address: '', activity: '' });
+  const [client, setClient] = useState({ 
+    name: '', nrc: '', nit: '', address: '', activity: '',
+    deliverer: '',      // Nombre Entrega
+    receiver: '',       // Nombre Recibe
+    observations: '',   // Observaciones
+    paymentCondition: 'CONTADO'  // Condición de operación
+  });
 
   // Auto-load dispatch data from sessionStorage
   useEffect(() => {
@@ -843,7 +849,11 @@ const InvoicingSystem = ({ products, agros, onUpdate }) => {
             nrc: dispatchData.client.nrc || '',
             nit: dispatchData.client.nit || '',
             address: dispatchData.client.address || '',
-            activity: ''
+            activity: '',
+            deliverer: dispatchData.client.deliverer || '',
+            receiver: dispatchData.client.receiver || '',
+            observations: dispatchData.client.observations || '',
+            paymentCondition: dispatchData.client.paymentCondition || 'CONTADO'
           });
         }
         
