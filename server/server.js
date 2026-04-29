@@ -968,10 +968,23 @@ app.get('/api/food-costing', async (req, res) => {
 app.post('/api/food-costing', async (req, res) => {
   const { product_id, gross_weight, gross_cost, cooked_weight, json_data } = req.body;
   try {
-    const info = await query(`
-      INSERT INTO food_costing (product_id, gross_weight, gross_cost, cooked_weight, json_data, date)
-      VALUES (?, ?, ?, ?, ?, ?) RETURNING id
-    `, [product_id, gross_weight, gross_cost, cooked_weight, json_data, new Date().toISOString()]);
+    // Use different queries for SQLite vs PostgreSQL
+    let info;
+    if (isProduction) {
+      // PostgreSQL supports RETURNING
+      info = await query(`
+        INSERT INTO food_costing (product_id, gross_weight, gross_cost, cooked_weight, json_data, date)
+        VALUES (?, ?, ?, ?, ?, ?) RETURNING id
+      `, [product_id, gross_weight, gross_cost, cooked_weight, json_data, new Date().toISOString()]);
+    } else {
+      // SQLite: insert then get last ID
+      const insertStmt = sqliteDb.prepare(`
+        INSERT INTO food_costing (product_id, gross_weight, gross_cost, cooked_weight, json_data, date)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `);
+      const result = insertStmt.run(product_id, gross_weight, gross_cost, cooked_weight, json_data, new Date().toISOString());
+      info = { lastInsertRowid: result.lastInsertRowid, rows: [] };
+    }
 
     // Parse json_data for better log details
     let eventName = 'Lote de comida';
