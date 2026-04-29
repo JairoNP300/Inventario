@@ -1778,7 +1778,7 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
     setHelpRequests(storedRequests);
   }, []);
 
-  if (selectedReport) return <FoodReport data={selectedReport} onBack={() => { setSelectedReport(null); onUpdate(); }} />;
+  if (selectedReport) return <FoodReport data={selectedReport} products={products} onBack={() => { setSelectedReport(null); onUpdate(); }} />;
 
   const addMeat = () => setMeats([...meats, { product_id: '', weight: '', cost: '' }]);
   const addInput = () => setInputs([...inputs, { description: '', cost: '' }]);
