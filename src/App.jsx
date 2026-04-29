@@ -2686,6 +2686,9 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
           </table>
         </div>
       </div>
+      
+      {/* Help Request Modal */}
+      <HelpRequestModal />
     </div>
   );
 };
