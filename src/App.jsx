@@ -3108,7 +3108,10 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
         .catch(() => setInventorySummary([]));
       fetch(`${API_BASE}/food-costing`)
         .then(r => r.json())
-        .then(d => setFoodCostingLogs(Array.isArray(d) ? d : []))
+        .then(d => {
+          console.log('Food costing logs fetched:', d);
+          setFoodCostingLogs(Array.isArray(d) ? d : []);
+        })
         .catch(() => setFoodCostingLogs([]));
     };
     fetchData();
