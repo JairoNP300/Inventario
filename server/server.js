@@ -42,8 +42,9 @@ app.get('/api/version', (req, res) => {
 });
 
 // --- DATABASE CONFIGURATION ---
-// Production only if DATABASE_URL is actually set
-const isProduction = !!process.env.DATABASE_URL;
+// TEMPORARY: Force SQLite on Render due to IPv6 connection issues with Supabase
+// TODO: Re-enable PostgreSQL when IPv6 is resolved or use a different database provider
+const isProduction = false; // Force SQLite for now
 let pool;
 let sqliteDb;
 
