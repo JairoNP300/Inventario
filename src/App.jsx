@@ -1914,8 +1914,11 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
             doc.addPage();
             meatY = 20;
           }
-          const productName = meat.product_name || meat.name || 'Producto';
-          doc.text(`${index + 1}. ${productName}: ${meat.weight || '0'} lbs - $${(meat.cost || '0').toFixed(2)}`, 20, meatY);
+          // Use the name field from enriched data, fallback to product_name, then to generic
+          const productName = meat.name || meat.product_name || 'Producto';
+          const weight = meat.weight || '0';
+          const cost = (meat.cost || '0').toFixed(2);
+          doc.text(`${index + 1}. ${productName}: ${weight} lbs - $${cost}`, 20, meatY);
           meatY += 10;
         });
       }
