@@ -2372,27 +2372,16 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
       console.log('Calling onUpdate to refresh data...');
       onUpdate();
       
-      // Show confirmation dialog with details
-      const confirmation = confirm(
-        `✅ Lote guardado exitosamente!\n\n` +
-        `📋 Detalles del Registro:\n` +
-        `• ID: ${saved.id}\n` +
-        `• Fecha: ${new Date(data.date).toLocaleDateString()}\n` +
-        `• Destino: ${data.event_name}\n` +
-        `• Propósito: ${data.batch_purpose}\n` +
-        `• Costo Total: $${data.total_cost.toFixed(2)}\n` +
-        `• Precio Venta: $${data.sale_price || '0.00'}\n` +
-        `• Utilidad: $${data.balance.toFixed(2)}\n\n` +
-        `¿Desea ver los detalles en el historial para corroborar los datos antes de imprimir el documento de auditoría operacional?`
-      );
+      // Simple success message and automatic scroll to history
+      alert(`¡Lote guardado exitosamente! ID: ${saved.id}`);
       
-      if (confirmation) {
-        // Scroll to history section
-        const historySection = document.querySelector('.form-card');
+      // Scroll to history section to see the saved data
+      setTimeout(() => {
+        const historySection = document.querySelector('.form-card:last-of-type');
         if (historySection) {
           historySection.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
-      }
+      }, 500);
     }).catch(err => {
       console.error('Error saving food costing:', err);
       alert('Error al guardar contabilidad de lote');
