@@ -968,6 +968,55 @@ const InvoicingSystem = ({ products, agros, onUpdate }) => {
             <input type="text" placeholder="Colonia San Benito..." value={client.address} onChange={e => setClient({ ...client, address: e.target.value })} />
           </div>
 
+          {/* Campos de Extensión de Factura */}
+          <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'rgba(56, 189, 248, 0.05)', borderRadius: '8px', border: '1px solid rgba(56, 189, 248, 0.2)' }}>
+            <h4 style={{ margin: '0 0 12px 0', fontSize: '0.9rem', color: 'var(--accent)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <FileText size={16} /> Datos de Extensión de Factura
+            </h4>
+            <div className="form-row two-col" style={{ marginBottom: '10px' }}>
+              <div className="form-group" style={{ margin: 0 }}>
+                <label>Condición de Operación</label>
+                <select 
+                  value={client.paymentCondition} 
+                  onChange={e => setClient({ ...client, paymentCondition: e.target.value })}
+                  style={{ width: '100%' }}
+                >
+                  <option value="CONTADO">CONTADO</option>
+                  <option value="CREDITO">CRÉDITO</option>
+                </select>
+              </div>
+              <div className="form-group" style={{ margin: 0 }}>
+                <label>Observaciones</label>
+                <input 
+                  type="text" 
+                  placeholder="Notas adicionales..." 
+                  value={client.observations} 
+                  onChange={e => setClient({ ...client, observations: e.target.value })} 
+                />
+              </div>
+            </div>
+            <div className="form-row two-col">
+              <div className="form-group" style={{ margin: 0 }}>
+                <label>Nombre Entrega</label>
+                <input 
+                  type="text" 
+                  placeholder="Persona que entrega la mercancía" 
+                  value={client.deliverer} 
+                  onChange={e => setClient({ ...client, deliverer: e.target.value })} 
+                />
+              </div>
+              <div className="form-group" style={{ margin: 0 }}>
+                <label>Nombre Recibe</label>
+                <input 
+                  type="text" 
+                  placeholder="Persona que recibe la mercancía" 
+                  value={client.receiver} 
+                  onChange={e => setClient({ ...client, receiver: e.target.value })} 
+                />
+              </div>
+            </div>
+          </div>
+
           <hr style={{ opacity: 0.1, margin: '2.5rem 0' }} />
 
           <div className="form-group">
