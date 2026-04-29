@@ -1855,7 +1855,6 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
 
   if (selectedReport) return <FoodReport data={selectedReport} products={products} onBack={() => { setSelectedReport(null); onUpdate(); }} />;
 
-
   const handleClearHistory = async () => {
     try {
       await fetch(`${API_BASE}/food-costing-all`, { method: 'DELETE' });
@@ -2108,7 +2107,7 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
                       }}>
                         ${balance.toFixed(2)}
                       </td>
-                      <td style={{ textAlign: 'center', display: 'flex', gap: '5px', justifyContent: 'center' }}>
+                      <td style={{ textAlign: 'center', display: 'flex', gap: '5px', justifyContent: 'center', flexWrap: 'wrap' }}>
                         <button
                           onClick={() => { setSelectedReport(lg); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                           className="btn-primary"
@@ -2117,6 +2116,25 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
                         >
                           <Printer size={14} />
                         </button>
+                        {isAdmin ? (
+                          <button
+                            onClick={() => handleEditRecord(lg)}
+                            className="btn-primary"
+                            style={{ padding: '6px 10px', fontSize: '0.7rem', width: 'auto', background: 'rgba(59, 130, 246, 0.1)', border: '1px solid #3b82f6', color: '#3b82f6' }}
+                            title="Editar Registro"
+                          >
+                            <Edit2 size={14} />
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleRequestHelp(lg)}
+                            className="btn-primary"
+                            style={{ padding: '6px 10px', fontSize: '0.7rem', width: 'auto', background: 'rgba(251, 191, 36, 0.1)', border: '1px solid #fbbf24', color: '#fbbf24' }}
+                            title="Solicitar Ayuda"
+                          >
+                            <AlertTriangle size={14} />
+                          </button>
+                        )}
                         <button
                           onClick={() => handleDeleteRow(lg.id)}
                           className="btn-primary"
