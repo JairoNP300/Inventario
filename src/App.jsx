@@ -1665,6 +1665,12 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
   });
   const [helpRequests, setHelpRequests] = useState([]);
 
+  // Load help requests on component mount
+  useEffect(() => {
+    const storedRequests = JSON.parse(localStorage.getItem('helpRequests') || '[]');
+    setHelpRequests(storedRequests);
+  }, []);
+
   if (selectedReport) return <FoodReport data={selectedReport} onBack={() => { setSelectedReport(null); onUpdate(); }} />;
 
   const addMeat = () => setMeats([...meats, { product_id: '', weight: '', cost: '' }]);
