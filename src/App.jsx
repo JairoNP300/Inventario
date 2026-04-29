@@ -1318,7 +1318,27 @@ const LogisticsHub = ({ products, agros, refreshTrigger, onUpdate, forceMode, in
     .then(r => r.json())
     .then(data => {
       if (data.error) { alert('Error: ' + data.error); return; }
-      setFormData({ product_id: '', origin: 'Ransa', destination: 'Lomas de San Francisco', weight: '', tag_weight: '', scale_weight: '', units_per_box: '', unit_type: 'Lbs', agro_id: '', value: '' });
+      
+      // Store dispatch data for invoice if it's a dispatch operation
+      if (!isIncome && activeSubTab === 'dispatch') {
+        const dispatchData = {
+          product_id: formData.product_id,
+          weight: formData.weight,
+          unit_type: formData.unit_type,
+          value: formData.value,
+          origin: formData.origin,
+          destination: formData.agro_id,
+          client: {
+            name: formData.client_name,
+            nit: formData.client_nit,
+            nrc: formData.client_nrc,
+            address: formData.client_address
+          }
+        };
+        sessionStorage.setItem('pending_invoice', JSON.stringify(dispatchData));
+      }
+      
+      setFormData({ product_id: '', origin: 'Ransa', destination: 'Lomas de San Francisco', weight: '', tag_weight: '', scale_weight: '', units_per_box: '', unit_type: 'Lbs', agro_id: '', value: '', client_name: '', client_nit: '', client_nrc: '', client_address: '' });
       setEditingId(null);
       onUpdate();
       alert(editingId ? 'Cambios actualizados correctamente' : 'Guardado correctamente');
