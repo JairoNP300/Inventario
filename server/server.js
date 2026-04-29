@@ -46,7 +46,9 @@ if (isProduction) {
   try {
     pool = new Pool({
       connectionString: process.env.DATABASE_URL,
-      ssl: { rejectUnauthorized: false }
+      ssl: { rejectUnauthorized: false },
+      // Force IPv4 to avoid ENETUNREACH error on Render
+      host: process.env.DATABASE_URL.match(/@([^:]+)/)?.[1] || undefined
     });
     console.log('✅ PostgreSQL conectado');
   } catch (e) {
