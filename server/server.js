@@ -35,6 +35,17 @@ app.get('/api/public-url', async (req, res) => {
   res.json({ url });
 });
 
+// Version endpoint for auto-refresh
+app.get('/api/version', (req, res) => {
+  const version = process.env.RENDER_GIT_COMMIT || process.env.VERCEL_GIT_COMMIT_SHA || Date.now().toString();
+  const deployTime = process.env.RENDER_DEPLOYED_AT || new Date().toISOString();
+  res.json({ 
+    version, 
+    deployTime,
+    timestamp: Date.now()
+  });
+});
+
 // --- DATABASE CONFIGURATION ---
 // Production only if DATABASE_URL is actually set
 const isProduction = !!process.env.DATABASE_URL;
