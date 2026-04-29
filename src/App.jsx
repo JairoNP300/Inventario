@@ -842,6 +842,8 @@ const InvoicingSystem = ({ products, agros, onUpdate }) => {
       return;
     }
 
+    console.log('Saving invoice with cart:', cart);
+    
     Promise.all(cart.map(item => {
       return fetch(`${API_BASE}/dispatches`, {
         method: 'POST',
@@ -853,13 +855,20 @@ const InvoicingSystem = ({ products, agros, onUpdate }) => {
           unit_type: item.unit,
           value: item.total
         })
+      }).then(res => {
+        if (!res.ok) throw new Error('Error saving dispatch');
+        return res.json();
       });
-    })).then(() => {
+    })).then(results => {
+      console.log('All dispatches saved:', results);
       alert('Venta guardada exitosamente. Abriendo vista de impresión...');
       window.print();
       setCart([]);
       onUpdate();
       window.dispatchEvent(new CustomEvent('changeTab', { detail: 'status' }));
+    }).catch(err => {
+      console.error('Error saving invoice:', err);
+      alert('Error al guardar la venta: ' + err.message);
     });
   };
 
