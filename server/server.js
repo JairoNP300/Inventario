@@ -55,7 +55,9 @@ if (isProduction) {
   console.log('📂 Iniciando SQLite local...');
   try {
     const Database = (await import('better-sqlite3')).default;
-    sqliteDb = new Database('inventario_oficial.db');
+    const dbPath = join(__dirname, '../inventario_oficial.db');
+    console.log('📁 Database path:', dbPath);
+    sqliteDb = new Database(dbPath);
     sqliteDb.pragma('journal_mode = WAL');
   } catch (e) {
     console.error('❌ Error cargando SQLite:', e.message);
