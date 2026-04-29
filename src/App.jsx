@@ -2666,7 +2666,7 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
             <div>
               <h4 style={{ borderBottom: '1px solid var(--border)', paddingBottom: '8px', fontSize: '1rem' }}>🛒 Materia Prima (Carnes)</h4>
               {meats.map((m, idx) => (
-                <div key={idx} style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                <div key={`meat-${idx}`} style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
                   <select value={m.product_id} onChange={e => updateMeat(idx, 'product_id', e.target.value)} required style={{ flex: 2 }}>
                     <option value="">Carne...</option>
                     {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
