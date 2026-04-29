@@ -2682,9 +2682,22 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
             <div>
               <h4 style={{ borderBottom: '1px solid var(--border)', paddingBottom: '8px', fontSize: '1rem' }}>🥗 Insumos y Verduras</h4>
               {inputs.map((inp, idx) => (
-                <div key={idx} style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
-                  <input type="text" placeholder="Tomate, Cebolla..." value={inp.description} onChange={e => updateInput(idx, 'description', e.target.value)} style={{ flex: 2 }} />
-                  <input type="number" step="0.01" placeholder="$ Costo" value={inp.cost} onChange={e => updateInput(idx, 'cost', e.target.value)} style={{ flex: 1 }} />
+                <div key={`input-${idx}`} style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                  <input 
+                    type="text" 
+                    placeholder="Tomate, Cebolla..." 
+                    value={inp.description} 
+                    onChange={e => updateInput(idx, 'description', e.target.value)} 
+                    style={{ flex: 2 }} 
+                  />
+                  <input 
+                    type="number" 
+                    step="0.01" 
+                    placeholder="$ Costo" 
+                    value={inp.cost} 
+                    onChange={e => updateInput(idx, 'cost', e.target.value)} 
+                    style={{ flex: 1 }} 
+                  />
                 </div>
               ))}
               <button type="button" onClick={addInput} style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--accent)', border: '1px dashed var(--accent)', padding: '5px 10px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.8rem' }}>+ Agregar Insumo</button>
