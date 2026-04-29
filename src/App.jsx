@@ -2667,7 +2667,7 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
               {logs.length === 0 ? (
                 <tr><td colSpan={11} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '20px' }}>Sin registros de lotes</td></tr>
               ) : (
-                logs.map(lg => {
+                logs.slice().reverse().map(lg => {
                   let details = {
                     event_name: lg.event_name || '—',
                     batch_purpose: lg.details || '—',
@@ -2808,14 +2808,16 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
                             <AlertTriangle size={14} />
                           </button>
                         )}
-                        <button
-                          onClick={() => handleDeleteRow(lg.id)}
-                          className="btn-primary"
-                          style={{ padding: '6px 10px', fontSize: '0.7rem', width: 'auto', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', color: '#ef4444' }}
-                          title="Eliminar Registro"
-                        >
-                          <Trash2 size={14} />
-                        </button>
+                        {isAdmin && (
+                          <button
+                            onClick={() => handleDeleteRow(lg.id)}
+                            className="btn-primary"
+                            style={{ padding: '6px 10px', fontSize: '0.7rem', width: 'auto', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', color: '#ef4444' }}
+                            title="Eliminar Registro"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        )}
                       </td>
                     </tr>
                   );
