@@ -1793,7 +1793,16 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
   };
 
   const handlePrintPDF = (record) => {
+    // Check if user is admin
+    const currentRole = sessionStorage.getItem('cp_role');
+    if (currentRole !== 'admin') {
+      alert('Función de PDF disponible solo para administradores');
+      return;
+    }
+
     try {
+      console.log('Generating PDF for record:', record);
+      
       // Parse record data
       let details = {
         event_name: record.event_name || '---',
@@ -1811,9 +1820,18 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
         details = { ...details, ...parsed };
       }
 
+      // Check if jsPDF is available
+      if (!window.jspdf || !window.jspdf.jsPDF) {
+        console.error('jsPDF not available');
+        alert('Error: Biblioteca PDF no cargada. Por favor recargue la página.');
+        return;
+      }
+
       // Create PDF content
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
+      
+      console.log('PDF document created');
       
       // Add custom font for better Spanish support
       doc.setFont('helvetica');
@@ -1905,13 +1923,16 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
       doc.text(`Generado: ${new Date().toLocaleString()}`, 105, 285, { align: 'center' });
       doc.text('Sistema de Inventario y Control de Lotes', 105, 290, { align: 'center' });
       
-      // Save the PDF
-      doc.save(`Lote_${record.id}_${new Date(record.date).toLocaleDateString().replace(/\//g, '-')}.pdf`);
+      // Generate filename and save
+      const filename = `Lote_${record.id}_${new Date(record.date).toLocaleDateString().replace(/\//g, '-')}.pdf`;
+      console.log('Saving PDF with filename:', filename);
+      
+      doc.save(filename);
       
       alert('PDF generado exitosamente');
     } catch (error) {
       console.error('Error generating PDF:', error);
-      alert('Error al generar el PDF. Por favor intente nuevamente.');
+      alert('Error al generar el PDF: ' + error.message);
     }
   };
 
