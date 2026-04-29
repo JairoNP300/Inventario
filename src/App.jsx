@@ -1653,6 +1653,8 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
   const [selectedReport, setSelectedReport] = useState(null);
   const [editingRecord, setEditingRecord] = useState(null);
   const [isAdmin, setIsAdmin] = useState(() => sessionStorage.getItem('cp_role') === 'admin');
+  const [inlineEditing, setInlineEditing] = useState({});
+  const [editingData, setEditingData] = useState({});
 
   if (selectedReport) return <FoodReport data={selectedReport} onBack={() => { setSelectedReport(null); onUpdate(); }} />;
 
