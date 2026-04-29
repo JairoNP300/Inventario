@@ -2313,6 +2313,30 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
                           type="number"
                         />
                       </td>
+                      <td>
+                        <EditableCell 
+                          recordId={lg.id} 
+                          field="unit_price_per_sale" 
+                          value={`$${parseFloat(details.unit_price_per_sale || 0).toFixed(2)}`} 
+                          type="number"
+                        />
+                      </td>
+                      <td>
+                        <EditableCell 
+                          recordId={lg.id} 
+                          field="leftover_weight" 
+                          value={details.leftover_weight || '0.00'} 
+                          type="number"
+                        />
+                      </td>
+                      <td style={{ color: 'var(--success)' }}>
+                        <EditableCell 
+                          recordId={lg.id} 
+                          field="leftover_value" 
+                          value={`$${parseFloat(details.leftover_value || 0).toFixed(2)}`} 
+                          type="number"
+                        />
+                      </td>
                       <td style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                         {hYield > 0 ? hYield.toFixed(0) + '%' : '---'}
                       </td>
