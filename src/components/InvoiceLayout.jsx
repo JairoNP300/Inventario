@@ -12,6 +12,10 @@ export default function InvoiceLayout({
   date = new Date().toISOString(),
   items = [],
   totals = {},
+  paymentCondition = 'CONTADO',
+  observations = '',
+  deliverer = '',
+  receiver = '',
   onPrint,
   onSave,
   onCancel
@@ -186,10 +190,10 @@ export default function InvoiceLayout({
       <div style={{ marginBottom: 14, border: '1px solid #d1d5db' }}>
         <div style={{ background: '#111827', color: '#fff', fontSize: 10, fontWeight: 700, padding: '4px 8px' }}>EXTENSIÓN</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, padding: 10, fontSize: 12 }}>
-          <div><strong>Condición de la operación:</strong> CONTADO</div>
-          <div><strong>Observaciones:</strong> ---</div>
-          <div><strong>Nombre Entrega:</strong> ---</div>
-          <div><strong>Nombre Recibe:</strong> ---</div>
+          <div><strong>Condición de la operación:</strong> {paymentCondition || recipient.paymentCondition || 'CONTADO'}</div>
+          <div><strong>Observaciones:</strong> {observations || recipient.observations || '---'}</div>
+          <div><strong>Nombre Entrega:</strong> {deliverer || recipient.deliverer || '---'}</div>
+          <div><strong>Nombre Recibe:</strong> {receiver || recipient.receiver || '---'}</div>
         </div>
       </div>
       
