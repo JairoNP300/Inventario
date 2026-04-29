@@ -30,7 +30,8 @@ import {
   Coins,
   LogOut,
   Lock,
-  MapPin
+  MapPin,
+  Bell
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import InvoiceLayout from './components/InvoiceLayout.jsx';
@@ -38,6 +39,10 @@ import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 
 const API_BASE = '/api';
+
+// Auto-refresh mechanism
+let currentVersion = localStorage.getItem('app_version') || 'v1.0.0';
+let updateCheckInterval = null;
 
 // Helper fetch que incluye el rol activo en cada request
 const apiFetch = (url, options = {}) => {
