@@ -119,15 +119,12 @@ function scheduleDeployment() {
     }, DEBOUNCE_MS);
 }
 
-// AUTO-DEPLOY TEMPORARILY DISABLED to prevent database wipes on Render
-// SQLite database is ephemeral on Render - each redeploy wipes data
-// To re-enable auto-deploy, remove the return statements below
+// AUTO-DEPLOY RE-ENABLED - PostgreSQL will be used for persistent storage
+// When DATABASE_URL is configured, the system uses PostgreSQL instead of SQLite
 
-console.log('⏸️ Auto-deploy DESHABILITADO temporalmente');
-console.log('⚠️ Razón: SQLite en Render se borra con cada redeploy');
-console.log('💡 Solución: Configura PostgreSQL en Render o despliega manualmente');
+console.log('✅ Auto-deploy HABILITADO');
+console.log('💡 Sistema usará PostgreSQL cuando DATABASE_URL esté configurado');
 
-/*
 watch(ROOT, { recursive: true }, (event, filename) => {
     if (filename && !shouldIgnore(filename)) {
         console.log(`📝 Archivo modificado: ${filename}`);
@@ -136,6 +133,5 @@ watch(ROOT, { recursive: true }, (event, filename) => {
 });
 
 deployOnStartupIfNeeded();
-*/
 
-console.log('✅ Sistema funcionando localmente sin auto-deploy activo\n');
+console.log('✅ Sistema funcionando con auto-deploy activo\n');
