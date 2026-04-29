@@ -2770,54 +2770,60 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
                           editable={false}
                         />
                       </td>
-                      <td style={{ textAlign: 'center', display: 'flex', gap: '5px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                        <button
-                          onClick={() => { setSelectedReport(lg); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                          className="btn-primary"
-                          style={{ padding: '6px 12px', fontSize: '0.7rem', width: 'auto', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)' }}
-                          title="Ver Reporte"
-                        >
-                          <FileText size={14} />
-                        </button>
-                        {isAdmin && (
-                          <button
-                            onClick={() => handlePrintPDF(lg)}
-                            className="btn-primary"
-                            style={{ padding: '6px 12px', fontSize: '0.7rem', width: 'auto', background: 'rgba(34, 197, 94, 0.1)', border: '1px solid #10b981', color: '#10b981' }}
-                            title="Imprimir PDF"
+                      <td className="col-actions">
+                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                          <motion.button
+                            whileHover={{ scale: 1.2 }}
+                            onClick={() => { setSelectedReport(lg); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                            style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer' }}
+                            title="Ver Reporte"
                           >
-                            <Download size={14} />
-                          </button>
-                        )}
-                        {isAdmin ? (
-                          <button
-                            onClick={() => handleEditRecord(lg)}
-                            className="btn-primary"
-                            style={{ padding: '6px 10px', fontSize: '0.7rem', width: 'auto', background: 'rgba(59, 130, 246, 0.1)', border: '1px solid #3b82f6', color: '#3b82f6' }}
-                            title="Editar Registro"
-                          >
-                            <Edit2 size={14} />
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => handleRequestHelp(lg)}
-                            className="btn-primary"
-                            style={{ padding: '6px 10px', fontSize: '0.7rem', width: 'auto', background: 'rgba(251, 191, 36, 0.1)', border: '1px solid #fbbf24', color: '#fbbf24' }}
-                            title="Solicitar Ayuda"
-                          >
-                            <AlertTriangle size={14} />
-                          </button>
-                        )}
-                        {isAdmin && (
-                          <button
-                            onClick={() => handleDeleteRow(lg.id)}
-                            className="btn-primary"
-                            style={{ padding: '6px 10px', fontSize: '0.7rem', width: 'auto', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', color: '#ef4444' }}
-                            title="Eliminar Registro"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        )}
+                            <FileText size={14} />
+                          </motion.button>
+                          {isAdmin && (
+                            <motion.button
+                              whileHover={{ scale: 1.2 }}
+                              onClick={() => handlePrintPDF(lg)}
+                              style={{ background: 'none', border: 'none', color: '#10b981', cursor: 'pointer' }}
+                              title="Imprimir PDF"
+                            >
+                              <Download size={14} />
+                            </motion.button>
+                          )}
+                          {isAdmin ? (
+                            <motion.button
+                              whileHover={{ scale: 1.2 }}
+                              onClick={() => handleEditRecord(lg)}
+                              style={{ background: 'none', border: 'none', color: '#f59e0b', cursor: 'pointer' }}
+                              title="Editar Registro"
+                            >
+                              <Edit2 size={14} />
+                            </motion.button>
+                          ) : (
+                            <motion.button
+                              whileHover={{ scale: 1.2 }}
+                              onClick={() => handleRequestHelp(lg)}
+                              style={{ background: 'none', border: 'none', color: '#fbbf24', cursor: 'pointer' }}
+                              title="Solicitar Ayuda"
+                            >
+                              <AlertTriangle size={14} />
+                            </motion.button>
+                          )}
+                          {isAdmin && (
+                            <motion.button
+                              whileHover={{ scale: 1.2 }}
+                              onClick={() => {
+                                if (confirm('¿Eliminar este registro de lote?')) {
+                                  handleDeleteRow(lg.id);
+                                }
+                              }}
+                              style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer' }}
+                              title="Eliminar Registro"
+                            >
+                              <Trash2 size={14} />
+                            </motion.button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
