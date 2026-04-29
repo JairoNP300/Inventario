@@ -905,54 +905,50 @@ const InvoicingSystem = ({ products, agros, onUpdate }) => {
 
           <hr style={{ opacity: 0.1, margin: '2.5rem 0' }} />
 
-          <div className="form-row two-col" style={{ alignItems: 'flex-start' }}>
+          <div className="form-group">
+            <label>Seleccionar Producto</label>
+            <select value={selectedProduct} onChange={e => setSelectedProduct(e.target.value)}>
+              <option value="">Seleccione Producto...</option>
+              {products.map(p => <option key={p.id} value={p.id}>{p.code ? `${p.code}: ` : ''}{p.name}</option>)}
+            </select>
+            {(() => {
+              const baseProduct = products.find(p => String(p.id) === String(selectedProduct));
+              if (!baseProduct) return null;
+
+              const getInCartKg = (agroID) => cart
+                .filter(item => String(item.product_id) === String(selectedProduct) && String(item.agro_id) === String(agroID))
+                .reduce((acc, item) => acc + (item.unit === 'Lbs' ? item.qty / 2.20462 : item.qty), 0);
+
+              const getInCartLbs = (agroID) => cart
+                .filter(item => String(item.product_id) === String(selectedProduct) && String(item.agro_id) === String(agroID))
+                .reduce((acc, item) => acc + (item.unit === 'Kg' ? item.qty * 2.20462 : item.qty), 0);
+
+              const displayProduct = {
+                ...baseProduct,
+                stock_kg: Math.max(0, (baseProduct.stock_kg || 0) - getInCartKg(1)),
+                stock_b2: Math.max(0, (baseProduct.stock_b2 || 0) - getInCartKg(2)),
+                stock_b3: Math.max(0, (baseProduct.stock_b3 || 0) - getInCartKg(3)),
+                stock_b4: Math.max(0, (baseProduct.stock_b4 || 0) - getInCartLbs(4))
+              };
+
+              return <ProductIntelligenceCard product={displayProduct} />;
+            })()}
+          </div>
+          <div className="form-group">
+            <label>Cantidad</label>
+            <input type="number" value={qty} onChange={e => setQty(e.target.value)} placeholder="Ingrese cantidad" />
+          </div>
+          <div className="form-row two-col">
             <div className="form-group">
-              <label>Seleccionar Producto</label>
-              <select value={selectedProduct} onChange={e => setSelectedProduct(e.target.value)}>
-                <option value="">Seleccione Producto...</option>
-                {products.map(p => <option key={p.id} value={p.id}>{p.code ? `${p.code}: ` : ''}{p.name}</option>)}
-              </select>
-              {(() => {
-                const baseProduct = products.find(p => String(p.id) === String(selectedProduct));
-                if (!baseProduct) return null;
-
-                const getInCartKg = (agroID) => cart
-                  .filter(item => String(item.product_id) === String(selectedProduct) && String(item.agro_id) === String(agroID))
-                  .reduce((acc, item) => acc + (item.unit === 'Lbs' ? item.qty / 2.20462 : item.qty), 0);
-
-                const getInCartLbs = (agroID) => cart
-                  .filter(item => String(item.product_id) === String(selectedProduct) && String(item.agro_id) === String(agroID))
-                  .reduce((acc, item) => acc + (item.unit === 'Kg' ? item.qty * 2.20462 : item.qty), 0);
-
-                const displayProduct = {
-                  ...baseProduct,
-                  stock_kg: Math.max(0, (baseProduct.stock_kg || 0) - getInCartKg(1)),
-                  stock_b2: Math.max(0, (baseProduct.stock_b2 || 0) - getInCartKg(2)),
-                  stock_b3: Math.max(0, (baseProduct.stock_b3 || 0) - getInCartKg(3)),
-                  stock_b4: Math.max(0, (baseProduct.stock_b4 || 0) - getInCartLbs(4))
-                };
-
-                return <ProductIntelligenceCard product={displayProduct} />;
-              })()}
+              <label>U. Medida</label>
+              <UnitSelector value={unit} onChange={setUnit} />
             </div>
             <div className="form-group">
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <div style={{ flex: 2 }}>
-                  <label style={{ fontSize: '0.65rem' }}>Cant</label>
-                  <input type="number" value={qty} onChange={e => setQty(e.target.value)} />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: '0.65rem' }}>U. Medida</label>
-                  <UnitSelector value={unit} onChange={setUnit} />
-                </div>
-                <div style={{ flex: 1.5 }}>
-                  <label style={{ fontSize: '0.65rem' }}>Ubicación Origen</label>
-                  <select value={agroId} onChange={e => setAgroId(e.target.value)}>
-                    <option value="">Seleccione...</option>
-                    {agros.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
-                  </select>
-                </div>
-              </div>
+              <label>Ubicación Origen</label>
+              <select value={agroId} onChange={e => setAgroId(e.target.value)}>
+                <option value="">Seleccione...</option>
+                {agros.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+              </select>
             </div>
           </div>
           <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'flex-end' }}>
