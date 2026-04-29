@@ -36,8 +36,9 @@ app.get('/api/public-url', async (req, res) => {
 });
 
 // --- DATABASE CONFIGURATION ---
-// Production only if DATABASE_URL is actually set
-const isProduction = !!process.env.DATABASE_URL;
+// TEMPORARY: Force SQLite to avoid IPv6 connection issues on Render
+// TODO: Fix IPv6 issue and re-enable PostgreSQL for production
+const isProduction = false; // Force SQLite for now
 let pool;
 let sqliteDb;
 
