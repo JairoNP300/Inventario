@@ -1776,15 +1776,228 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
   };
 
   const handleRequestHelp = (record) => {
-    const message = `Usuario solicita ayuda para editar el registro ID: ${record.id}\n` +
-                   `Fecha: ${new Date(record.date).toLocaleDateString()}\n` +
-                   `Propósito: ${record.json_data ? (typeof record.json_data === 'string' ? JSON.parse(record.json_data).batch_purpose : record.json_data.batch_purpose) : 'N/A'}\n` +
-                   `Por favor contacte al administrador para asistencia.`;
-    
-    alert(message);
-    
-    // Here you could also send this to a notification system or log it
-    console.log('Help requested for record:', record.id);
+    setHelpRequestData({
+      recordId: record.id,
+      issueType: 'correccion_registro',
+      description: '',
+      contactInfo: '',
+      urgency: 'normal'
+    });
+    setHelpRequestModal(true);
+  };
+
+  const submitHelpRequest = () => {
+    const newRequest = {
+      id: Date.now(),
+      recordId: helpRequestData.recordId,
+      issueType: helpRequestData.issueType,
+      description: helpRequestData.description,
+      contactInfo: helpRequestData.contactInfo,
+      urgency: helpRequestData.urgency,
+      timestamp: new Date().toISOString(),
+      status: 'pending',
+      userRole: sessionStorage.getItem('cp_role') || 'desconocido'
+    };
+
+    // Add to help requests list
+    setHelpRequests([...helpRequests, newRequest]);
+
+    // Store in localStorage for persistence and admin notification
+    const existingRequests = JSON.parse(localStorage.getItem('helpRequests') || '[]');
+    existingRequests.push(newRequest);
+    localStorage.setItem('helpRequests', JSON.stringify(existingRequests));
+
+    // Show confirmation
+    alert(`Solicitud de ayuda enviada exitosamente:\n\n` +
+          `ID Registro: ${helpRequestData.recordId}\n` +
+          `Tipo: ${helpRequestData.issueType}\n` +
+          `Descripción: ${helpRequestData.description}\n` +
+          `Urgencia: ${helpRequestData.urgency}\n\n` +
+          `El administrador será notificado y responderá a la brevedad.`);
+
+    // Reset modal
+    setHelpRequestModal(false);
+    setHelpRequestData({
+      recordId: null,
+      issueType: '',
+      description: '',
+      contactInfo: '',
+      urgency: 'normal'
+    });
+  };
+
+  const HelpRequestModal = () => {
+    if (!helpRequestModal) return null;
+
+    return (
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0,0,0,0.8)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000
+      }}>
+        <div style={{
+          background: 'var(--bg-main)',
+          padding: '30px',
+          borderRadius: '16px',
+          border: '1px solid var(--border)',
+          maxWidth: '500px',
+          width: '90%',
+          maxHeight: '80vh',
+          overflowY: 'auto'
+        }}>
+          <h3 style={{ color: 'var(--accent)', marginBottom: '20px' }}>
+            <AlertTriangle size={20} style={{ marginRight: '10px' }} />
+            Solicitar Ayuda al Administrador
+          </h3>
+          
+          <div style={{ marginBottom: '15px' }}>
+            <label style={{ color: 'var(--text-main)', display: 'block', marginBottom: '5px' }}>
+              Tipo de Solicitud:
+            </label>
+            <select
+              value={helpRequestData.issueType}
+              onChange={(e) => setHelpRequestData({ ...helpRequestData, issueType: e.target.value })}
+              style={{
+                width: '100%',
+                padding: '8px',
+                background: 'var(--bg-secondary)',
+                border: '1px solid var(--border)',
+                borderRadius: '8px',
+                color: 'white'
+              }}
+            >
+              <option value="">Seleccione un tipo...</option>
+              <option value="correccion_registro">Corrección de Registro</option>
+              <option value="error_sistema">Error del Sistema</option>
+              <option value="acceso_denegado">Acceso Denegado</option>
+              <option value="datos_incorrectos">Datos Incorrectos</option>
+              <option value="otro">Otro (Especificar)</option>
+            </select>
+          </div>
+
+          <div style={{ marginBottom: '15px' }}>
+            <label style={{ color: 'var(--text-main)', display: 'block', marginBottom: '5px' }}>
+              ID del Registro:
+            </label>
+            <input
+              type="text"
+              value={helpRequestData.recordId || ''}
+              readOnly
+              style={{
+                width: '100%',
+                padding: '8px',
+                background: 'rgba(255,255,255,0.1)',
+                border: '1px solid var(--border)',
+                borderRadius: '8px',
+                color: 'var(--text-muted)'
+              }}
+            />
+          </div>
+
+          <div style={{ marginBottom: '15px' }}>
+            <label style={{ color: 'var(--text-main)', display: 'block', marginBottom: '5px' }}>
+              Descripción Detallada:
+            </label>
+            <textarea
+              value={helpRequestData.description}
+              onChange={(e) => setHelpRequestData({ ...helpRequestData, description: e.target.value })}
+              placeholder="Describa detalladamente lo que necesita corregir o el problema encontrado..."
+              style={{
+                width: '100%',
+                padding: '8px',
+                background: 'var(--bg-secondary)',
+                border: '1px solid var(--border)',
+                borderRadius: '8px',
+                color: 'white',
+                minHeight: '100px',
+                resize: 'vertical'
+              }}
+              required
+            />
+          </div>
+
+          <div style={{ marginBottom: '15px' }}>
+            <label style={{ color: 'var(--text-main)', display: 'block', marginBottom: '5px' }}>
+              Información de Contacto:
+            </label>
+            <input
+              type="text"
+              value={helpRequestData.contactInfo}
+              onChange={(e) => setHelpRequestData({ ...helpRequestData, contactInfo: e.target.value })}
+              placeholder="Teléfono, email o forma de contacto preferida"
+              style={{
+                width: '100%',
+                padding: '8px',
+                background: 'var(--bg-secondary)',
+                border: '1px solid var(--border)',
+                borderRadius: '8px',
+                color: 'white'
+              }}
+            />
+          </div>
+
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{ color: 'var(--text-main)', display: 'block', marginBottom: '5px' }}>
+              Urgencia:
+            </label>
+            <select
+              value={helpRequestData.urgency}
+              onChange={(e) => setHelpRequestData({ ...helpRequestData, urgency: e.target.value })}
+              style={{
+                width: '100%',
+                padding: '8px',
+                background: 'var(--bg-secondary)',
+                border: '1px solid var(--border)',
+                borderRadius: '8px',
+                color: 'white'
+              }}
+            >
+              <option value="baja">Baja</option>
+              <option value="normal">Normal</option>
+              <option value="alta">Alta</option>
+              <option value="critica">Crítica</option>
+            </select>
+          </div>
+
+          <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+            <button
+              onClick={() => setHelpRequestModal(false)}
+              style={{
+                padding: '10px 20px',
+                background: '#6b7280',
+                border: 'none',
+                borderRadius: '8px',
+                color: 'white',
+                cursor: 'pointer'
+              }}
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={submitHelpRequest}
+              disabled={!helpRequestData.description || !helpRequestData.issueType}
+              style={{
+                padding: '10px 20px',
+                background: helpRequestData.description && helpRequestData.issueType ? 'var(--accent)' : '#4b5563',
+                border: 'none',
+                borderRadius: '8px',
+                color: 'white',
+                cursor: helpRequestData.description && helpRequestData.issueType ? 'pointer' : 'not-allowed'
+              }}
+            >
+              Enviar Solicitud
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   const startInlineEdit = (recordId, field, currentValue) => {
