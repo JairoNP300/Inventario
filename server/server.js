@@ -72,7 +72,8 @@ if (isProduction) {
     
     pool = new Pool({
       connectionString: connectionString,
-      ssl: { rejectUnauthorized: false }
+      ssl: { rejectUnauthorized: false },
+      family: 4 // Force IPv4
     });
     console.log('✅ PostgreSQL conectado');
   } catch (e) {
