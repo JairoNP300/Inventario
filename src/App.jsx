@@ -2787,14 +2787,16 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
                         >
                           <FileText size={14} />
                         </button>
-                        <button
-                          onClick={() => handlePrintPDF(lg)}
-                          className="btn-primary"
-                          style={{ padding: '6px 12px', fontSize: '0.7rem', width: 'auto', background: 'rgba(34, 197, 94, 0.1)', border: '1px solid #10b981', color: '#10b981' }}
-                          title="Imprimir PDF"
-                        >
-                          <Download size={14} />
-                        </button>
+                        {isAdmin && (
+                          <button
+                            onClick={() => handlePrintPDF(lg)}
+                            className="btn-primary"
+                            style={{ padding: '6px 12px', fontSize: '0.7rem', width: 'auto', background: 'rgba(34, 197, 94, 0.1)', border: '1px solid #10b981', color: '#10b981' }}
+                            title="Imprimir PDF"
+                          >
+                            <Download size={14} />
+                          </button>
+                        )}
                         {isAdmin ? (
                           <button
                             onClick={() => handleEditRecord(lg)}
