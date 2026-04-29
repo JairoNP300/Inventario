@@ -2288,6 +2288,45 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
 
   return (
     <div className="report-content">
+      {/* Help Requests Notification for Admins */}
+      {isAdmin && helpRequests.length > 0 && (
+        <div style={{ 
+          background: 'rgba(251, 191, 36, 0.1)', 
+          border: '1px solid #fbbf24', 
+          borderRadius: '8px', 
+          padding: '10px', 
+          marginBottom: '10px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px'
+        }}>
+          <AlertTriangle size={16} color="#fbbf24" />
+          <span style={{ color: '#fbbf24', fontSize: '0.9rem' }}>
+            <strong>{helpRequests.filter(r => r.status === 'pending').length}</strong> solicitudes de ayuda pendientes
+          </span>
+          <button 
+            onClick={() => {
+              const pendingRequests = helpRequests.filter(r => r.status === 'pending');
+              const message = pendingRequests.map(r => 
+                `ID: ${r.id} | Registro: ${r.recordId} | Tipo: ${r.issueType} | Urgencia: ${r.urgency}\nDescripción: ${r.description}`
+              ).join('\n\n');
+              alert(`Solicitudes de Ayuda Pendientes:\n\n${message}`);
+            }}
+            style={{
+              background: '#fbbf24',
+              border: 'none',
+              borderRadius: '4px',
+              padding: '4px 8px',
+              color: 'white',
+              fontSize: '0.8rem',
+              cursor: 'pointer'
+            }}
+          >
+            Ver Solicitudes
+          </button>
+        </div>
+      )}
+
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px', gap: '10px' }}>
         <button onClick={handleClearHistory} className="btn-primary" style={{ width: 'auto', background: '#ef4444', fontSize: '0.8rem', padding: '8px 15px', color: 'white' }}>
           <Trash2 size={16} /> Vaciar Historial
