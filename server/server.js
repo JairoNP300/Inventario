@@ -307,7 +307,7 @@ const initDb = async () => {
     );
 
     CREATE TABLE IF NOT EXISTS food_costing (
-      id SERIAL PRIMARY KEY,
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
       date TEXT,
       event_name TEXT,
       details TEXT, 
