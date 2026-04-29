@@ -2691,7 +2691,7 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
                   const balance = parseFloat(details.balance) || 0;
 
                   return (
-                    <tr key={lg.id}>
+                    <tr key={lg.id} className="fade-in">
                       <td style={{ color: 'var(--text-muted)' }}>
                         <EditableCell 
                           recordId={lg.id} 
