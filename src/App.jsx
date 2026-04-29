@@ -1820,15 +1820,7 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
         details = { ...details, ...parsed };
       }
 
-      // Check if jsPDF is available
-      if (!window.jspdf || !window.jspdf.jsPDF) {
-        console.error('jsPDF not available');
-        alert('Error: Biblioteca PDF no cargada. Por favor recargue la página.');
-        return;
-      }
-
-      // Create PDF content
-      const { jsPDF } = window.jspdf;
+      // Create PDF content using imported jsPDF
       const doc = new jsPDF();
       
       console.log('PDF document created');
