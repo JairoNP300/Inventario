@@ -3005,7 +3005,7 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
       </div>
       
       {/* Help Request Modal */}
-      <HelpRequestModal />
+      {useMemo(() => <HelpRequestModal />, [helpRequestModal, helpRequestData])}
     </div>
   );
 };
