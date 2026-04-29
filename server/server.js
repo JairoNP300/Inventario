@@ -73,12 +73,19 @@ if (isProduction) {
     pool = new Pool({
       connectionString: connectionString,
       ssl: { rejectUnauthorized: false },
-      family: 4 // Force IPv4
+      family: 4, // Force IPv4
+      connectionTimeoutMillis: 10000,
+      idleTimeoutMillis: 30000
     });
-    console.log('✅ PostgreSQL conectado');
+    
+    // Test the connection
+    const client = await pool.connect();
+    console.log('✅ PostgreSQL conectado exitosamente');
+    client.release();
   } catch (e) {
     console.error('❌ Error conectando PostgreSQL:', e.message);
     console.log('⚠️ Fallback a SQLite...');
+    pool = null;
   }
 }
 
