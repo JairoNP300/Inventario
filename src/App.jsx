@@ -1792,6 +1792,129 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
     setHelpRequestModal(true);
   };
 
+  const handlePrintPDF = (record) => {
+    try {
+      // Parse record data
+      let details = {
+        event_name: record.event_name || '---',
+        batch_purpose: record.details || '---',
+        total_cost: parseFloat(record.gross_cost) || 0,
+        sale_price: 0,
+        leftover_value: 0,
+        unit_price_per_sale: 0,
+        leftover_weight: 0,
+        balance: parseFloat(record.cooked_weight) || 0
+      };
+      
+      if (record.json_data) {
+        const parsed = typeof record.json_data === 'string' ? JSON.parse(record.json_data) : record.json_data;
+        details = { ...details, ...parsed };
+      }
+
+      // Create PDF content
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      
+      // Add custom font for better Spanish support
+      doc.setFont('helvetica');
+      
+      // Header
+      doc.setFontSize(20);
+      doc.setTextColor(56, 189, 248);
+      doc.text('Reporte de Lote de Comida', 105, 20, { align: 'center' });
+      
+      // Date and ID
+      doc.setFontSize(12);
+      doc.setTextColor(100);
+      doc.text(`ID: ${record.id}`, 20, 35);
+      doc.text(`Fecha: ${new Date(record.date).toLocaleDateString()}`, 20, 45);
+      
+      // Main information
+      doc.setFontSize(14);
+      doc.setTextColor(0);
+      doc.text('Información General', 20, 65);
+      
+      doc.setFontSize(11);
+      doc.text(`Destino/Institución: ${details.event_name}`, 20, 80);
+      doc.text(`Propósito: ${details.batch_purpose}`, 20, 90);
+      
+      // Financial details
+      doc.setFontSize(14);
+      doc.text('Detalles Financieros', 20, 115);
+      
+      doc.setFontSize(11);
+      doc.text(`Costo Operacional: $${(details.total_cost || 0).toFixed(2)}`, 20, 130);
+      doc.text(`Precio Venta: $${parseFloat(details.sale_price || 0).toFixed(2)}`, 20, 140);
+      doc.text(`Precio Unitario: $${parseFloat(details.unit_price_per_sale || 0).toFixed(2)}`, 20, 150);
+      doc.text(`Peso Restante: ${details.leftover_weight || '0.00'} lbs`, 20, 160);
+      doc.text(`Valor Sobrante: $${parseFloat(details.leftover_value || 0).toFixed(2)}`, 20, 170);
+      
+      // Balance with color
+      const balance = parseFloat(details.balance) || 0;
+      doc.setTextColor(balance >= 0 ? 16 : 239, balance >= 0 ? 185 : 68, balance >= 0 ? 129 : 68);
+      doc.setFontSize(12);
+      doc.text(`Utilidad: $${balance.toFixed(2)}`, 20, 185);
+      
+      // Calculate yield
+      const pText = String(details.batch_purpose || '');
+      const histWeightMatch = pText.match(/(\d+(\.\d+)?)/);
+      const hWeight = histWeightMatch ? parseFloat(histWeightMatch[0]) : (parseFloat(record.cooked_weight) || 0);
+      const hRawTotal = (details.meats || []).reduce((acc, m) => acc + (parseFloat(m.weight) || 0), 0) || (parseFloat(record.gross_weight) || 0);
+      const hYield = hRawTotal > 0 ? (hWeight / hRawTotal) * 100 : 0;
+      
+      doc.setTextColor(0);
+      doc.setFontSize(11);
+      doc.text(`Rendimiento: ${hYield > 0 ? hYield.toFixed(1) + '%' : 'N/A'}`, 20, 200);
+      
+      // Meat details if available
+      if (details.meats && details.meats.length > 0) {
+        doc.setFontSize(14);
+        doc.text('Materias Primas (Carnes)', 20, 225);
+        
+        doc.setFontSize(10);
+        let meatY = 240;
+        details.meats.forEach((meat, index) => {
+          if (meatY > 270) {
+            doc.addPage();
+            meatY = 20;
+          }
+          doc.text(`${index + 1}. ${meat.name || 'Producto'}: ${meat.weight || '0'} lbs - $${(meat.cost || '0').toFixed(2)}`, 20, meatY);
+          meatY += 10;
+        });
+      }
+      
+      // Input details if available
+      if (details.inputs && details.inputs.length > 0) {
+        const currentY = doc.internal.pageSize.height - 60;
+        if (currentY > 100) {
+          doc.setFontSize(14);
+          doc.text('Insumos Adicionales', 20, currentY - 20);
+          
+          doc.setFontSize(10);
+          let inputY = currentY - 10;
+          details.inputs.slice(0, 3).forEach((input, index) => {
+            doc.text(`${index + 1}. ${input.description || 'Insumo'}: $${(input.cost || '0').toFixed(2)}`, 20, inputY);
+            inputY += 8;
+          });
+        }
+      }
+      
+      // Footer
+      doc.setFontSize(10);
+      doc.setTextColor(150);
+      doc.text(`Generado: ${new Date().toLocaleString()}`, 105, 285, { align: 'center' });
+      doc.text('Sistema de Inventario y Control de Lotes', 105, 290, { align: 'center' });
+      
+      // Save the PDF
+      doc.save(`Lote_${record.id}_${new Date(record.date).toLocaleDateString().replace(/\//g, '-')}.pdf`);
+      
+      alert('PDF generado exitosamente');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Error al generar el PDF. Por favor intente nuevamente.');
+    }
+  };
+
   const submitHelpRequest = () => {
     const newRequest = {
       id: Date.now(),
