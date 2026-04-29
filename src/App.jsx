@@ -2248,7 +2248,7 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
             </thead>
             <tbody>
               {logs.length === 0 ? (
-                <tr><td colSpan={8} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '20px' }}>Sin registros de lotes</td></tr>
+                <tr><td colSpan={11} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '20px' }}>Sin registros de lotes</td></tr>
               ) : (
                 logs.map(lg => {
                   let details = {
