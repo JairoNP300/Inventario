@@ -2055,6 +2055,7 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
     leftover_value: '',
     unit_price_per_sale: '',
     leftover_weight: '',
+    quantity_sold: '', // Cantidad de unidades vendidas (ej: 1000 pinchos)
     payment_status: 'Crédito',
     notes: ''
   });
@@ -2843,14 +2844,66 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
               </h4>
             </div>
 
-            <div className="form-row">
+            <div className="form-row three-col">
               <div className="form-group">
-                <label>Precio Venta / Crédito ($)</label>
-                <input type="number" step="0.01" value={extraData.sale_price} onChange={e => setExtraData({ ...extraData, sale_price: e.target.value })} placeholder="0.00" style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--accent)' }} />
+                <label>Cantidad de Unidades Vendidas</label>
+                <input 
+                  type="number" 
+                  step="1" 
+                  value={extraData.quantity_sold} 
+                  onChange={e => {
+                    const qty = e.target.value;
+                    const unitPrice = parseFloat(extraData.unit_price_per_sale) || 0;
+                    const calculatedSalePrice = qty && unitPrice ? (parseFloat(qty) * unitPrice).toFixed(2) : extraData.sale_price;
+                    setExtraData({ 
+                      ...extraData, 
+                      quantity_sold: qty,
+                      sale_price: calculatedSalePrice
+                    });
+                  }} 
+                  placeholder="Ej: 1000" 
+                  style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-main)' }} 
+                />
+                <small style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>
+                  Ej: 1000 pinchos, 50 platos, etc.
+                </small>
               </div>
               <div className="form-group">
                 <label>Precio Unitario por Venta ($)</label>
-                <input type="number" step="0.01" value={extraData.unit_price_per_sale} onChange={e => setExtraData({ ...extraData, unit_price_per_sale: e.target.value })} placeholder="0.00" style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-main)' }} />
+                <input 
+                  type="number" 
+                  step="0.01" 
+                  value={extraData.unit_price_per_sale} 
+                  onChange={e => {
+                    const unitPrice = e.target.value;
+                    const qty = parseFloat(extraData.quantity_sold) || 0;
+                    const calculatedSalePrice = qty && unitPrice ? (qty * parseFloat(unitPrice)).toFixed(2) : extraData.sale_price;
+                    setExtraData({ 
+                      ...extraData, 
+                      unit_price_per_sale: unitPrice,
+                      sale_price: calculatedSalePrice
+                    });
+                  }} 
+                  placeholder="0.00" 
+                  style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-main)' }} 
+                />
+                <small style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>
+                  Precio por cada unidad vendida
+                </small>
+              </div>
+              <div className="form-group">
+                <label>Precio Venta Total ($)</label>
+                <input 
+                  type="number" 
+                  step="0.01" 
+                  value={extraData.sale_price} 
+                  onChange={e => setExtraData({ ...extraData, sale_price: e.target.value })} 
+                  placeholder="0.00" 
+                  style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--accent)' }} 
+                />
+                <small style={{ color: 'var(--accent)', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>
+                  Calculado: {extraData.quantity_sold || '0'} × ${extraData.unit_price_per_sale || '0.00'} = ${extraData.sale_price || '0.00'}
+                </small>
               </div>
             </div>
             <div className="form-row">
