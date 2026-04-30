@@ -3447,39 +3447,147 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
   const PRODUCT_WEIGHT_DATA = useMemo(() => ({
     // Datos extraídos del inventario físico Ransa (500+ páginas)
     // Última actualización: Abril 2026
+    
+    // STOCK POR UBICACIÓN (según imagen inicial)
+    stockByLocation: {
+      usulutan_warehouse: {
+        name: "Bodega Usulután",
+        totalBoxes: 583, // Saldo inicial (Cajas Salen)
+        products: {
+          "1618": { boxes: 222, name: "Sin Hueso Nalga Adentro" },
+          "1619": { boxes: 111, name: "Sin Hueso Tortuguita" },
+          "1620": { boxes: 0, name: "Con Hueso Cogote" },
+          "1621": { boxes: 0, name: "Sin Hueso Bife Angosto" },
+          "1622": { boxes: 0, name: "Recorte 80.20" },
+          "1623": { boxes: 0, name: "Recorte 50.50" },
+          "1624": { boxes: 102, name: "Aguja" },
+          "1625": { boxes: 0, name: "Corazón Cuadril" },
+          "1626": { boxes: 44, name: "Sin Hueso Delantero" },
+          "1627": { boxes: 0, name: "Sin Hueso Tapa Cuadril" },
+          "1628": { boxes: 104, name: "Sin Hueso Recorte de Carne" }
+        }
+      },
+      ransa: {
+        name: "Ransa",
+        totalBoxes: 330, // Cajas disponibles en Ransa (Cajas Quedan)
+        products: {
+          "1618": { boxes: 63, name: "Sin Hueso Nalga Adentro" },
+          "1619": { boxes: 63, name: "Sin Hueso Tortuguita" },
+          "1620": { boxes: 45, name: "Con Hueso Cogote" },
+          "1621": { boxes: 22, name: "Sin Hueso Bife Angosto" },
+          "1622": { boxes: 21, name: "Recorte 80.20" },
+          "1623": { boxes: 23, name: "Recorte 50.50" },
+          "1624": { boxes: 0, name: "Aguja" },
+          "1625": { boxes: 0, name: "Corazón Cuadril" },
+          "1626": { boxes: 0, name: "Sin Hueso Delantero" },
+          "1627": { boxes: 34, name: "Sin Hueso Tapa Cuadril" },
+          "1628": { boxes: 59, name: "Sin Hueso Recorte de Carne" }
+        }
+      }
+    },
+    
+    // PESOS PROMEDIO POR PRODUCTO
     weightAverages: {
       "1618": { 
         name: "Sin Hueso Nalga Adentro", 
         avgLbs: 15.08, 
         avgKg: 6.84, 
-        boxes: 222,
+        totalBoxes: 285, // Total general del producto
         totalKg: 1517.28 
       },
       "1619": { 
         name: "Sin Hueso Tortuguita", 
         avgLbs: 47.58, 
         avgKg: 21.58, 
-        boxes: 111 
+        totalBoxes: 174
+      },
+      "1620": { 
+        name: "Con Hueso Cogote", 
+        avgLbs: 0, // No hay datos de peso en las imágenes
+        avgKg: 0,
+        totalBoxes: 45
+      },
+      "1621": { 
+        name: "Sin Hueso Bife Angosto", 
+        avgLbs: 0,
+        avgKg: 0,
+        totalBoxes: 22
+      },
+      "1622": { 
+        name: "Recorte 80.20", 
+        avgLbs: 0,
+        avgKg: 0,
+        totalBoxes: 21
+      },
+      "1623": { 
+        name: "Recorte 50.50", 
+        avgLbs: 0,
+        avgKg: 0,
+        totalBoxes: 23
       },
       "1624": { 
         name: "Aguja", 
         avgLbs: 39.95, 
         avgKg: 18.12, 
-        boxes: 102 
+        totalBoxes: 102
+      },
+      "1625": { 
+        name: "Corazón Cuadril", 
+        avgLbs: 0,
+        avgKg: 0,
+        totalBoxes: 0
       },
       "1626": { 
         name: "Sin Hueso Delantero", 
         avgLbs: 53.72, 
         avgKg: 24.37, 
-        boxes: 44 
+        totalBoxes: 44
+      },
+      "1627": { 
+        name: "Sin Hueso Tapa Cuadril", 
+        avgLbs: 0,
+        avgKg: 0,
+        totalBoxes: 34
       },
       "1628": { 
         name: "Sin Hueso Recorte de Carne", 
         avgLbs: 46.41, 
         avgKg: 21.05, 
-        boxes: 104 
+        totalBoxes: 163
       }
     },
+    
+    // Función para obtener stock por ubicación
+    getStockByLocation: function(location, productCode = null) {
+      const locationData = this.stockByLocation[location];
+      if (!locationData) return null;
+      
+      if (productCode) {
+        const productStock = locationData.products[productCode];
+        if (!productStock) return null;
+        return {
+          boxes: productStock.boxes,
+          name: productStock.name,
+          location: locationData.name,
+          estimatedWeightLbs: productStock.boxes * (this.weightAverages[productCode]?.avgLbs || 0),
+          estimatedWeightKg: productStock.boxes * (this.weightAverages[productCode]?.avgKg || 0)
+        };
+      }
+      
+      // Retorna todo el stock de la ubicación
+      return {
+        location: locationData.name,
+        totalBoxes: locationData.totalBoxes,
+        products: Object.entries(locationData.products).map(([code, data]) => ({
+          code,
+          name: data.name,
+          boxes: data.boxes,
+          estimatedWeightLbs: data.boxes * (this.weightAverages[code]?.avgLbs || 0),
+          estimatedWeightKg: data.boxes * (this.weightAverages[code]?.avgKg || 0)
+        }))
+      };
+    },
+    
     // Función para obtener peso promedio por código de producto
     getAverageWeight: function(productCode) {
       const data = this.weightAverages[productCode];
@@ -3487,9 +3595,10 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
       return {
         lbs: data.avgLbs,
         kg: data.avgKg,
-        boxes: data.boxes
+        totalBoxes: data.totalBoxes
       };
     },
+    
     // Función para calcular peso estimado por cantidad de cajas
     calculateEstimatedWeight: function(productCode, boxCount, unit = 'Lbs') {
       const avg = this.getAverageWeight(productCode);
@@ -3499,7 +3608,29 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
         estimatedWeight: weight,
         unit: unit,
         basedOn: `${boxCount} cajas × ${unit === 'Lbs' ? avg.lbs : avg.kg} ${unit}/caja`,
-        referenceBoxes: avg.boxes
+        referenceTotalBoxes: avg.totalBoxes
+      };
+    },
+    
+    // Función para obtener resumen completo de inventario
+    getInventorySummary: function() {
+      return {
+        grandTotal: {
+          boxes: 913, // Total de todas las cajas
+          locations: {
+            usulutan: 583,
+            ransa: 330
+          }
+        },
+        byProduct: Object.entries(this.weightAverages).map(([code, data]) => ({
+          code,
+          name: data.name,
+          totalBoxes: data.totalBoxes,
+          inUsulutan: this.stockByLocation.usulutan_warehouse.products[code]?.boxes || 0,
+          inRansa: this.stockByLocation.ransa.products[code]?.boxes || 0,
+          avgLbs: data.avgLbs,
+          avgKg: data.avgKg
+        }))
       };
     }
   }), []);
