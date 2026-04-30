@@ -610,42 +610,38 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
   ];
 
   // Función para obtener datos iniciales de stock desde productWeightData
-  // Integra los totales exactos de KG en las ubicaciones correspondientes
+  // Integra los totales EXACTOS de KG en las ubicaciones correspondientes
+  // según las imágenes del inventario físico
   const getInitialStockData = () => {
     if (!productWeightData || inventoryRows.length > 0) return inventoryRows;
     
     const weightTotals = productWeightData.weightTotals;
-    const stockByLocation = productWeightData.stockByLocation;
     
-    if (!weightTotals || !stockByLocation) return [];
+    if (!weightTotals) return [];
     
-    // Para cada producto con datos de peso, calcular el peso en cada ubicación
+    // Crear filas de inventario con los totales EXACTOS de KG por ubicación
+    // Datos extraídos de las imágenes:
+    // - Usulután tiene las 583 cajas que "salen" (222+111+102+44+104)
+    // - Ransa tiene las 330 cajas que "quedan" (sin datos de peso en imágenes)
+    
     return Object.entries(weightTotals).map(([code, data]) => {
-      if (data.totalKg === 0) return null; // Saltar productos sin datos de peso
+      if (data.totalKg === 0) return null;
       
-      const usulutanBoxes = stockByLocation.usulutan_warehouse?.products?.[code]?.boxes || 0;
-      const ransaBoxes = stockByLocation.ransa?.products?.[code]?.boxes || 0;
-      const totalBoxesWithWeight = data.totalBoxes; // Cajas que tienen datos de peso
-      
-      // Calcular peso proporcional en cada ubicación
-      // Si todas las cajas con peso están en una ubicación, todo el peso va ahí
-      let usulutanKg = 0;
-      let ransaKg = 0;
-      
-      if (totalBoxesWithWeight > 0) {
-        const kgPerBox = data.totalKg / totalBoxesWithWeight;
-        // Distribuir según las cajas en cada ubicación
-        usulutanKg = usulutanBoxes * kgPerBox;
-        ransaKg = ransaBoxes * kgPerBox;
-      }
+      // Según la imagen de totales:
+      // - Las cajas con peso de las imágenes son las que salen de Usulután
+      // - Las cajas que quedan en Ransa no tienen datos de peso en las imágenes
       
       // bodega_1 = Ransa (KG), bodega_2 = Soyapango (LBS), bodega_3 = Usulután (LBS), bodega_4 = Lomas (LBS)
       return {
         name: data.name,
-        bodega_1: ransaKg, // Ransa en KG
-        bodega_2: 0, // Soyapango - no hay datos iniciales
-        bodega_3: usulutanKg * 2.20462, // Usulután en LBS (convertir KG a LBS)
-        bodega_4: 0  // Lomas - no hay datos iniciales
+        // Ransa: las cajas quedan pero no tienen datos de peso en las imágenes = 0 KG
+        bodega_1: data.ransaKg || 0,
+        // Soyapango: no hay datos
+        bodega_2: 0,
+        // Usulután: tiene el peso total de las cajas que salen (convertir KG a LBS para mostrar)
+        bodega_3: (data.usulutanKg || data.totalKg) * 2.20462,
+        // Lomas: no hay datos
+        bodega_4: 0
       };
     }).filter(item => item !== null && (item.bodega_1 > 0 || item.bodega_3 > 0));
   };
