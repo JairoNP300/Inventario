@@ -821,7 +821,7 @@ const numeroALetras = (num) => {
 
 // --- InvoicingSystem (Paso 4) ---
 // React is already imported at the top of this file
-const InvoicingSystem = ({ products, agros, onUpdate }) => {
+const InvoicingSystem = ({ products, agros, productWeightData, onUpdate }) => {
   const [cart, setCart] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState('');
   const [agroId, setAgroId] = useState('');
@@ -1396,7 +1396,7 @@ const FoodReport = ({ data, products = [], onBack }) => {
 };
 
 // --- ExportReport ---
-const ExportReport = ({ products, agros, refreshTrigger }) => {
+const ExportReport = ({ products, agros, productWeightData, refreshTrigger }) => {
   const [loading, setLoading] = useState(false);
   const handleExport = async () => {
     setLoading(true);
@@ -1440,7 +1440,7 @@ const ExportReport = ({ products, agros, refreshTrigger }) => {
 };
 
 // --- LogisticsHub (Unificado) ---
-const LogisticsHub = ({ products, agros, refreshTrigger, onUpdate, forceMode, incomeLogs = [], dispatchLogs = [] }) => {
+const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUpdate, forceMode, incomeLogs = [], dispatchLogs = [] }) => {
   const [activeSubTab, setActiveSubTab] = useState(forceMode === 'unified' ? 'unified' : (forceMode === 'distribution' ? 'dispatch' : 'income'));
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
