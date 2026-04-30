@@ -619,7 +619,7 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
     
     // Crear filas de inventario con los totales EXACTOS de KG por ubicación
     return Object.entries(weightTotals).map(([code, data]) => {
-      if (data.totalKg === 0) return null;
+      // Mostrar todos los productos, incluso si tienen 0 KG
       
       // bodega_1 = Ransa (KG), bodega_2 = Soyapango (LBS), bodega_3 = Usulután (LBS), bodega_4 = Lomas (LBS)
       return {
@@ -633,11 +633,17 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
         // Lomas: no hay datos
         bodega_4: 0
       };
-    }).filter(item => item !== null);
+    });
   };
 
+  // Estado para ordenamiento
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
+
   // Siempre mostrar datos de productWeightData cuando estén disponibles
-  const displayRows = productWeightData?.weightTotals ? getWeightDataRows() : inventoryRows;
+  const weightDataRows = productWeightData?.weightTotals ? getWeightDataRows() : [];
+  
+  // Combinar datos de peso con datos de inventario para mostrar todos los productos
+  const displayRows = weightDataRows.length > 0 ? weightDataRows : inventoryRows;
 
   useEffect(() => {
     let cancelled = false;
