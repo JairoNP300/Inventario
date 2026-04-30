@@ -3673,12 +3673,12 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
             transition={{ duration: 0.2 }}
           >
             <TabErrorBoundary resetKey={activeTab} onRetry={triggerRefresh}>
-              {activeTab === 'income' && <LogisticsHub products={products} agros={agros} refreshTrigger={refresh} onUpdate={triggerRefresh} forceMode="unified" incomeLogs={incomeLogs} dispatchLogs={dispatchLogs} />}
+              {activeTab === 'income' && <LogisticsHub products={products} agros={agros} productWeightData={PRODUCT_WEIGHT_DATA} refreshTrigger={refresh} onUpdate={triggerRefresh} forceMode="unified" incomeLogs={incomeLogs} dispatchLogs={dispatchLogs} />}
               {activeTab === 'production' && <ProductionReport products={products} onUpdate={triggerRefresh} productionLogs={productionLogs} />}
-              {activeTab === 'distribution' && <LogisticsHub products={products} agros={agros} refreshTrigger={refresh} onUpdate={triggerRefresh} forceMode="distribution" incomeLogs={incomeLogs} dispatchLogs={dispatchLogs} />}
-              {activeTab === 'invoice' && <InvoicingSystem products={products} agros={agros} onUpdate={triggerRefresh} />}
+              {activeTab === 'distribution' && <LogisticsHub products={products} agros={agros} productWeightData={PRODUCT_WEIGHT_DATA} refreshTrigger={refresh} onUpdate={triggerRefresh} forceMode="distribution" incomeLogs={incomeLogs} dispatchLogs={dispatchLogs} />}
+              {activeTab === 'invoice' && <InvoicingSystem products={products} agros={agros} productWeightData={PRODUCT_WEIGHT_DATA} onUpdate={triggerRefresh} />}
               {activeTab === 'status' && <StatusReport products={products} refreshTrigger={refresh} onUpdate={triggerRefresh} />}
-              {activeTab === 'reports' && <ExportReport products={products} agros={agros} refreshTrigger={refresh} />}
+              {activeTab === 'reports' && <ExportReport products={products} agros={agros} productWeightData={PRODUCT_WEIGHT_DATA} refreshTrigger={refresh} />}
               {activeTab === 'comida' && <FoodCostingSystem products={products} onUpdate={triggerRefresh} logs={foodCostingLogs} />}
               {activeTab === 'monitor' && <AdminMonitor />}
               {activeTab === 'config' && <ConfigPanel products={products} onUpdate={triggerRefresh} />}
