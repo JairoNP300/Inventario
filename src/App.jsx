@@ -614,20 +614,38 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
     if (!productWeightData || inventoryRows.length > 0) return inventoryRows;
     
     // Generar datos de inventario a partir de productWeightData
-    const stockData = productWeightData.getInventorySummary?.();
-    if (!stockData) return [];
+    // Usar los totales exactos de KG sumados de las imágenes
+    const allTotals = productWeightData.getAllTotals?.() || [];
+    const stockByLocation = productWeightData.stockByLocation;
     
-    return stockData.byProduct.map(product => {
-      const weightData = productWeightData.weightAverages?.[product.code];
-      const avgLbs = weightData?.avgLbs || 0;
+    if (!allTotals.length || !stockByLocation) return [];
+    
+    return allTotals.map(product => {
+      const code = product.code;
+      const totalKg = product.totalKg;
       
-      // Convertir cajas a peso usando el promedio por caja
+      // Distribuir el peso total según la ubicación (proporcional a las cajas)
+      const usulutanBoxes = stockByLocation.usulutan_warehouse?.products?.[code]?.boxes || 0;
+      const ransaBoxes = stockByLocation.ransa?.products?.[code]?.boxes || 0;
+      const totalBoxesWithData = usulutanBoxes + ransaBoxes;
+      
+      // Si solo hay cajas en una ubicación, todo el peso va ahí
+      // Si hay en ambas, distribuir proporcionalmente
+      let usulutanKg = 0;
+      let ransaKg = 0;
+      
+      if (totalBoxesWithData > 0) {
+        const kgPerBox = totalKg / productWeightData.weightTotals?.[code]?.totalBoxes || totalKg;
+        usulutanKg = usulutanBoxes * kgPerBox;
+        ransaKg = ransaBoxes * kgPerBox;
+      }
+      
       // bodega_1 = Ransa (KG), bodega_2 = Soyapango (LBS), bodega_3 = Usulután (LBS), bodega_4 = Lomas (LBS)
       return {
         name: product.name,
-        bodega_1: (product.inRansa * (weightData?.avgKg || 0)), // Ransa en KG
+        bodega_1: ransaKg, // Ransa en KG
         bodega_2: 0, // Soyapango - no hay datos iniciales
-        bodega_3: (product.inUsulutan * avgLbs), // Usulután en LBS
+        bodega_3: usulutanKg * 2.20462, // Usulután en LBS (convertir KG a LBS)
         bodega_4: 0  // Lomas - no hay datos iniciales
       };
     }).filter(item => item.bodega_1 > 0 || item.bodega_3 > 0);
