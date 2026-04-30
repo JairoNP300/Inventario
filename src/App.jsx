@@ -781,7 +781,26 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
         <div className="form-card" style={{ gridColumn: 'span 2' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
             <h4 style={{ margin: 0 }}>Balance Consolidado por Bodega</h4>
-            <div style={{ width: '200px' }}><UnitSelector value={viewUnit} onChange={setViewUnit} /></div>
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+              <select 
+                value={sortConfig.key || ''} 
+                onChange={(e) => setSortConfig({ key: e.target.value || null, direction: sortConfig.direction })}
+                style={{ padding: '0.4rem 0.8rem', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '0.9rem' }}
+              >
+                <option value="">Ordenar por...</option>
+                <option value="name">Producto (A-Z)</option>
+                <option value="total">Total (cantidad)</option>
+                <option value="usulutan">Usulután</option>
+                <option value="ransa">Ransa</option>
+              </select>
+              <button
+                onClick={() => setSortConfig({ ...sortConfig, direction: sortConfig.direction === 'asc' ? 'desc' : 'asc' })}
+                style={{ padding: '0.4rem 0.8rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--surface)', cursor: 'pointer' }}
+              >
+                {sortConfig.direction === 'asc' ? '↑ Menor a Mayor' : '↓ Mayor a Menor'}
+              </button>
+              <div style={{ width: '200px' }}><UnitSelector value={viewUnit} onChange={setViewUnit} /></div>
+            </div>
           </div>
           <div className="grid-table-container">
             <table>
