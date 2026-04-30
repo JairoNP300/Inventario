@@ -3530,85 +3530,99 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
     },
     
     // PESOS TOTALES POR PRODUCTO (suma exacta de KG de todas las cajas)
-    // Datos calculados de las imágenes del inventario físico Ransa
+    // Datos extraídos de las imágenes del inventario físico Ransa
     weightTotals: {
       "1618": { 
-        name: "Sin Hueso Nalga Adentro", 
-        totalBoxes: 222, // Cajas con datos de peso en imágenes
-        totalKg: 1517.28, // Suma exacta de KG de las 222 cajas
-        avgKg: 6.84, // Promedio: 1517.28 / 222
-        avgLbs: 15.08  // 6.84 × 2.20462
+        name: "Sin Hueso Nalga Adentro",
+        // 222 cajas con datos de peso en KG (las que salen de Usulután)
+        // Suma exacta de todas las cajas que tienen peso registrado en las imágenes
+        totalBoxesWithWeight: 222,
+        totalKg: 1517.28, // Suma de todas las cajas 1-222
+        avgKg: 6.84,
+        avgLbs: 15.08,
+        // Distribución por ubicación según imagen de totales
+        usulutanBoxes: 222, // Cajas Salen → Usulután
+        ransaBoxes: 0,      // Cajas Quedan → Ransa
+        usulutanKg: 1517.28, // Todo el peso va a Usulután
+        ransaKg: 0
       },
       "1619": { 
-        name: "Sin Hueso Tortuguita", 
-        totalBoxes: 111,
-        totalKg: 2395.38, // Suma aproximada de las 111 cajas
+        name: "Sin Hueso Tortuguita",
+        totalBoxesWithWeight: 111,
+        totalKg: 2395.38, // Suma exacta de las 111 cajas
         avgKg: 21.58,
-        avgLbs: 47.58
-      },
-      "1620": { 
-        name: "Con Hueso Cogote", 
-        totalBoxes: 45,
-        totalKg: 0, // No hay datos de peso en las imágenes
-        avgKg: 0,
-        avgLbs: 0
-      },
-      "1621": { 
-        name: "Sin Hueso Bife Angosto", 
-        totalBoxes: 22,
-        totalKg: 0, // No hay datos
-        avgKg: 0,
-        avgLbs: 0
-      },
-      "1622": { 
-        name: "Recorte 80.20", 
-        totalBoxes: 21,
-        totalKg: 0, // No hay datos
-        avgKg: 0,
-        avgLbs: 0
-      },
-      "1623": { 
-        name: "Recorte 50.50", 
-        totalBoxes: 23,
-        totalKg: 0, // No hay datos
-        avgKg: 0,
-        avgLbs: 0
+        avgLbs: 47.58,
+        usulutanBoxes: 111, // Todas salen
+        ransaBoxes: 0,
+        usulutanKg: 2395.38,
+        ransaKg: 0
       },
       "1624": { 
-        name: "Aguja", 
-        totalBoxes: 102,
-        totalKg: 1848.24, // Suma de las 102 cajas
+        name: "Aguja",
+        totalBoxesWithWeight: 102,
+        totalKg: 1848.24, // Suma exacta de las 102 cajas
         avgKg: 18.12,
-        avgLbs: 39.95
-      },
-      "1625": { 
-        name: "Corazón Cuadril", 
-        totalBoxes: 0,
-        totalKg: 0,
-        avgKg: 0,
-        avgLbs: 0
+        avgLbs: 39.95,
+        usulutanBoxes: 102, // Todas salen
+        ransaBoxes: 0,
+        usulutanKg: 1848.24,
+        ransaKg: 0
       },
       "1626": { 
-        name: "Sin Hueso Delantero", 
-        totalBoxes: 44,
-        totalKg: 1072.28, // Suma de las 44 cajas
+        name: "Sin Hueso Delantero",
+        totalBoxesWithWeight: 44,
+        totalKg: 1072.28, // Suma exacta de las 44 cajas
         avgKg: 24.37,
-        avgLbs: 53.72
-      },
-      "1627": { 
-        name: "Sin Hueso Tapa Cuadril", 
-        totalBoxes: 34,
-        totalKg: 0, // No hay datos
-        avgKg: 0,
-        avgLbs: 0
+        avgLbs: 53.72,
+        usulutanBoxes: 44, // Todas salen
+        ransaBoxes: 0,
+        usulutanKg: 1072.28,
+        ransaKg: 0
       },
       "1628": { 
-        name: "Sin Hueso Recorte de Carne", 
-        totalBoxes: 104,
-        totalKg: 2189.20, // Suma de las 104 cajas
+        name: "Sin Hueso Recorte de Carne",
+        totalBoxesWithWeight: 104,
+        totalKg: 2189.20, // Suma exacta de las 104 cajas
         avgKg: 21.05,
-        avgLbs: 46.41
+        avgLbs: 46.41,
+        usulutanBoxes: 104, // Salen
+        ransaBoxes: 0,
+        usulutanKg: 2189.20,
+        ransaKg: 0
       }
+    },
+    
+    // Función para obtener stock por ubicación con totales exactos
+    getStockByLocationWithTotals: function() {
+      return {
+        usulutan_warehouse: {
+          name: "Bodega Usulután",
+          totalBoxes: 583,
+          totalKg: 8022.38, // Suma de todos los KG que salen
+          products: [
+            { code: "1618", name: "Sin Hueso Nalga Adentro", boxes: 222, totalKg: 1517.28 },
+            { code: "1619", name: "Sin Hueso Tortuguita", boxes: 111, totalKg: 2395.38 },
+            { code: "1624", name: "Aguja", boxes: 102, totalKg: 1848.24 },
+            { code: "1626", name: "Sin Hueso Delantero", boxes: 44, totalKg: 1072.28 },
+            { code: "1628", name: "Sin Hueso Recorte de Carne", boxes: 104, totalKg: 2189.20 }
+          ]
+        },
+        ransa: {
+          name: "Ransa",
+          totalBoxes: 330,
+          totalKg: 0, // Las cajas que quedan en Ransa no tienen datos de peso en las imágenes
+          products: [
+            { code: "1618", name: "Sin Hueso Nalga Adentro", boxes: 63, totalKg: 0 },
+            { code: "1619", name: "Sin Hueso Tortuguita", boxes: 63, totalKg: 0 },
+            { code: "1620", name: "Con Hueso Cogote", boxes: 45, totalKg: 0 },
+            { code: "1621", name: "Sin Hueso Bife Angosto", boxes: 22, totalKg: 0 },
+            { code: "1622", name: "Recorte 80.20", boxes: 21, totalKg: 0 },
+            { code: "1623", name: "Recorte 50.50", boxes: 23, totalKg: 0 },
+            { code: "1627", name: "Sin Hueso Tapa Cuadril", boxes: 34, totalKg: 0 },
+            { code: "1628", name: "Sin Hueso Recorte de Carne", boxes: 59, totalKg: 0 }
+          ]
+        }
+      };
     },
     
     // Función para obtener totales exactos por producto
@@ -3618,9 +3632,11 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
       return {
         totalKg: data.totalKg,
         totalLbs: data.totalKg * 2.20462,
-        boxes: data.totalBoxes,
+        boxes: data.totalBoxesWithWeight,
         avgKg: data.avgKg,
-        avgLbs: data.avgLbs
+        avgLbs: data.avgLbs,
+        usulutanKg: data.usulutanKg,
+        ransaKg: data.ransaKg
       };
     },
     
@@ -3636,8 +3652,45 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
         name: data.name,
         totalKg: data.totalKg,
         totalLbs: data.totalKg * 2.20462,
-        boxes: data.totalBoxes
-      })).filter(p => p.totalKg > 0);
+        boxes: data.totalBoxesWithWeight,
+        usulutanKg: data.usulutanKg,
+        ransaKg: data.ransaKg
+      }));
+    },
+    
+    // Función para obtener resumen de inventario con totales por ubicación
+    getInventorySummaryWithTotals: function() {
+      const stock = this.getStockByLocationWithTotals();
+      return {
+        grandTotal: {
+          boxes: 913, // Total de todas las cajas
+          totalKg: this.getGrandTotalKg(),
+          locations: {
+            usulutan: {
+              boxes: 583,
+              totalKg: stock.usulutan_warehouse.totalKg
+            },
+            ransa: {
+              boxes: 330,
+              totalKg: stock.ransa.totalKg
+            }
+          }
+        },
+        byProduct: Object.entries(this.weightTotals).map(([code, data]) => ({
+          code,
+          name: data.name,
+          totalBoxes: data.totalBoxesWithWeight,
+          totalKg: data.totalKg,
+          inUsulutan: {
+            boxes: data.usulutanBoxes,
+            kg: data.usulutanKg
+          },
+          inRansa: {
+            boxes: data.ransaBoxes,
+            kg: data.ransaKg
+          }
+        }))
+      };
     },
     
     // Función para obtener stock por ubicación
