@@ -609,6 +609,32 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
     { label: 'Lomas de San Francisco (Lbs)', value: 'Lomas de San Francisco' }
   ];
 
+  // Función para obtener datos iniciales de stock desde productWeightData
+  const getInitialStockData = () => {
+    if (!productWeightData || inventoryRows.length > 0) return inventoryRows;
+    
+    // Generar datos de inventario a partir de productWeightData
+    const stockData = productWeightData.getInventorySummary?.();
+    if (!stockData) return [];
+    
+    return stockData.byProduct.map(product => {
+      const weightData = productWeightData.weightAverages?.[product.code];
+      const avgLbs = weightData?.avgLbs || 0;
+      
+      // Convertir cajas a peso usando el promedio por caja
+      // bodega_1 = Ransa (KG), bodega_2 = Soyapango (LBS), bodega_3 = Usulután (LBS), bodega_4 = Lomas (LBS)
+      return {
+        name: product.name,
+        bodega_1: (product.inRansa * (weightData?.avgKg || 0)), // Ransa en KG
+        bodega_2: 0, // Soyapango - no hay datos iniciales
+        bodega_3: (product.inUsulutan * avgLbs), // Usulután en LBS
+        bodega_4: 0  // Lomas - no hay datos iniciales
+      };
+    }).filter(item => item.bodega_1 > 0 || item.bodega_3 > 0);
+  };
+
+  const displayRows = inventoryRows.length > 0 ? inventoryRows : getInitialStockData();
+
   useEffect(() => {
     let cancelled = false;
     fetch(`${API_BASE}/reports/inventory-status`)
