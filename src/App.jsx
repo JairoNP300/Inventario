@@ -3637,8 +3637,64 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
         avgKg: 21.05,
         avgLbs: 46.41,
         usulutanBoxes: 104, // Salen
-        ransaBoxes: 0,
+        ransaBoxes: 59,     // Quedan en Ransa (sin peso en imágenes)
         usulutanKg: 2189.20,
+        ransaKg: 0
+      },
+      // Productos que quedan en Ransa (330 cajas sin datos de peso en imágenes)
+      "1620": {
+        name: "Con Hueso Cogote",
+        totalBoxesWithWeight: 0,
+        totalKg: 0,
+        avgKg: 0,
+        avgLbs: 0,
+        usulutanBoxes: 0,
+        ransaBoxes: 45,
+        usulutanKg: 0,
+        ransaKg: 0
+      },
+      "1621": {
+        name: "Sin Hueso Bife Angosto",
+        totalBoxesWithWeight: 0,
+        totalKg: 0,
+        avgKg: 0,
+        avgLbs: 0,
+        usulutanBoxes: 0,
+        ransaBoxes: 22,
+        usulutanKg: 0,
+        ransaKg: 0
+      },
+      "1622": {
+        name: "Recorte 80.20",
+        totalBoxesWithWeight: 0,
+        totalKg: 0,
+        avgKg: 0,
+        avgLbs: 0,
+        usulutanBoxes: 0,
+        ransaBoxes: 21,
+        usulutanKg: 0,
+        ransaKg: 0
+      },
+      "1623": {
+        name: "Recorte 50.50",
+        totalBoxesWithWeight: 0,
+        totalKg: 0,
+        avgKg: 0,
+        avgLbs: 0,
+        usulutanBoxes: 0,
+        ransaBoxes: 23,
+        usulutanKg: 0,
+        ransaKg: 0
+      },
+      "1627": {
+        name: "Sin Hueso Tapa Cuadril",
+        totalBoxesWithWeight: 0,
+        totalKg: 0,
+        avgKg: 0,
+        avgLbs: 0,
+        usulutanBoxes: 0,
+        ransaBoxes: 34,
+        usulutanKg: 0,
         ransaKg: 0
       }
     },
