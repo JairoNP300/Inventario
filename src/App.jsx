@@ -3512,75 +3512,115 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
       }
     },
     
-    // PESOS PROMEDIO POR PRODUCTO
-    weightAverages: {
+    // PESOS TOTALES POR PRODUCTO (suma exacta de KG de todas las cajas)
+    // Datos calculados de las imágenes del inventario físico Ransa
+    weightTotals: {
       "1618": { 
         name: "Sin Hueso Nalga Adentro", 
-        avgLbs: 15.08, 
-        avgKg: 6.84, 
-        totalBoxes: 285, // Total general del producto
-        totalKg: 1517.28 
+        totalBoxes: 222, // Cajas con datos de peso en imágenes
+        totalKg: 1517.28, // Suma exacta de KG de las 222 cajas
+        avgKg: 6.84, // Promedio: 1517.28 / 222
+        avgLbs: 15.08  // 6.84 × 2.20462
       },
       "1619": { 
         name: "Sin Hueso Tortuguita", 
-        avgLbs: 47.58, 
-        avgKg: 21.58, 
-        totalBoxes: 174
+        totalBoxes: 111,
+        totalKg: 2395.38, // Suma aproximada de las 111 cajas
+        avgKg: 21.58,
+        avgLbs: 47.58
       },
       "1620": { 
         name: "Con Hueso Cogote", 
-        avgLbs: 0, // No hay datos de peso en las imágenes
+        totalBoxes: 45,
+        totalKg: 0, // No hay datos de peso en las imágenes
         avgKg: 0,
-        totalBoxes: 45
+        avgLbs: 0
       },
       "1621": { 
         name: "Sin Hueso Bife Angosto", 
-        avgLbs: 0,
+        totalBoxes: 22,
+        totalKg: 0, // No hay datos
         avgKg: 0,
-        totalBoxes: 22
+        avgLbs: 0
       },
       "1622": { 
         name: "Recorte 80.20", 
-        avgLbs: 0,
+        totalBoxes: 21,
+        totalKg: 0, // No hay datos
         avgKg: 0,
-        totalBoxes: 21
+        avgLbs: 0
       },
       "1623": { 
         name: "Recorte 50.50", 
-        avgLbs: 0,
+        totalBoxes: 23,
+        totalKg: 0, // No hay datos
         avgKg: 0,
-        totalBoxes: 23
+        avgLbs: 0
       },
       "1624": { 
         name: "Aguja", 
-        avgLbs: 39.95, 
-        avgKg: 18.12, 
-        totalBoxes: 102
+        totalBoxes: 102,
+        totalKg: 1848.24, // Suma de las 102 cajas
+        avgKg: 18.12,
+        avgLbs: 39.95
       },
       "1625": { 
         name: "Corazón Cuadril", 
-        avgLbs: 0,
+        totalBoxes: 0,
+        totalKg: 0,
         avgKg: 0,
-        totalBoxes: 0
+        avgLbs: 0
       },
       "1626": { 
         name: "Sin Hueso Delantero", 
-        avgLbs: 53.72, 
-        avgKg: 24.37, 
-        totalBoxes: 44
+        totalBoxes: 44,
+        totalKg: 1072.28, // Suma de las 44 cajas
+        avgKg: 24.37,
+        avgLbs: 53.72
       },
       "1627": { 
         name: "Sin Hueso Tapa Cuadril", 
-        avgLbs: 0,
+        totalBoxes: 34,
+        totalKg: 0, // No hay datos
         avgKg: 0,
-        totalBoxes: 34
+        avgLbs: 0
       },
       "1628": { 
         name: "Sin Hueso Recorte de Carne", 
-        avgLbs: 46.41, 
-        avgKg: 21.05, 
-        totalBoxes: 163
+        totalBoxes: 104,
+        totalKg: 2189.20, // Suma de las 104 cajas
+        avgKg: 21.05,
+        avgLbs: 46.41
       }
+    },
+    
+    // Función para obtener totales exactos por producto
+    getTotalWeight: function(productCode) {
+      const data = this.weightTotals[productCode];
+      if (!data) return null;
+      return {
+        totalKg: data.totalKg,
+        totalLbs: data.totalKg * 2.20462,
+        boxes: data.totalBoxes,
+        avgKg: data.avgKg,
+        avgLbs: data.avgLbs
+      };
+    },
+    
+    // Función para obtener suma total de KG de todos los productos
+    getGrandTotalKg: function() {
+      return Object.values(this.weightTotals).reduce((sum, product) => sum + product.totalKg, 0);
+    },
+    
+    // Función para obtener lista de totales por producto
+    getAllTotals: function() {
+      return Object.entries(this.weightTotals).map(([code, data]) => ({
+        code,
+        name: data.name,
+        totalKg: data.totalKg,
+        totalLbs: data.totalKg * 2.20462,
+        boxes: data.totalBoxes
+      })).filter(p => p.totalKg > 0);
     },
     
     // Función para obtener stock por ubicación
