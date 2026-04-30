@@ -3442,6 +3442,67 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
   const [products, setProducts] = useState([]);
   const [agros, setAgros] = useState([]);
   const [refresh, setRefresh] = useState(0);
+
+  // Datos de pesos promedio por producto (cajas Ransa) - NO son valores fijos, son referencia
+  const PRODUCT_WEIGHT_DATA = useMemo(() => ({
+    // Datos extraídos del inventario físico Ransa (500+ páginas)
+    // Última actualización: Abril 2026
+    weightAverages: {
+      "1618": { 
+        name: "Sin Hueso Nalga Adentro", 
+        avgLbs: 15.08, 
+        avgKg: 6.84, 
+        boxes: 222,
+        totalKg: 1517.28 
+      },
+      "1619": { 
+        name: "Sin Hueso Tortuguita", 
+        avgLbs: 47.58, 
+        avgKg: 21.58, 
+        boxes: 111 
+      },
+      "1624": { 
+        name: "Aguja", 
+        avgLbs: 39.95, 
+        avgKg: 18.12, 
+        boxes: 102 
+      },
+      "1626": { 
+        name: "Sin Hueso Delantero", 
+        avgLbs: 53.72, 
+        avgKg: 24.37, 
+        boxes: 44 
+      },
+      "1628": { 
+        name: "Sin Hueso Recorte de Carne", 
+        avgLbs: 46.41, 
+        avgKg: 21.05, 
+        boxes: 104 
+      }
+    },
+    // Función para obtener peso promedio por código de producto
+    getAverageWeight: function(productCode) {
+      const data = this.weightAverages[productCode];
+      if (!data) return null;
+      return {
+        lbs: data.avgLbs,
+        kg: data.avgKg,
+        boxes: data.boxes
+      };
+    },
+    // Función para calcular peso estimado por cantidad de cajas
+    calculateEstimatedWeight: function(productCode, boxCount, unit = 'Lbs') {
+      const avg = this.getAverageWeight(productCode);
+      if (!avg) return null;
+      const weight = boxCount * (unit === 'Lbs' ? avg.lbs : avg.kg);
+      return {
+        estimatedWeight: weight,
+        unit: unit,
+        basedOn: `${boxCount} cajas × ${unit === 'Lbs' ? avg.lbs : avg.kg} ${unit}/caja`,
+        referenceBoxes: avg.boxes
+      };
+    }
+  }), []);
   const [productionLogs, setProductionLogs] = useState([]);
   const [incomeLogs, setIncomeLogs] = useState([]);
   const [dispatchLogs, setDispatchLogs] = useState([]);
