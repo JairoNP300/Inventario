@@ -821,7 +821,7 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
         </div>
         <button
           onClick={() => {
-            if (inventoryRows.length === 0) { alert('El inventario ya está en cero.'); return; }
+            if (displayRows.length === 0) { alert('El inventario ya está en cero.'); return; }
             if (confirm('⚠️ ¿Deseas poner todas las existencias en CERO?')) {
               if (confirm('❌ ESTA ACCIÓN ES IRREVERSIBLE. ¿Continuar?')) {
                 fetch(`${API_BASE}/admin/clear-inventory`, { method: 'POST' }).then(() => { onUpdate(); alert('Inventario Vaciado'); });
