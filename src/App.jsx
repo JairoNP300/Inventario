@@ -610,27 +610,16 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
     { label: 'Lomas de San Francisco (Lbs)', value: 'Lomas de San Francisco' }
   ];
 
-  // Función para obtener datos iniciales de stock desde productWeightData
-  // Integra los totales EXACTOS de KG en las ubicaciones correspondientes
-  // según las imágenes del inventario físico
-  const getInitialStockData = () => {
-    if (!productWeightData || inventoryRows.length > 0) return inventoryRows;
+  // Función para obtener datos de stock desde productWeightData
+  // Integra los totales EXACTOS de KG por ubicación según las imágenes
+  const getWeightDataRows = () => {
+    if (!productWeightData?.weightTotals) return [];
     
     const weightTotals = productWeightData.weightTotals;
     
-    if (!weightTotals) return [];
-    
     // Crear filas de inventario con los totales EXACTOS de KG por ubicación
-    // Datos extraídos de las imágenes:
-    // - Usulután tiene las 583 cajas que "salen" (222+111+102+44+104)
-    // - Ransa tiene las 330 cajas que "quedan" (sin datos de peso en imágenes)
-    
     return Object.entries(weightTotals).map(([code, data]) => {
       if (data.totalKg === 0) return null;
-      
-      // Según la imagen de totales:
-      // - Las cajas con peso de las imágenes son las que salen de Usulután
-      // - Las cajas que quedan en Ransa no tienen datos de peso en las imágenes
       
       // bodega_1 = Ransa (KG), bodega_2 = Soyapango (LBS), bodega_3 = Usulután (LBS), bodega_4 = Lomas (LBS)
       return {
@@ -644,10 +633,11 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
         // Lomas: no hay datos
         bodega_4: 0
       };
-    }).filter(item => item !== null && (item.bodega_1 > 0 || item.bodega_3 > 0));
+    }).filter(item => item !== null);
   };
 
-  const displayRows = inventoryRows.length > 0 ? inventoryRows : getInitialStockData();
+  // Siempre mostrar datos de productWeightData cuando estén disponibles
+  const displayRows = productWeightData?.weightTotals ? getWeightDataRows() : inventoryRows;
 
   useEffect(() => {
     let cancelled = false;
