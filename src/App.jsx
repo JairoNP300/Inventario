@@ -2174,7 +2174,7 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
       setEditingRecord(null);
       setMeats([{ product_id: '', weight: '', cost: '' }]);
       setInputs([{ description: '', cost: '' }]);
-      setExtraData({ event_name: '', batch_purpose: '', sale_price: '', leftover_value: '', unit_price_per_sale: '', leftover_weight: '', notes: '' });
+      setExtraData({ event_name: '', batch_purpose: '', sale_price: '', leftover_value: '', unit_price_per_sale: '', leftover_weight: '', quantity_sold: '', notes: '' });
       onUpdate();
       alert('Registro actualizado exitosamente');
     }).catch(err => {
@@ -2663,7 +2663,7 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
       console.log('Data saved successfully:', saved);
       setMeats([{ product_id: '', weight: '', cost: '' }]);
       setInputs([{ description: '', cost: '' }]);
-      setExtraData({ event_name: '', batch_purpose: '', sale_price: '', leftover_value: '', unit_price_per_sale: '', leftover_weight: '', notes: '' });
+      setExtraData({ event_name: '', batch_purpose: '', sale_price: '', leftover_value: '', unit_price_per_sale: '', leftover_weight: '', quantity_sold: '', notes: '' });
       
       // Force refresh to update the history table immediately
       console.log('Calling onUpdate to refresh data...');
