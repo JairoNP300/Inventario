@@ -639,11 +639,50 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
   // Estado para ordenamiento
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
 
+  // Función para ordenar datos
+  const sortData = (data) => {
+    if (!sortConfig.key) return data;
+    
+    const factor = viewUnit === 'Kg' ? 1 : 2.20462;
+    
+    return [...data].sort((a, b) => {
+      let aValue, bValue;
+      
+      switch (sortConfig.key) {
+        case 'name':
+          aValue = a.name || '';
+          bValue = b.name || '';
+          break;
+        case 'total':
+          aValue = (toNum(a.bodega_1) + toNum(a.bodega_2) + toNum(a.bodega_3) + toNum(a.bodega_4)) * factor;
+          bValue = (toNum(b.bodega_1) + toNum(b.bodega_2) + toNum(b.bodega_3) + toNum(b.bodega_4)) * factor;
+          break;
+        case 'usulutan':
+          aValue = toNum(a.bodega_3);
+          bValue = toNum(b.bodega_3);
+          break;
+        case 'ransa':
+          aValue = toNum(a.bodega_1);
+          bValue = toNum(b.bodega_1);
+          break;
+        default:
+          return 0;
+      }
+      
+      if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+  };
+
   // Siempre mostrar datos de productWeightData cuando estén disponibles
   const weightDataRows = productWeightData?.weightTotals ? getWeightDataRows() : [];
   
   // Combinar datos de peso con datos de inventario para mostrar todos los productos
-  const displayRows = weightDataRows.length > 0 ? weightDataRows : inventoryRows;
+  const unsortedRows = weightDataRows.length > 0 ? weightDataRows : inventoryRows;
+  
+  // Aplicar ordenamiento
+  const displayRows = sortData(unsortedRows);
 
   useEffect(() => {
     let cancelled = false;
