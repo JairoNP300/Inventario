@@ -119,19 +119,21 @@ function scheduleDeployment() {
     }, DEBOUNCE_MS);
 }
 
-// AUTO-DEPLOY RE-ENABLED - PostgreSQL will be used for persistent storage
+// AUTO-DEPLOY TEMPORARILY DISABLED - Manual deployment for stability
 // When DATABASE_URL is configured, the system uses PostgreSQL instead of SQLite
 
-console.log('✅ Auto-deploy HABILITADO');
+console.log('⚠️ Auto-deploy DESACTIVADO temporalmente');
 console.log('💡 Sistema usará PostgreSQL cuando DATABASE_URL esté configurado');
+console.log('⚠️ Deploy manual activado para evitar conflictos');
 
-watch(ROOT, { recursive: true }, (event, filename) => {
-    if (filename && !shouldIgnore(filename)) {
-        console.log(`📝 Archivo modificado: ${filename}`);
-        scheduleDeployment();
-    }
-});
+// Commented out to prevent auto-commit conflicts
+// watch(ROOT, { recursive: true }, (event, filename) => {
+//     if (filename && !shouldIgnore(filename)) {
+//         console.log(`📝 Archivo modificado: ${filename}`);
+//         scheduleDeployment();
+//     }
+// });
 
-deployOnStartupIfNeeded();
+// deployOnStartupIfNeeded();
 
-console.log('✅ Sistema funcionando con auto-deploy activo\n');
+console.log('✅ Sistema funcionando con deploy manual\n');
