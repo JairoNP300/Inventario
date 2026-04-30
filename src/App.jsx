@@ -610,45 +610,44 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
   ];
 
   // Función para obtener datos iniciales de stock desde productWeightData
+  // Integra los totales exactos de KG en las ubicaciones correspondientes
   const getInitialStockData = () => {
     if (!productWeightData || inventoryRows.length > 0) return inventoryRows;
     
-    // Generar datos de inventario a partir de productWeightData
-    // Usar los totales exactos de KG sumados de las imágenes
-    const allTotals = productWeightData.getAllTotals?.() || [];
+    const weightTotals = productWeightData.weightTotals;
     const stockByLocation = productWeightData.stockByLocation;
     
-    if (!allTotals.length || !stockByLocation) return [];
+    if (!weightTotals || !stockByLocation) return [];
     
-    return allTotals.map(product => {
-      const code = product.code;
-      const totalKg = product.totalKg;
+    // Para cada producto con datos de peso, calcular el peso en cada ubicación
+    return Object.entries(weightTotals).map(([code, data]) => {
+      if (data.totalKg === 0) return null; // Saltar productos sin datos de peso
       
-      // Distribuir el peso total según la ubicación (proporcional a las cajas)
       const usulutanBoxes = stockByLocation.usulutan_warehouse?.products?.[code]?.boxes || 0;
       const ransaBoxes = stockByLocation.ransa?.products?.[code]?.boxes || 0;
-      const totalBoxesWithData = usulutanBoxes + ransaBoxes;
+      const totalBoxesWithWeight = data.totalBoxes; // Cajas que tienen datos de peso
       
-      // Si solo hay cajas en una ubicación, todo el peso va ahí
-      // Si hay en ambas, distribuir proporcionalmente
+      // Calcular peso proporcional en cada ubicación
+      // Si todas las cajas con peso están en una ubicación, todo el peso va ahí
       let usulutanKg = 0;
       let ransaKg = 0;
       
-      if (totalBoxesWithData > 0) {
-        const kgPerBox = totalKg / productWeightData.weightTotals?.[code]?.totalBoxes || totalKg;
+      if (totalBoxesWithWeight > 0) {
+        const kgPerBox = data.totalKg / totalBoxesWithWeight;
+        // Distribuir según las cajas en cada ubicación
         usulutanKg = usulutanBoxes * kgPerBox;
         ransaKg = ransaBoxes * kgPerBox;
       }
       
       // bodega_1 = Ransa (KG), bodega_2 = Soyapango (LBS), bodega_3 = Usulután (LBS), bodega_4 = Lomas (LBS)
       return {
-        name: product.name,
+        name: data.name,
         bodega_1: ransaKg, // Ransa en KG
         bodega_2: 0, // Soyapango - no hay datos iniciales
         bodega_3: usulutanKg * 2.20462, // Usulután en LBS (convertir KG a LBS)
         bodega_4: 0  // Lomas - no hay datos iniciales
       };
-    }).filter(item => item.bodega_1 > 0 || item.bodega_3 > 0);
+    }).filter(item => item !== null && (item.bodega_1 > 0 || item.bodega_3 > 0));
   };
 
   const displayRows = inventoryRows.length > 0 ? inventoryRows : getInitialStockData();
