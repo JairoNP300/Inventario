@@ -832,6 +832,70 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
         </div>
       </div>
 
+      {/* === TOTALES EXACTOS POR PRODUCTO (Datos Inventario Físico) === */}
+      {productWeightData && productWeightData.getAllTotals && (
+        <div className="card-grid" style={{ marginTop: '2rem' }}>
+          <div className="form-card" style={{ gridColumn: 'span 2' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <h4 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--accent)' }}>
+                <Package size={20} /> 
+                Total de Peso por Producto (Suma de Columnas KG)
+              </h4>
+              <small style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>
+                Datos extraídos de inventario físico Ransa (500+ páginas)
+              </small>
+            </div>
+            <div className="grid-table-container">
+              <table>
+                <thead>
+                  <tr style={{ background: 'rgba(56, 189, 248, 0.1)' }}>
+                    <th className="col-carne" style={{ textAlign: 'left' }}>Código</th>
+                    <th className="col-carne" style={{ textAlign: 'left' }}>Producto</th>
+                    <th className="col-qty" style={{ textAlign: 'center' }}>Cajas</th>
+                    <th className="col-qty" style={{ textAlign: 'right' }}>Total KG</th>
+                    <th className="col-qty" style={{ textAlign: 'right' }}>Total LBS</th>
+                    <th className="col-qty" style={{ textAlign: 'right' }}>Promedio KG/Caja</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {productWeightData.getAllTotals().map((product, idx) => (
+                    <tr key={product.code} style={{ background: idx % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent' }}>
+                      <td className="col-carne" style={{ fontWeight: 700, color: 'var(--accent)' }}>{product.code}</td>
+                      <td className="col-carne" style={{ fontWeight: 600, color: 'var(--text-main)' }}>{product.name}</td>
+                      <td className="col-qty" style={{ textAlign: 'center', color: 'var(--text-muted)' }}>{product.boxes}</td>
+                      <td className="col-qty" style={{ textAlign: 'right', fontWeight: 700, color: '#10b981' }}>
+                        {product.totalKg.toFixed(2)} kg
+                      </td>
+                      <td className="col-qty" style={{ textAlign: 'right', color: 'var(--accent)' }}>
+                        {product.totalLbs.toFixed(2)} lbs
+                      </td>
+                      <td className="col-qty" style={{ textAlign: 'right', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                        {(product.totalKg / product.boxes).toFixed(2)} kg
+                      </td>
+                    </tr>
+                  ))}
+                  <tr style={{ borderTop: '2px solid rgba(56, 189, 248, 0.3)', background: 'rgba(56, 189, 248, 0.05)' }}>
+                    <td className="col-carne" colSpan={2} style={{ fontWeight: 800, color: 'var(--text-main)' }}>
+                      TOTAL GENERAL
+                    </td>
+                    <td className="col-qty" style={{ textAlign: 'center', fontWeight: 700 }}>
+                      {productWeightData.getAllTotals().reduce((sum, p) => sum + p.boxes, 0)} cajas
+                    </td>
+                    <td className="col-qty" style={{ textAlign: 'right', fontWeight: 800, color: '#10b981', fontSize: '1.1rem' }}>
+                      {productWeightData.getGrandTotalKg().toFixed(2)} kg
+                    </td>
+                    <td className="col-qty" style={{ textAlign: 'right', fontWeight: 800, color: 'var(--accent)' }}>
+                      {(productWeightData.getGrandTotalKg() * 2.20462).toFixed(2)} lbs
+                    </td>
+                    <td className="col-qty"></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div style={{ marginTop: '3.5rem', padding: '2.5rem', background: 'rgba(239, 68, 68, 0.05)', borderRadius: '24px', border: '1px solid rgba(239, 68, 68, 0.2)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h4 style={{ color: '#ef4444', margin: 0, border: 'none', fontSize: '1.2rem' }}>Protocolo de Reinicio Crítico</h4>
