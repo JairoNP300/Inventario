@@ -591,7 +591,7 @@ const UnitSelector = ({ value, onChange }) => (
 );
 
 // --- StatusReport ---
-const StatusReport = ({ products, refreshTrigger, onUpdate }) => {
+const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUpdate }) => {
   const toNum = (v) => Number(v) || 0;
   const productRows = Array.isArray(products) ? products : [];
   const [inventory, setInventory] = useState([]);
@@ -3808,7 +3808,7 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
               {activeTab === 'production' && <ProductionReport products={products} onUpdate={triggerRefresh} productionLogs={productionLogs} />}
               {activeTab === 'distribution' && <LogisticsHub products={products} agros={agros} productWeightData={PRODUCT_WEIGHT_DATA} refreshTrigger={refresh} onUpdate={triggerRefresh} forceMode="distribution" incomeLogs={incomeLogs} dispatchLogs={dispatchLogs} />}
               {activeTab === 'invoice' && <InvoicingSystem products={products} agros={agros} productWeightData={PRODUCT_WEIGHT_DATA} onUpdate={triggerRefresh} />}
-              {activeTab === 'status' && <StatusReport products={products} refreshTrigger={refresh} onUpdate={triggerRefresh} />}
+              {activeTab === 'status' && <StatusReport products={products} agros={agros} productWeightData={PRODUCT_WEIGHT_DATA} refreshTrigger={refresh} onUpdate={triggerRefresh} />}
               {activeTab === 'reports' && <ExportReport products={products} agros={agros} productWeightData={PRODUCT_WEIGHT_DATA} refreshTrigger={refresh} />}
               {activeTab === 'comida' && <FoodCostingSystem products={products} onUpdate={triggerRefresh} logs={foodCostingLogs} />}
               {activeTab === 'monitor' && <AdminMonitor />}
