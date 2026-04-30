@@ -786,7 +786,7 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
                 </tr>
               </thead>
               <tbody>
-                {inventoryRows.length > 0 ? inventoryRows.map(i => {
+                {displayRows.length > 0 ? displayRows.map(i => {
                   const isKg = viewUnit === 'Kg';
                   const factor = 2.20462;
                   // bodega_1 = KG, bodega_2/3/4 = LBS
