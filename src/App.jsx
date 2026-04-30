@@ -1,4 +1,4 @@
-// Render webhook trigger - 2026-04-30 10:55 - Build fix
+// Render webhook trigger - 2026-04-30 10:56 - Null char fix
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
