@@ -3995,16 +3995,23 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
 
       <div className="global-status-banner">
         {[
-          { label: 'Ransa', col: 'bodega_1' },
-          { label: 'Soyapango', col: 'bodega_2' },
-          { label: 'Usulután', col: 'bodega_3' },
-          { label: 'Lomas', col: 'bodega_4' }
+          { label: 'Ransa', col: 'bodega_1', unit: 'KG' },
+          { label: 'Soyapango', col: 'bodega_2', unit: 'LBS' },
+          { label: 'Usulután', col: 'bodega_3', unit: 'LBS' },
+          { label: 'Lomas', col: 'bodega_4', unit: 'LBS' }
         ].map((w) => {
-          const val = inventorySummary.reduce((acc, i) => acc + (parseFloat(i[w.col]) || 0), 0);
+          // Usar datos de productWeightData si están disponibles, sino usar inventorySummary
+          const stockData = productWeightData?.weightTotals ? 
+            Object.values(productWeightData.weightTotals).reduce((acc, p) => {
+              if (w.col === 'bodega_1') return acc + (p.ransaKg || 0);
+              if (w.col === 'bodega_3') return acc + ((p.usulutanKg || 0) * 2.20462); // Convertir KG a LBS
+              return acc;
+            }, 0) :
+            inventorySummary.reduce((acc, i) => acc + (parseFloat(i[w.col]) || 0), 0);
           return (
             <div key={w.col} className="status-item">
               <div className="status-label">{w.label}</div>
-              <div className="status-value">{Math.round(val).toLocaleString()} <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>{w.label === 'Ransa' ? 'KG' : 'LBS'}</span></div>
+              <div className="status-value">{Math.round(stockData).toLocaleString()} <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>{w.unit}</span></div>
             </div>
           );
         })}
@@ -4012,19 +4019,14 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
         <div className="status-item global">
           <div className="status-label">EXISTENCIA GLOBAL</div>
           <div className="status-value">
-            {Math.round(inventorySummary.reduce((acc, i) => acc + (parseFloat(i.final_stock) || 0), 0)).toLocaleString()} <small style={{ fontSize: '0.6rem' }}>LBS</small>
+            {(() => {
+              if (productWeightData?.weightTotals) {
+                const total = Object.values(productWeightData.weightTotals).reduce((acc, p) => acc + ((p.totalKg || 0) * 2.20462), 0);
+                return Math.round(total).toLocaleString();
+              }
+              return Math.round(inventorySummary.reduce((acc, i) => acc + (parseFloat(i.final_stock) || 0), 0)).toLocaleString();
+            })()} <small style={{ fontSize: '0.6rem' }}>LBS</small>
           </div>
-        </div>
-
-        <div className="banner-actions">
-          <motion.button
-            whileHover={{ rotate: 180 }}
-            onClick={triggerRefresh}
-            className="btn-primary"
-            style={{ width: '50px', height: '50px', padding: 0, borderRadius: '50%', display: 'flex', alignItems: 'center', justifySelf: 'center', justifyContent: 'center' }}
-          >
-            <RefreshCcw size={20} />
-          </motion.button>
         </div>
       </div>
 
