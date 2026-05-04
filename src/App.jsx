@@ -623,6 +623,7 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
       
       // bodega_1 = Ransa (KG), bodega_2 = Soyapango (LBS), bodega_3 = Usulután (LBS), bodega_4 = Lomas (LBS)
       return {
+        code: code,
         name: data.name,
         // Ransa: las cajas quedan pero no tienen datos de peso en las imágenes = 0 KG
         bodega_1: data.ransaKg || 0,
