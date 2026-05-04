@@ -866,7 +866,10 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
                   const total = b1 + b2 + b3 + b4;
                   return (
                     <tr key={i.name}>
-                      <td className="col-carne" style={{ fontWeight: 700, color: 'var(--text-main)' }}>{i.name}</td>
+                      <td className="col-carne" style={{ fontWeight: 700, color: 'var(--text-main)' }}>
+                        <span style={{ color: 'var(--accent)', fontWeight: 800, marginRight: '8px' }}>{i.code || productRows.find(p => p.name === i.name)?.code || ''}</span>
+                        {i.name}
+                      </td>
                       <td className="col-qty" style={{ color: 'var(--accent)' }}>{b1.toFixed(1)}</td>
                       <td className="col-qty" style={{ color: 'var(--success)' }}>{b2.toFixed(1)}</td>
                       <td className="col-qty" style={{ color: 'var(--success)' }}>{b3.toFixed(1)}</td>
