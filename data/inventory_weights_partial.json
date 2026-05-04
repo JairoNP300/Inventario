@@ -1,0 +1,76 @@
+{
+  "calculation_date": "2026-05-04",
+  "source": "Physical inventory images - partial data",
+  "status": "PENDING - waiting for remaining images",
+  "products": {
+    "1618": {
+      "name": "Sin Hueso Nalga Adentro",
+      "boxes": 222,
+      "location": "Usulutan (salen)",
+      "weights_kg": [
+        6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84,
+        6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84,
+        6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84,
+        6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84,
+        6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84,
+        6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84,
+        6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84,
+        6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84,
+        6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84,
+        6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84,
+        6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84,
+        6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84,
+        6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84,
+        6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84,
+        6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84,
+        6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84,
+        6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84,
+        6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84,
+        6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84,
+        6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84, 6.84,
+        6.84, 6.84, 6.84, 6.84, 6.84, 6.84
+      ],
+      "total_kg": 1517.28,
+      "notes": "Waiting for complete sum from all images"
+    },
+    "1619": {
+      "name": "Sin Hueso Tortuguita",
+      "boxes": 111,
+      "location": "Usulutan (salen)",
+      "weights_kg": [],
+      "total_kg": 0,
+      "notes": "Waiting for weight data from images"
+    },
+    "1624": {
+      "name": "Aguja",
+      "boxes": 102,
+      "location": "Usulutan (salen)",
+      "weights_kg": [],
+      "total_kg": 0,
+      "notes": "Waiting for weight data from images"
+    },
+    "1626": {
+      "name": "Sin Hueso Delantero",
+      "boxes": 44,
+      "location": "Usulutan (salen)",
+      "weights_kg": [],
+      "total_kg": 0,
+      "notes": "Waiting for weight data from images"
+    },
+    "1628": {
+      "name": "Sin Hueso Recorte de Carne",
+      "boxes": 104,
+      "location": "Usulutan (salen)",
+      "weights_kg": [],
+      "total_kg": 0,
+      "notes": "Waiting for weight data from images"
+    }
+  },
+  "summary": {
+    "total_boxes_usulutan": 583,
+    "total_boxes_ransa": 330,
+    "total_weight_kg_usulutan": 0,
+    "total_weight_kg_ransa": 0,
+    "calculation_status": "INCOMPLETE - waiting for remaining weight data"
+  }
+}
