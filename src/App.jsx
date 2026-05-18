@@ -311,7 +311,7 @@ const ProductIntelligenceCard = ({ product }) => {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '0.85rem' }}>
             <span style={{ color: 'var(--text-muted)' }}>Ransa: <b style={{ color: 'var(--text-main)' }}>{n(product.stock_kg).toFixed(1)}kg</b></span>
             <span style={{ color: 'var(--text-muted)' }}>Lomas: <b style={{ color: 'var(--accent)' }}>{n(product.stock_b4).toFixed(1)}lbs</b></span>
-            <span style={{ color: 'var(--text-muted)' }}>Soyapango: <b style={{ color: 'var(--accent)' }}>{(n(product.stock_b2) * 2.20462).toFixed(1)}lbs</b></span>
+            <span style={{ color: 'var(--text-muted)' }}>Soyapango: <b style={{ color: 'var(--accent)' }}>{n(product.stock_b2).toFixed(1)}lbs</b></span>
             <span style={{ color: 'var(--text-muted)' }}>Usulután: <b style={{ color: 'var(--accent)' }}>{n(product.stock_b3).toFixed(1)}lbs</b></span>
           </div>
         </div>
