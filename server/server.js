@@ -1103,10 +1103,15 @@ app.post('/api/admin/sync-catalog', async (req, res) => {
     for (const p of products) {
       await query('INSERT INTO products (code, name, category, price_per_lb) VALUES (?, ?, ?, ?)', p);
     }
-    // Ensure inventory exists for new products
-    const { rows: prods } = await query('SELECT id FROM products');
+    // Ensure inventory exists for new products - includes all bodega columns
+    const { rows: prods } = await query('SELECT id, code FROM products');
     for (const p of prods) {
-      await query('INSERT INTO inventory (product_id, initial_stock, current_stock) VALUES (?, 100, 100)');
+      const physicalData = physicalInventoryData[p.code] || {};
+      await query(`
+        INSERT INTO inventory (product_id, bodega_1, bodega_2, bodega_3, bodega_4, initial_stock, current_stock, sold_stock)
+        VALUES (?, ?, 0, ?, 0, 100, 100, 0)
+        ON CONFLICT(product_id) DO NOTHING
+      `, [p.id, physicalData.bodega_1 || 0, physicalData.bodega_3 || 0]);
     }
 
     res.json({ success: true, message: 'Catálogo sincronizado con la imagen' });
