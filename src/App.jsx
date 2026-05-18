@@ -675,14 +675,7 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
     });
   };
 
-  // Siempre mostrar datos de productWeightData cuando estén disponibles
-  const weightDataRows = productWeightData?.weightTotals ? getWeightDataRows() : [];
-  
-  // Combinar datos de peso con datos de inventario para mostrar todos los productos
-  const unsortedRows = weightDataRows.length > 0 ? weightDataRows : inventoryRows;
-  
-  // Aplicar ordenamiento
-  const displayRows = sortData(unsortedRows);
+  const displayRows = sortData(inventoryRows);
 
   useEffect(() => {
     let cancelled = false;
@@ -864,8 +857,8 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
                   const b4 = isKg ? toNum(i.bodega_4) / factor : toNum(i.bodega_4);
                   const total = b1 + b2 + b3 + b4;
                   return (
-                    <tr key={i.name}>
-                      <td className="col-carne" style={{ fontWeight: 700, color: 'var(--text-main)' }}>{i.name}</td>
+                    <tr key={i.code}>
+                      <td className="col-carne" style={{ fontWeight: 700, color: 'var(--text-main)' }}>{i.name || `Producto ${i.code}`}</td>
                       <td className="col-qty" style={{ color: 'var(--accent)' }}>{b1.toFixed(1)}</td>
                       <td className="col-qty" style={{ color: 'var(--success)' }}>{b2.toFixed(1)}</td>
                       <td className="col-qty" style={{ color: 'var(--success)' }}>{b3.toFixed(1)}</td>
@@ -892,7 +885,13 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
             if (displayRows.length === 0) { alert('El inventario ya está en cero.'); return; }
             if (confirm('⚠️ ¿Deseas poner todas las existencias en CERO?')) {
               if (confirm('❌ ESTA ACCIÓN ES IRREVERSIBLE. ¿Continuar?')) {
-                fetch(`${API_BASE}/admin/clear-inventory`, { method: 'POST' }).then(() => { onUpdate(); alert('Inventario Vaciado'); });
+                fetch(`${API_BASE}/admin/clear-inventory`, { method: 'POST' })
+                  .then(r => r.json())
+                  .then(d => {
+                    if (d.success) { onUpdate(); alert('Inventario Vaciado'); }
+                    else { alert('Error: ' + (d.error || 'Desconocido')); }
+                  })
+                  .catch(err => alert('Error de conexión: ' + err.message));
               }
             }
           }}

@@ -1117,13 +1117,25 @@ app.post('/api/admin/sync-catalog', async (req, res) => {
 
 app.post('/api/admin/clear-inventory', async (req, res) => {
   try {
-    await query('UPDATE inventory SET bodega_1 = 0, bodega_2 = 0, bodega_3 = 0, bodega_4 = 0, current_stock = 0, sold_stock = 0');
+    console.log('[CLEAR-INVENTORY] Starting inventory clear...');
+    const r1 = await query('UPDATE inventory SET bodega_1 = 0, bodega_2 = 0, bodega_3 = 0, bodega_4 = 0, current_stock = 0, sold_stock = 0');
+    console.log('[CLEAR-INVENTORY] Inventory updated, result:', r1);
     await query('DELETE FROM movements');
+    console.log('[CLEAR-INVENTORY] Movements deleted');
     await query('DELETE FROM production_logs');
+    console.log('[CLEAR-INVENTORY] Production logs deleted');
     await query('DELETE FROM dispatches');
+    console.log('[CLEAR-INVENTORY] Dispatches deleted');
     await query('DELETE FROM ransa_requests');
+    console.log('[CLEAR-INVENTORY] Ransa requests deleted');
+    // Verify the update worked
+    const verify = await query('SELECT COUNT(*) as total, SUM(bodega_1 + bodega_2 + bodega_3 + bodega_4) as sum FROM inventory');
+    console.log('[CLEAR-INVENTORY] Verification:', verify.rows[0]);
     res.json({ success: true, message: 'Inventario vaciado completamente' });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) {
+    console.error('[CLEAR-INVENTORY] Error:', err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.post('/api/admin/reset', async (req, res) => {
