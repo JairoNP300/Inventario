@@ -1151,6 +1151,66 @@ app.post('/api/admin/reset', async (req, res) => {
   }
 });
 
+// Sync inventory from physical inventory data
+// Bodega mapping: bodega_1 = Ransa (KG), bodega_2 = Soyapango (LBS), bodega_3 = Usulután (LBS), bodega_4 = Lomas (LBS)
+const physicalInventoryData = {
+  "1618": { name: "Sin Hueso Nalga Adentro", bodega_1: 0, bodega_3: 1517.28 },
+  "1619": { name: "Sin Hueso Tortuguita", bodega_1: 0, bodega_3: 2395.38 },
+  "1620": { name: "Con Hueso Cogote", bodega_1: 0, bodega_3: 0 },
+  "1621": { name: "Sin Hueso Bife Angosto", bodega_1: 0, bodega_3: 0 },
+  "1622": { name: "Recorte 80.20", bodega_1: 0, bodega_3: 0 },
+  "1623": { name: "Recorte 50.50", bodega_1: 0, bodega_3: 0 },
+  "1624": { name: "Aguja", bodega_1: 0, bodega_3: 1848.24 },
+  "1625": { name: "Corazón Cuadril", bodega_1: 0, bodega_3: 0 },
+  "1626": { name: "Sin Hueso Delantero", bodega_1: 0, bodega_3: 1072.28 },
+  "1627": { name: "Sin Hueso Tapa Cuadril", bodega_1: 0, bodega_3: 0 },
+  "1628": { name: "Sin Hueso Recorte de Carne", bodega_1: 0, bodega_3: 2189.20 }
+};
+
+app.post('/api/admin/sync-inventory-weights', async (req, res) => {
+  try {
+    console.log('[SYNC-INVENTORY] Starting inventory sync from physical data...');
+    const { rows: products } = await query('SELECT id, code, name FROM products');
+    let syncedCount = 0;
+    
+    for (const product of products) {
+      const physicalData = physicalInventoryData[product.code];
+      if (physicalData) {
+        // Update all bodega columns for this product
+        await query(`
+          UPDATE inventory SET 
+            bodega_1 = COALESCE((SELECT bodega_1 FROM inventory WHERE product_id = ?), 0),
+            bodega_2 = COALESCE((SELECT bodega_2 FROM inventory WHERE product_id = ?), 0),
+            bodega_3 = ?,
+            bodega_4 = COALESCE((SELECT bodega_4 FROM inventory WHERE product_id = ?), 0),
+            current_stock = ? + COALESCE((SELECT bodega_2 FROM inventory WHERE product_id = ?), 0) + COALESCE((SELECT bodega_4 FROM inventory WHERE product_id = ?), 0)
+          WHERE product_id = ?
+        `, [
+          product.id, product.id, physicalData.bodega_3,
+          product.id, physicalData.bodega_1, product.id, product.id, product.id
+        ]);
+        
+        // Also update bodega_1 if it needs to be set
+        if (physicalData.bodega_1 > 0) {
+          await query('UPDATE inventory SET bodega_1 = ? WHERE product_id = ?', [physicalData.bodega_1, product.id]);
+        }
+        
+        console.log(`[SYNC] Updated product ${product.code} (${product.name}): bodega_3 = ${physicalData.bodega_3}`);
+        syncedCount++;
+      }
+    }
+    
+    // Verify the sync
+    const verify = await query('SELECT p.code, p.name, i.bodega_1, i.bodega_2, i.bodega_3, i.bodega_4, (i.bodega_1 + i.bodega_2 + i.bodega_3 + i.bodega_4) as total FROM inventory i JOIN products p ON i.product_id = p.id ORDER BY CAST(p.code AS INTEGER)');
+    console.log('[SYNC-INVENTORY] Verification after sync:', verify.rows);
+    
+    res.json({ success: true, message: `Inventario sincronizado: ${syncedCount} productos actualizados`, data: verify.rows });
+  } catch (err) {
+    console.error('[SYNC-INVENTORY] Error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Fallback to index.html for SPA
 app.get('*', (req, res) => {
   res.sendFile(join(__dirname, '../dist/index.html'));
