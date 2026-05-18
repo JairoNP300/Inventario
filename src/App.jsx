@@ -913,7 +913,7 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
           }}
           className="btn-primary" style={{ width: 'auto', background: '#059669' }}
         >
-          <RefreshCw size={20} /> Sincronizar Inventario
+          <RefreshCcw size={20} /> Sincronizar Inventario
         </button>
       </div>
     </div>
