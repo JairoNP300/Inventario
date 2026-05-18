@@ -847,7 +847,7 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
                 </tr>
               </thead>
               <tbody>
-                {displayRows.length > 0 ? displayRows.map(i => {
+{displayRows.length > 0 ? displayRows.map(i => {
                   const isKg = viewUnit === 'Kg';
                   const factor = 2.20462;
                   // bodega_1 = KG, bodega_2/3/4 = LBS
@@ -870,6 +870,17 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
                   );
                 }) : <tr><td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '20px' }}>Sin datos de inventario</td></tr>}
               </tbody>
+              <tfoot>
+                <tr style={{ background: 'rgba(14,165,233,0.1)', fontWeight: 800 }}>
+                  <td style={{ padding: '12px', borderTop: '2px solid var(--accent)' }}>TOTAL KG (Ransa)</td>
+                  <td style={{ padding: '12px', borderTop: '2px solid var(--accent)', color: 'var(--accent)' }}>
+                    {displayRows.reduce((sum, i) => sum + toNum(i.bodega_1), 0).toFixed(1)} kg
+                  </td>
+                  <td colSpan={4} style={{ padding: '12px', borderTop: '2px solid var(--accent)', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                    (Solo bodega Ransa en KG)
+                  </td>
+                </tr>
+              </tfoot>
             </table>
           </div>
         </div>
