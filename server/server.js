@@ -1159,17 +1159,17 @@ app.post('/api/admin/reset', async (req, res) => {
 // Sync inventory from physical inventory data
 // Bodega mapping: bodega_1 = Ransa (KG), bodega_2 = Soyapango (LBS), bodega_3 = Usulután (LBS), bodega_4 = Lomas (LBS)
 const physicalInventoryData = {
-  "1618": { name: "Sin Hueso Nalga Adentro", bodega_1: 0, bodega_3: 1517.28 },
-  "1619": { name: "Sin Hueso Tortuguita", bodega_1: 0, bodega_3: 2395.38 },
+  "1618": { name: "Sin Hueso Nalga Adentro", bodega_1: 0, bodega_3: 9168.1 },
+  "1619": { name: "Cajas Tortuguita", bodega_1: 0, bodega_3: 5948.9 },
   "1620": { name: "Con Hueso Cogote", bodega_1: 0, bodega_3: 0 },
   "1621": { name: "Sin Hueso Bife Angosto", bodega_1: 0, bodega_3: 0 },
   "1622": { name: "Recorte 80.20", bodega_1: 0, bodega_3: 0 },
   "1623": { name: "Recorte 50.50", bodega_1: 0, bodega_3: 0 },
-  "1624": { name: "Aguja", bodega_1: 0, bodega_3: 1848.24 },
+  "1624": { name: "Aguja", bodega_1: 0, bodega_3: 4808.9 },
   "1625": { name: "Corazón Cuadril", bodega_1: 0, bodega_3: 0 },
-  "1626": { name: "Sin Hueso Delantero", bodega_1: 0, bodega_3: 1072.28 },
+  "1626": { name: "Sin Hueso Delantero", bodega_1: 0, bodega_3: 1072.3 },
   "1627": { name: "Sin Hueso Tapa Cuadril", bodega_1: 0, bodega_3: 0 },
-  "1628": { name: "Sin Hueso Recorte de Carne", bodega_1: 0, bodega_3: 2189.20 }
+  "1628": { name: "Sin Hueso Recorte de Carne", bodega_1: 0, bodega_3: 5595.4 }
 };
 
 app.post('/api/admin/sync-inventory-weights', async (req, res) => {
