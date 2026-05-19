@@ -903,22 +903,6 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
         >
           <Trash2 size={20} /> Vaciar Sistema
         </button>
-        <button
-          onClick={() => {
-            if (confirm('Sincronizar inventario con datos físicos del inventario?')) {
-              fetch(`${API_BASE}/admin/sync-inventory-weights`, { method: 'POST' })
-                .then(r => r.json())
-                .then(d => {
-                  if (d.success) { onUpdate(); alert('Inventario Sincronizado: ' + d.message); }
-                  else { alert('Error: ' + (d.error || 'Desconocido')); }
-                })
-                .catch(err => alert('Error de conexión: ' + err.message));
-            }
-          }}
-          className="btn-primary" style={{ width: 'auto', background: '#059669' }}
-        >
-          <RefreshCcw size={20} /> Sincronizar Inventario
-        </button>
       </div>
     </div>
   );

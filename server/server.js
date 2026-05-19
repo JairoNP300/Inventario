@@ -1226,10 +1226,53 @@ app.get('*', (req, res) => {
 
 // Initialize database and run migration
 initDb().then(() => {
-  migrateDatabase().then(() => {
+  migrateDatabase().then(async () => {
+    // Auto-sync inventory on startup - only for products with zero stock
+    try {
+      console.log('[AUTO-SYNC] Checking inventory for zero-stock products...');
+      const { rows: products } = await query('SELECT id, code, name FROM products');
+      let syncedCount = 0;
+      
+      for (const product of products) {
+        const physicalData = physicalInventoryData[product.code];
+        if (physicalData) {
+          // Check current inventory values
+          const { rows: current } = await query('SELECT bodega_1, bodega_2, bodega_3, bodega_4 FROM inventory WHERE product_id = ?', [product.id]);
+          const inv = current[0] || {};
+          const totalStock = (inv.bodega_1 || 0) + (inv.bodega_2 || 0) + (inv.bodega_3 || 0) + (inv.bodega_4 || 0);
+          
+          // Only sync if product has no stock (all zeros)
+          if (totalStock === 0) {
+            await query(`
+              UPDATE inventory SET 
+                bodega_1 = ?,
+                bodega_2 = 0,
+                bodega_3 = ?,
+                bodega_4 = 0,
+                current_stock = ? + ?
+              WHERE product_id = ?
+            `, [
+              physicalData.bodega_1, physicalData.bodega_3,
+              physicalData.bodega_1, physicalData.bodega_3, product.id
+            ]);
+            console.log(`[AUTO-SYNC] Initialized product ${product.code} (${product.name}): bodega_3=${physicalData.bodega_3}`);
+            syncedCount++;
+          }
+        }
+      }
+      
+      if (syncedCount > 0) {
+        console.log(`[AUTO-SYNC] ✅ ${syncedCount} productos inicializados con stock base`);
+      } else {
+        console.log('[AUTO-SYNC] ✅ Todos los productos ya tienen stock - no se requiere sincronización');
+      }
+    } catch (err) {
+      console.error('[AUTO-SYNC] Error:', err.message);
+    }
+    
     app.listen(port, '0.0.0.0', () => {
       console.log(`Server running at port ${port}`);
-      console.log('All changes applied: New locations, stock levels (100 per bodega), and deduction logic');
+      console.log('All changes applied: New locations, stock levels, and deduction logic');
     });
   }).catch(err => {
     console.error('Migration failed:', err);
