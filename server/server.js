@@ -1181,27 +1181,30 @@ app.post('/api/admin/sync-inventory-weights', async (req, res) => {
     for (const product of products) {
       const physicalData = physicalInventoryData[product.code];
       if (physicalData) {
-        // Update all bodega columns for this product
-        await query(`
-          UPDATE inventory SET 
-            bodega_1 = COALESCE((SELECT bodega_1 FROM inventory WHERE product_id = ?), 0),
-            bodega_2 = COALESCE((SELECT bodega_2 FROM inventory WHERE product_id = ?), 0),
-            bodega_3 = ?,
-            bodega_4 = COALESCE((SELECT bodega_4 FROM inventory WHERE product_id = ?), 0),
-            current_stock = ? + COALESCE((SELECT bodega_2 FROM inventory WHERE product_id = ?), 0) + COALESCE((SELECT bodega_4 FROM inventory WHERE product_id = ?), 0)
-          WHERE product_id = ?
-        `, [
-          product.id, product.id, physicalData.bodega_3,
-          product.id, physicalData.bodega_1, product.id, product.id, product.id
-        ]);
+        // Check current inventory values - only sync if all bodegas are zero
+        const { rows: current } = await query('SELECT bodega_1, bodega_2, bodega_3, bodega_4 FROM inventory WHERE product_id = ?', [product.id]);
+        const inv = current[0] || {};
+        const totalStock = (inv.bodega_1 || 0) + (inv.bodega_2 || 0) + (inv.bodega_3 || 0) + (inv.bodega_4 || 0);
         
-        // Also update bodega_1 if it needs to be set
-        if (physicalData.bodega_1 > 0) {
-          await query('UPDATE inventory SET bodega_1 = ? WHERE product_id = ?', [physicalData.bodega_1, product.id]);
+        // Only sync if product has no stock (all zeros)
+        if (totalStock === 0) {
+          await query(`
+            UPDATE inventory SET 
+              bodega_1 = ?,
+              bodega_2 = 0,
+              bodega_3 = ?,
+              bodega_4 = 0,
+              current_stock = ? + ?
+            WHERE product_id = ?
+          `, [
+            physicalData.bodega_1, physicalData.bodega_3,
+            physicalData.bodega_1, physicalData.bodega_3, product.id
+          ]);
+          console.log(`[SYNC] Initialized product ${product.code} (${product.name}): bodega_1=${physicalData.bodega_1}, bodega_3=${physicalData.bodega_3}`);
+          syncedCount++;
+        } else {
+          console.log(`[SYNC] Skipped product ${product.code} (${product.name}): already has stock (${totalStock})`);
         }
-        
-        console.log(`[SYNC] Updated product ${product.code} (${product.name}): bodega_3 = ${physicalData.bodega_3}`);
-        syncedCount++;
       }
     }
     
@@ -1209,7 +1212,7 @@ app.post('/api/admin/sync-inventory-weights', async (req, res) => {
     const verify = await query('SELECT p.code, p.name, i.bodega_1, i.bodega_2, i.bodega_3, i.bodega_4, (i.bodega_1 + i.bodega_2 + i.bodega_3 + i.bodega_4) as total FROM inventory i JOIN products p ON i.product_id = p.id ORDER BY CAST(p.code AS INTEGER)');
     console.log('[SYNC-INVENTORY] Verification after sync:', verify.rows);
     
-    res.json({ success: true, message: `Inventario sincronizado: ${syncedCount} productos actualizados`, data: verify.rows });
+    res.json({ success: true, message: `Inventario sincronizado: ${syncedCount} productos inicializados (los demás ya tenían stock)`, data: verify.rows });
   } catch (err) {
     console.error('[SYNC-INVENTORY] Error:', err);
     res.status(500).json({ error: err.message });
