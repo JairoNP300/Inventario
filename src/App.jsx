@@ -1710,6 +1710,7 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
               <label>Punto de Entrega (Destino)</label>
               <select value={formData.agro_id} onChange={e => setFormData({ ...formData, agro_id: e.target.value })} required>
                 <option value="">Seleccione Destino...</option>
+                <option value="VENTA_DIRECTA">Venta directa</option>
                 {agros.filter(a => a.name !== 'Ransa').map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
               </select>
             </div>
