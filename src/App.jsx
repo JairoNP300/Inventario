@@ -924,6 +924,8 @@ const InvoicingSystem = ({ products, agros, productWeightData, onUpdate }) => {
   const [agroId, setAgroId] = useState('');
   const [qty, setQty] = useState('');
   const [unit, setUnit] = useState('Lbs');
+  const [discountPercent, setDiscountPercent] = useState(0);
+  const [originWarehouse, setOriginWarehouse] = useState('Central de abasto - Usulután (Cuarto Frío)');
   const [client, setClient] = useState({ 
     name: '', nrc: '', nit: '', address: '', activity: '',
     deliverer: '',      // Nombre Entrega
@@ -931,6 +933,13 @@ const InvoicingSystem = ({ products, agros, productWeightData, onUpdate }) => {
     observations: '',   // Observaciones
     paymentCondition: 'CONTADO'  // Condición de operación
   });
+
+  const warehouses = [
+    'Ransa',
+    'Central de abasto - Soyapango (Cuarto Frío)',
+    'Central de abasto - Usulután (Cuarto Frío)',
+    'Lomas de San Francisco'
+  ];
 
   // Auto-load dispatch data from sessionStorage
   useEffect(() => {
@@ -973,7 +982,9 @@ const InvoicingSystem = ({ products, agros, productWeightData, onUpdate }) => {
               qty: parseFloat(dispatchData.weight),
               unit: dispatchData.unit_type || 'Lbs',
               price: price || 0,
-              total: parseFloat(dispatchData.weight) * (price || 0)
+              subtotal: parseFloat(dispatchData.weight) * (price || 0),
+              discount_percent: dispatchData.discount_percent || 0,
+              total: parseFloat(dispatchData.value) || (parseFloat(dispatchData.weight) * (price || 0))
             }]);
           }
         }
@@ -990,10 +1001,11 @@ const InvoicingSystem = ({ products, agros, productWeightData, onUpdate }) => {
     const p = products.find(prod => String(prod.id) === String(selectedProduct));
     if (!p || !qty || !agroId) return alert('Complete los datos: Producto, Cantidad y Ubicación');
     let price = unit === 'Lbs' ? p.price_per_lb : p.price_per_kg;
-    const newItem = { id: Date.now(), product_id: p.id, agro_id: parseInt(agroId), name: p.name, qty: parseFloat(qty), unit, price: price || 0, total: parseFloat(qty) * (price || 0) };
+    const subtotal = parseFloat(qty) * (price || 0);
+    const discount = parseFloat(discountPercent) || 0;
+    const totalWithDiscount = subtotal * (1 - discount / 100);
+    const newItem = { id: Date.now(), product_id: p.id, agro_id: parseInt(agroId), name: p.name, qty: parseFloat(qty), unit, price: price || 0, subtotal, discount_percent: discount, total: totalWithDiscount };
     setCart([...cart, newItem]);
-    console.log('Added to cart:', newItem);
-    console.log('Cart now:', [...cart, newItem]);
     setSelectedProduct(''); setQty('');
   };
 
@@ -1022,7 +1034,8 @@ const InvoicingSystem = ({ products, agros, productWeightData, onUpdate }) => {
           agro_id: item.agro_id,
           weight: item.qty,
           unit_type: item.unit,
-          value: item.total
+          value: item.total,
+          discount_percent: item.discount_percent || 0
         })
       }).then(res => {
         if (!res.ok) throw new Error('Error saving dispatch');
@@ -1163,6 +1176,18 @@ const InvoicingSystem = ({ products, agros, productWeightData, onUpdate }) => {
             </div>
             <div className="form-group">
               <label>Ubicación Origen</label>
+              <select value={originWarehouse} onChange={e => setOriginWarehouse(e.target.value)}>
+                {warehouses.map(w => <option key={w} value={w}>{w}</option>)}
+              </select>
+            </div>
+          </div>
+          <div className="form-row two-col">
+            <div className="form-group">
+              <label>Descuento (%)</label>
+              <input type="number" step="0.01" min="0" max="100" value={discountPercent} onChange={e => setDiscountPercent(e.target.value)} placeholder="0" />
+            </div>
+            <div className="form-group">
+              <label>Destino</label>
               <select value={agroId} onChange={e => setAgroId(e.target.value)}>
                 <option value="">Seleccione...</option>
                 {agros.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
@@ -1193,6 +1218,7 @@ const InvoicingSystem = ({ products, agros, productWeightData, onUpdate }) => {
                     <th style={{ textAlign: 'center', padding: '8px', color: '#10b981' }}>Cantidad</th>
                     <th style={{ textAlign: 'center', padding: '8px', color: '#10b981' }}>Unidad</th>
                     <th style={{ textAlign: 'right', padding: '8px', color: '#10b981' }}>Precio</th>
+                    <th style={{ textAlign: 'center', padding: '8px', color: '#10b981' }}>Dto %</th>
                     <th style={{ textAlign: 'right', padding: '8px', color: '#10b981' }}>Total</th>
                     <th style={{ textAlign: 'center', padding: '8px', color: '#10b981' }}>Acción</th>
                   </tr>
@@ -1204,6 +1230,7 @@ const InvoicingSystem = ({ products, agros, productWeightData, onUpdate }) => {
                       <td style={{ padding: '8px', textAlign: 'center', color: 'var(--text-main)' }}>{item.qty.toFixed(2)}</td>
                       <td style={{ padding: '8px', textAlign: 'center', color: 'var(--text-main)' }}>{item.unit}</td>
                       <td style={{ padding: '8px', textAlign: 'right', color: 'var(--text-main)' }}>${item.price.toFixed(2)}</td>
+                      <td style={{ padding: '8px', textAlign: 'center', color: item.discount_percent > 0 ? '#f59e0b' : 'var(--text-muted)' }}>{item.discount_percent > 0 ? `${item.discount_percent}%` : '-'}</td>
                       <td style={{ padding: '8px', textAlign: 'right', color: '#10b981', fontWeight: 600 }}>${item.total.toFixed(2)}</td>
                       <td style={{ padding: '8px', textAlign: 'center' }}>
                         <button
@@ -1219,7 +1246,7 @@ const InvoicingSystem = ({ products, agros, productWeightData, onUpdate }) => {
                 </tbody>
                 <tfoot>
                   <tr style={{ borderTop: '2px solid rgba(16, 185, 129, 0.3)' }}>
-                    <td colSpan="4" style={{ padding: '8px', textAlign: 'right', fontWeight: 700, color: '#10b981' }}>Total Carrito:</td>
+                    <td colSpan="5" style={{ padding: '8px', textAlign: 'right', fontWeight: 700, color: '#10b981' }}>Total Carrito:</td>
                     <td style={{ padding: '8px', textAlign: 'right', fontWeight: 800, color: '#10b981', fontSize: '1rem' }}>
                       ${cart.reduce((sum, item) => sum + item.total, 0).toFixed(2)}
                     </td>

@@ -218,6 +218,18 @@ const migrateDatabase = async () => {
     console.warn('activity_log migration:', e.message);
   }
 
+  // Add discount_percent column to dispatches if not exists
+  try {
+    if (isProduction) {
+      await query(`ALTER TABLE dispatches ADD COLUMN discount_percent DECIMAL(5,2) DEFAULT 0`);
+    } else {
+      sqliteDb.prepare('ALTER TABLE dispatches ADD COLUMN discount_percent DECIMAL(5,2) DEFAULT 0').run();
+    }
+    console.log('discount_percent column added to dispatches');
+  } catch(e) {
+    console.log('discount_percent column already exists in dispatches');
+  }
+
   console.log('Database migration completed successfully');
 };
 
@@ -628,12 +640,12 @@ app.get('/api/reports/dispatches', async (req, res) => {
 });
 
 app.post('/api/dispatches', async (req, res) => {
-  const { product_id, agro_id, weight, unit_type, value, origin_warehouse } = req.body;
+  const { product_id, agro_id, weight, unit_type, value, origin_warehouse, discount_percent } = req.body;
   try {
     const info = await query(`
-      INSERT INTO dispatches (product_id, agro_id, weight, unit_type, value)
-      VALUES (?, ?, ?, ?, ?) RETURNING id
-    `, [product_id, agro_id, weight, unit_type || 'Lbs', value]);
+      INSERT INTO dispatches (product_id, agro_id, weight, unit_type, value, discount_percent)
+      VALUES (?, ?, ?, ?, ?, ?) RETURNING id
+    `, [product_id, agro_id, weight, unit_type || 'Lbs', value, discount_percent || 0]);
 
     // Determine which bodega to deduct from based on origin_warehouse
     const colMap = {
