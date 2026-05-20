@@ -72,7 +72,7 @@ export default function InvoiceLayout({
           line-height: 1.3 !important;
           padding: 6px 8px !important;
           width: 100% !important;
-          max-width: 160mm !important;
+          max-width: 120mm !important;
           margin: 0 auto !important;
           box-sizing: border-box !important;
         }
@@ -279,8 +279,8 @@ export default function InvoiceLayout({
           #invoice-print-area {
             display: block !important;
             width: 100% !important;
-            max-width: none !important;
-            margin: 0 !important;
+            max-width: 140mm !important;
+            margin: 0 auto !important;
             padding: 10px 15px !important;
             box-shadow: none !important;
             border: none !important;
