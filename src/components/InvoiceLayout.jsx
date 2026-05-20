@@ -71,7 +71,7 @@ export default function InvoiceLayout({
           font-size: 9px !important;
           line-height: 1.3 !important;
           padding: 10px 14px !important;
-          max-width: 210mm !important;
+          max-width: 160mm !important;
           margin: 0 auto !important;
         }
         #invoice-preview-section {
