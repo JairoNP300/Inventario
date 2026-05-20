@@ -149,12 +149,12 @@ export default function InvoiceLayout({
             )}
             {items.map((it, idx) => (
               <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0' }}>
-                <td style={{ padding: '8px 10px', fontSize: 12 }}>{idx + 1}</td>
-                <td style={{ padding: '8px 10px', fontSize: 12 }}>{Number(it.qty || 0).toFixed(2)}</td>
-                <td style={{ padding: '8px 10px', fontSize: 12 }}>{it.unit || 'Und'}</td>
-                <td style={{ padding: '8px 10px', fontSize: 12, fontWeight: 600 }}>{it.description || 'Producto'}</td>
-                <td style={{ padding: '8px 10px', fontSize: 12, textAlign: 'right' }}>${Number(it.unitPrice || it.price || 0).toFixed(2)}</td>
-                <td style={{ padding: '8px 10px', fontSize: 12, textAlign: 'right', fontWeight: 700 }}>${Number(it.total || 0).toFixed(2)}</td>
+                <td style={{ padding: '8px 10px', fontSize: 12, color: '#111827' }}>{idx + 1}</td>
+                <td style={{ padding: '8px 10px', fontSize: 12, color: '#111827' }}>{Number(it.qty || 0).toFixed(2)}</td>
+                <td style={{ padding: '8px 10px', fontSize: 12, color: '#111827' }}>{it.unit || 'Und'}</td>
+                <td style={{ padding: '8px 10px', fontSize: 12, fontWeight: 600, color: '#111827' }}>{it.description || 'Producto'}</td>
+                <td style={{ padding: '8px 10px', fontSize: 12, textAlign: 'right', color: '#111827' }}>${Number(it.unitPrice || it.price || 0).toFixed(2)}</td>
+                <td style={{ padding: '8px 10px', fontSize: 12, textAlign: 'right', fontWeight: 700, color: '#111827' }}>${Number(it.total || 0).toFixed(2)}</td>
               </tr>
             ))}
           </tbody>

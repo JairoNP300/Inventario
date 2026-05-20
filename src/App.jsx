@@ -1013,10 +1013,10 @@ const InvoicingSystem = ({ products, agros, productWeightData, onUpdate }) => {
     setCart(cart.filter(item => item.id !== id));
   };
 
-  const sumatoriaVentas = cart.reduce((acc, i) => acc + i.total, 0);
-  const iva = sumatoriaVentas * 0.13;
-  const totalPagar = sumatoriaVentas + iva;
-  const printableItems = cart.map(ci => ({ qty: ci.qty, unit: ci.unit, description: ci.name, unitPrice: ci.price, total: ci.total }));
+  const sumatoriaVentas = cart.reduce((acc, i) => acc + i.subtotal, 0);
+  const discountPercent = cart.length > 0 ? (cart[0].discount_percent || 0) : 0;
+  const totalPagar = cart.reduce((acc, i) => acc + i.total, 0);
+  const printableItems = cart.map(ci => ({ qty: ci.qty, unit: ci.unit, description: ci.name || 'Sin descripción', unitPrice: ci.price, total: ci.total }));
   const saveAndPrint = () => {
     if (!client.name || cart.length === 0) {
       alert('Datos incompletos');
@@ -1266,7 +1266,7 @@ const InvoicingSystem = ({ products, agros, productWeightData, onUpdate }) => {
         recipient={client}
         date={new Date().toISOString()}
         items={printableItems}
-        totals={{ subtotal: sumatoriaVentas, tax: iva, total: totalPagar }}
+        totals={{ subtotal: sumatoriaVentas, discount: discountPercent, total: totalPagar }}
         paymentCondition={client.paymentCondition}
         observations={client.observations}
         deliverer={client.deliverer}
