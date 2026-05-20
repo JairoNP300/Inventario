@@ -1576,6 +1576,8 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
     // Client data for invoice
     client_name: '', client_nit: '', client_nrc: '', client_address: ''
   });
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewData, setPreviewData] = useState(null);
 
   // Auto-calculate total value based on unit type, specific prices, and discount
   useEffect(() => {
@@ -1605,6 +1607,33 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
   const handleAction = (e) => {
     e.preventDefault();
     const isIncome = activeSubTab === 'income' || activeSubTab === 'unified';
+    
+    // For dispatch, show preview first
+    if (!isIncome && activeSubTab === 'dispatch') {
+      const product = products.find(p => String(p.id) === String(formData.product_id));
+      const agro = agros.find(a => String(a.id) === String(formData.agro_id));
+      
+      setPreviewData({
+        product,
+        agro,
+        weight: formData.weight,
+        unit_type: formData.unit_type,
+        value: formData.value,
+        discount_percent: formData.discount_percent,
+        origin: formData.origin,
+        client: {
+          name: formData.client_name,
+          nit: formData.client_nit,
+          nrc: formData.client_nrc,
+          address: formData.client_address
+        }
+      });
+      setShowPreview(true);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    
+    // For income, save directly
     const endpoint = isIncome ? '/reports/ransa' : '/dispatches';
     const url = editingId ? `${API_BASE}${endpoint}/${editingId}` : `${API_BASE}${endpoint}`;
 
@@ -1618,26 +1647,6 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
     .then(data => {
       if (data.error) { alert('Error: ' + data.error); return; }
       
-      // Store dispatch data for invoice if it's a dispatch operation
-      if (!isIncome && activeSubTab === 'dispatch') {
-        const dispatchData = {
-          product_id: formData.product_id,
-          weight: formData.weight,
-          unit_type: formData.unit_type,
-          value: formData.value,
-          discount_percent: formData.discount_percent,
-          origin: formData.origin,
-          destination: formData.agro_id,
-          client: {
-            name: formData.client_name,
-            nit: formData.client_nit,
-            nrc: formData.client_nrc,
-            address: formData.client_address
-          }
-        };
-        sessionStorage.setItem('pending_invoice', JSON.stringify(dispatchData));
-      }
-      
       setFormData({ product_id: '', origin: 'Ransa', destination: 'Lomas de San Francisco', weight: '', tag_weight: '', scale_weight: '', units_per_box: '', unit_type: 'Lbs', agro_id: '', value: '', discount_percent: 0, client_name: '', client_nit: '', client_nrc: '', client_address: '' });
       setEditingId(null);
       onUpdate();
@@ -1646,10 +1655,39 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
       // Auto-navigation logic
       if (!editingId) {
         if (isIncome) window.dispatchEvent(new CustomEvent('changeTab', { detail: 'production' }));
-        else window.dispatchEvent(new CustomEvent('changeTab', { detail: 'invoice' }));
       }
     })
     .catch(err => { console.error('Error en handleAction:', err); alert('Error de conexión: ' + err.message); });
+  };
+
+  const confirmAndSave = () => {
+    if (!previewData) return;
+    
+    apiFetch(`${API_BASE}/dispatches`, {
+      method: 'POST',
+      body: JSON.stringify({
+        product_id: previewData.product.id,
+        agro_id: previewData.agro?.id || previewData.destination,
+        weight: previewData.weight,
+        unit_type: previewData.unit_type,
+        value: previewData.value,
+        origin_warehouse: previewData.origin,
+        discount_percent: previewData.discount_percent
+      })
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.error) { alert('Error: ' + data.error); return; }
+      
+      setFormData({ product_id: '', origin: 'Ransa', destination: 'Lomas de San Francisco', weight: '', tag_weight: '', scale_weight: '', units_per_box: '', unit_type: 'Lbs', agro_id: '', value: '', discount_percent: 0, client_name: '', client_nit: '', client_nrc: '', client_address: '' });
+      setEditingId(null);
+      setShowPreview(false);
+      setPreviewData(null);
+      onUpdate();
+      alert('Despacho guardado exitosamente');
+      window.print();
+    })
+    .catch(err => { console.error('Error saving dispatch:', err); alert('Error de conexión: ' + err.message); });
   };
 
   const handleEdit = (log) => {
@@ -1838,9 +1876,48 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
         <button type="submit" className="btn-primary" disabled={activeSubTab === 'mass' && (parseFloat(Object.values(formData.distributions || {}).reduce((acc, v) => acc + (parseFloat(v) || 0), 0)) > (parseFloat(formData.total_to_distribute) || 0))}>
           {activeSubTab === 'mass' ? 'Confirmar Distribución Masiva' :
             activeSubTab === 'unified' ? 'Recepción -> Ir a Procesos' :
-              activeSubTab === 'dispatch' ? 'Despacho -> Ir a Factura' : 'Ejecutar Paso'}
+              activeSubTab === 'dispatch' ? 'Vista Previa de Factura' : 'Ejecutar Paso'}
         </button>
       </form>
+
+      {showPreview && previewData && (
+        <div className="form-card" style={{ marginTop: '2rem', background: 'rgba(255,255,255,0.02)' }}>
+          <h3 style={{ marginBottom: '1.5rem', color: 'var(--accent)' }}>Vista Previa de Factura</h3>
+          <InvoiceLayout
+            company="CARNES DEL PARAGUAY S.A.S DE C.V"
+            address="CALLE LA MASCOTA, CONDOMINIO GALICIA, COLONIA SAN BENITO, 18"
+            nit="0623-160725-114-6"
+            nrc="367641-0"
+            recipient={{
+              name: previewData.client.name,
+              nit: previewData.client.nit,
+              nrc: previewData.client.nrc,
+              address: previewData.client.address
+            }}
+            date={new Date().toISOString()}
+            items={[{
+              qty: parseFloat(previewData.weight),
+              unit: previewData.unit_type,
+              description: previewData.product?.name || '',
+              unitPrice: previewData.unit_type === 'Lbs' ? (previewData.product?.price_per_lb || 0) : (previewData.product?.price_per_kg || 0),
+              total: parseFloat(previewData.value)
+            }]}
+            totals={{
+              subtotal: parseFloat(previewData.value) / (1 - (parseFloat(previewData.discount_percent) || 0) / 100),
+              discount: parseFloat(previewData.discount_percent) || 0,
+              tax: parseFloat(previewData.value) * 0.13,
+              total: parseFloat(previewData.value) * 1.13
+            }}
+            paymentCondition="CONTADO"
+            observations=""
+            deliverer=""
+            receiver=""
+            onPrint={() => window.print()}
+            onSave={confirmAndSave}
+            onCancel={() => { setShowPreview(false); setPreviewData(null); }}
+          />
+        </div>
+      )}
 
       <div className="form-card" style={{ marginTop: '20px' }}>
         <h3 style={{ marginBottom: '1.5rem' }}>Trazabilidad: Últimos Movimientos</h3>
