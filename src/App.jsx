@@ -1035,6 +1035,7 @@ const InvoicingSystem = ({ products, agros, productWeightData, onUpdate }) => {
           weight: item.qty,
           unit_type: item.unit,
           value: item.total,
+          origin_warehouse: originWarehouse,
           discount_percent: item.discount_percent || 0
         })
       }).then(res => {
