@@ -307,7 +307,7 @@ export default function InvoiceLayout({
           .il-extension-grid { padding: 4px 6px !important; font-size: 8px !important; }
           .il-extension-grid > div { margin-bottom: 2px !important; }
           .il-section-header { font-size: 6px !important; padding: 1px 6px !important; }
-          .il-no-print { display: none !important; }
+          #invoice-print-area .il-no-print { display: none !important; }
           [style*="borderBottom"] { margin-bottom: 4px !important; padding-bottom: 4px !important; }
           @page { size: A4 portrait; margin: 8mm; }
         }
@@ -412,7 +412,7 @@ export default function InvoiceLayout({
           <div className="il-disclaimer">Esta factura no incluye retenciones adicionales sujetas al comprador salvo que se especifique. Operación sujeta a revisión.</div>
         </div>
 
-        <div className="il-no-print">
+        <div className="il-no-print no-print">
           <button className="il-btn-save" onClick={onSave || onPrint}>GUARDAR VENTA &amp; IMPRIMIR</button>
           <button className="il-btn-cancel" onClick={onCancel}>Volver al Formulario</button>
         </div>

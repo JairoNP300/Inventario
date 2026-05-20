@@ -4304,7 +4304,7 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
         </AnimatePresence>
       </main>
 
-      <footer>
+      <footer className="no-print">
         <p>&copy; 2026 Carnes del Paraguay - Sistema de Logística Propio</p>
       </footer>
     </div>
