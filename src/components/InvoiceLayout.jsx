@@ -2,7 +2,7 @@ import React from 'react';
 
 export default function InvoiceLayout({
   company = 'CARNES DEL PARAGUAY S.A.S DE C.V',
-  address = 'CALLE LA MASCOTA, CONDOMINIO GALICIA, COLONIA SAN BENITO, 18. MUNICIPIO DE SAN SALVADOR CENTRO.',
+  address = 'CALLE LA MASCOTA, CONDOMINIO GALICIA, COLONIA SAN BENITO, 18',
   nit = '0623-160725-114-6',
   nrc = '367641-0',
   phone = '2222-2222',
@@ -35,6 +35,202 @@ export default function InvoiceLayout({
         if (r === 0) return decenas[d];
         return decenas[d] + ' Y ' + unidades[r];
       }
+      if (num < 1000) {
+        const c = Math.floor(num / 100);
+        const r = num % 100;
+        const head = c === 1 && r !== 0 ? 'CIENTO' : centenas[c];
+        return r ? head + ' ' + toWord(r) : head;
+      }
+      if (num < 1000000) {
+        const miles = Math.floor(num / 1000);
+        const r = num % 1000;
+        const milesWord = miles + ' MIL';
+        return r ? milesWord + ' ' + toWord(r) : milesWord;
+      }
+      const millones = Math.floor(num / 1000000);
+      const r = num % 1000000;
+      const millonesWord = toWord(millones) + ' MILLON';
+      return r ? millonesWord + ' ' + toWord(r) : millonesWord;
+    };
+    return toWord(Math.floor(n)).trim().toUpperCase();
+  };
+
+  const totalInt = Math.floor(total || 0);
+  const cents = Math.round(((total || 0) - totalInt) * 100);
+  const totalInWords = cents > 0 ? numberToWords(totalInt) + ' CON ' + numberToWords(cents) + ' CENTAVOS' : numberToWords(totalInt);
+  
+  const codigoFactura = `DTE-03-M001P001-${Math.random().toString(36).toUpperCase().substring(2, 10)}`;
+  
+  return (
+    <div id="invoice-print-area" className="invoice-container" style={{ 
+      padding: '12px 16px',
+      fontFamily: 'Arial, sans-serif',
+      color: '#111827',
+      background: '#ffffff',
+      maxWidth: 800,
+      margin: '0 auto',
+      fontSize: 11
+    }}>
+      <div className="header-badge" style={{
+        background: '#f3f4f6',
+        color: '#4b5563',
+        fontSize: 8,
+        fontWeight: 700,
+        letterSpacing: 0.5,
+        padding: '3px 8px',
+        display: 'inline-block',
+        marginBottom: 8
+      }}>
+        DOCUMENTO TRIBUTARIO ELECTRÓNICO
+      </div>
+      
+      <div style={{ marginBottom: 10, borderBottom: '1px solid #d1d5db', paddingBottom: 8 }}>
+        <h1 style={{ fontSize: '1.2rem', fontWeight: 900, color: '#111827', margin: 0, letterSpacing: -0.5 }}>
+          {company}
+        </h1>
+        <p style={{ color: '#374151', margin: '3px 0 0 0', fontSize: '0.7rem' }}>
+          {address}
+        </p>
+        <p style={{ color: '#374151', margin: '2px 0 0 0', fontSize: '0.68rem' }}>
+          <strong>TELÉFONO:</strong> {phone} | <strong>CORREO:</strong> {email}
+        </p>
+        <p style={{ marginTop: 4, fontSize: '0.68rem' }}>
+          <strong>NIT:</strong> {nit} | <strong>NRC:</strong> {nrc}
+        </p>
+      </div>
+      
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, padding: 6, background: '#f9fafb', border: '1px solid #e5e7eb' }}>
+        <div>
+          <div style={{ fontSize: 8, color: '#6b7280', textTransform: 'uppercase', fontWeight: 700 }}>Tipo de Documento</div>
+          <div style={{ fontSize: 10, fontWeight: 800, color: '#111827' }}>COMPROBANTE DE CRÉDITO FISCAL</div>
+        </div>
+        <div>
+          <div style={{ fontSize: 8, color: '#6b7280', textTransform: 'uppercase', fontWeight: 700 }}>Código de Generación</div>
+          <div style={{ fontSize: 9, color: '#1f2937', fontFamily: 'monospace' }}>{codigoFactura}</div>
+        </div>
+        <div>
+          <div style={{ fontSize: 8, color: '#6b7280', textTransform: 'uppercase', fontWeight: 700 }}>Fecha de Emisión</div>
+          <div style={{ fontSize: 10, fontWeight: 800, color: '#111827' }}>
+            {new Date(date).toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })}
+          </div>
+        </div>
+      </div>
+      
+      <div style={{ marginBottom: 8, padding: 6, background: '#ffffff', border: '1px solid #e5e7eb' }}>
+        <div style={{ fontSize: 8, color: '#ffffff', textTransform: 'uppercase', fontWeight: 700, marginBottom: 4, background: '#1f2937', padding: '2px 6px' }}>
+          DATOS DEL RECEPTOR
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4, fontSize: 10 }}>
+          <div><strong>Nombre/Razón Social:</strong> {recipient.name || '---'}</div>
+          <div><strong>NIT/DUI:</strong> {recipient.nit || '---'}</div>
+          <div><strong>NRC:</strong> {recipient.nrc || '---'}</div>
+          <div><strong>Dirección:</strong> {recipient.address || '---'}</div>
+        </div>
+      </div>
+      
+      <div style={{ marginBottom: 8, overflow: 'hidden', border: '1px solid #e5e7eb' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr style={{ background: '#1f2937' }}>
+              <th style={{ textAlign: 'left', padding: '4px 6px', color: 'white', fontSize: 8, fontWeight: 800, textTransform: 'uppercase' }}>N°</th>
+              <th style={{ textAlign: 'left', padding: '4px 6px', color: 'white', fontSize: 8, fontWeight: 800, textTransform: 'uppercase' }}>Cantidad</th>
+              <th style={{ textAlign: 'left', padding: '4px 6px', color: 'white', fontSize: 8, fontWeight: 800, textTransform: 'uppercase' }}>Unidad</th>
+              <th style={{ textAlign: 'left', padding: '4px 6px', color: 'white', fontSize: 8, fontWeight: 800, textTransform: 'uppercase' }}>Descripción</th>
+              <th style={{ textAlign: 'right', padding: '4px 6px', color: 'white', fontSize: 8, fontWeight: 800, textTransform: 'uppercase' }}>P. Unitario</th>
+              <th style={{ textAlign: 'right', padding: '4px 6px', color: 'white', fontSize: 8, fontWeight: 800, textTransform: 'uppercase' }}>Ventas Gravadas</th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.length === 0 && (
+              <tr><td colSpan={6} style={{ padding: 8, textAlign: 'center', color: '#6b7280', fontSize: 10 }}>No hay productos registrados en el detalle</td></tr>
+            )}
+            {items.map((it, idx) => (
+              <tr key={idx} style={{ borderBottom: '1px solid #e5e7eb' }}>
+                <td style={{ padding: '4px 6px', fontSize: 10, color: '#111827' }}>{idx + 1}</td>
+                <td style={{ padding: '4px 6px', fontSize: 10, color: '#111827' }}>{Number(it.qty || 0).toFixed(2)}</td>
+                <td style={{ padding: '4px 6px', fontSize: 10, color: '#111827' }}>{it.unit || 'Und'}</td>
+                <td style={{ padding: '4px 6px', fontSize: 10, fontWeight: 600, color: '#111827' }}>{it.description || 'Producto'}</td>
+                <td style={{ padding: '4px 6px', fontSize: 10, textAlign: 'right', color: '#111827' }}>${Number(it.unitPrice || it.price || 0).toFixed(2)}</td>
+                <td style={{ padding: '4px 6px', fontSize: 10, textAlign: 'right', fontWeight: 700, color: '#111827' }}>${Number(it.total || 0).toFixed(2)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+        <div style={{ width: 260, padding: 8, background: '#ffffff', border: '1px solid #e5e7eb' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, fontSize: 11 }}>
+            <span style={{ color: '#64748b' }}>Sumatoria Ventas Gravadas</span>
+            <span style={{ fontWeight: 700 }}>${subtotal.toFixed(2)}</span>
+          </div>
+          {discount > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, fontSize: 11 }}>
+              <span style={{ color: '#f59e0b' }}>Descuento ({discount}%)</span>
+              <span style={{ fontWeight: 700, color: '#f59e0b' }}>${(subtotal * discount / 100).toFixed(2)}</span>
+            </div>
+          )}
+          <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 4, borderTop: '1px solid #e5e7eb', fontSize: 13, fontWeight: 900 }}>
+            <span>MONTO TOTAL A PAGAR</span>
+            <span>${total.toFixed(2)}</span>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ marginBottom: 8, border: '1px solid #e5e7eb' }}>
+        <div style={{ background: '#1f2937', color: '#fff', fontSize: 8, fontWeight: 700, padding: '2px 6px' }}>EXTENSIÓN</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4, padding: 6, fontSize: 10 }}>
+          <div><strong>Condición de la operación:</strong> {paymentCondition || recipient.paymentCondition || 'CONTADO'}</div>
+          <div><strong>Observaciones:</strong> {observations || recipient.observations || '---'}</div>
+          <div><strong>Nombre Entrega:</strong> {deliverer || recipient.deliverer || '---'}</div>
+          <div><strong>Nombre Recibe:</strong> {receiver || recipient.receiver || '---'}</div>
+        </div>
+      </div>
+      
+      <div style={{ marginBottom: 12, padding: 8, background: '#fefce8', borderRadius: 4, border: '1px solid #fef08a' }}>
+        <div style={{ fontSize: 9, fontWeight: 700, color: '#a16207', marginBottom: 2 }}>SON:</div>
+        <div style={{ fontSize: 11, color: '#713f12' }}>{totalInWords} DÓLARES</div>
+        <div style={{ fontSize: 9, color: '#a16207', marginTop: 4 }}>Esta factura no incluye retenciones adicionales sujetas al comprador salvo que se especifique. Operación sujeta a revisión.</div>
+      </div>
+      
+      <div className="no-print" style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+        <button 
+          onClick={onSave || onPrint} 
+          className="btn-primary" 
+          style={{ 
+            flex: 1, 
+            background: '#10b981', 
+            color: 'white',
+            padding: '10px 16px',
+            borderRadius: 8,
+            fontWeight: 700,
+            fontSize: 12,
+            border: 'none',
+            cursor: 'pointer'
+          }}
+        >
+          GUARDAR VENTA & IMPRIMIR
+        </button>
+        <button 
+          onClick={onCancel} 
+          style={{ 
+            flex: 1, 
+            background: '#64748b', 
+            color: 'white',
+            padding: '10px 16px',
+            borderRadius: 8,
+            fontWeight: 700,
+            fontSize: 12,
+            border: 'none',
+            cursor: 'pointer'
+          }}
+        >
+          Volver al Formulario
+        </button>
+      </div>
+    </div>
+  );
+}
       if (num < 1000) {
         const c = Math.floor(num / 100);
         const r = num % 100;

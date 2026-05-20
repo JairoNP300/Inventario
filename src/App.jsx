@@ -1907,7 +1907,7 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
       </form>
 
       {showPreview && previewData && (
-        <div id="invoice-preview-section" className="form-card" style={{ marginTop: '2rem', background: 'rgba(255,255,255,0.02)' }}>
+        <div id="invoice-preview-section" style={{ marginTop: '2rem' }}>
           <InvoiceLayout
             company="CARNES DEL PARAGUAY S.A.S DE C.V"
             address="CALLE LA MASCOTA, CONDOMINIO GALICIA, COLONIA SAN BENITO, 18"
@@ -4125,8 +4125,20 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
         @media print {
           body * { visibility: hidden; }
           #invoice-print-area, #invoice-print-area * { visibility: visible; }
-          #invoice-print-area { position: absolute; left: 0; top: 0; width: 100%; }
-          .btn-primary, .no-print { display: none !important; }
+          #invoice-print-area { 
+            position: absolute; 
+            left: 0; 
+            top: 0; 
+            width: 100%; 
+            padding: 10mm !important;
+            margin: 0 !important;
+            box-shadow: none !important;
+            border: none !important;
+            max-width: 100% !important;
+          }
+          .no-print { display: none !important; }
+          .invoice-container { page-break-inside: avoid; }
+          @page { size: A4 portrait; margin: 5mm; }
         }
       `}</style>
       <header>
