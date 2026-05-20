@@ -1016,7 +1016,7 @@ const InvoicingSystem = ({ products, agros, productWeightData, onUpdate }) => {
   const sumatoriaVentas = cart.reduce((acc, i) => acc + i.subtotal, 0);
   const cartDiscountPercent = cart.length > 0 ? (cart[0].discount_percent || 0) : 0;
   const totalPagar = cart.reduce((acc, i) => acc + i.total, 0);
-  const printableItems = cart.map(ci => ({ qty: ci.qty, unit: ci.unit, description: ci.name || 'Sin descripción', unitPrice: ci.price, total: ci.total }));
+  const printableItems = cart.map(ci => ({ qty: ci.qty, unit: ci.unit, name: ci.name, description: ci.name || 'Sin descripción', unitPrice: ci.price, total: ci.total, subtotal: ci.subtotal }));
   const saveAndPrint = () => {
     if (!client.name || cart.length === 0) {
       alert('Datos incompletos');
@@ -2042,9 +2042,11 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
             items={dispatchCart.map(ci => ({
               qty: ci.qty,
               unit: ci.unit,
+              name: ci.name,
               description: ci.name,
               unitPrice: ci.price,
-              total: ci.total
+              total: ci.total,
+              subtotal: ci.subtotal
             }))}
             totals={{
               subtotal: dispatchCart.reduce((s, i) => s + i.subtotal, 0),

@@ -325,7 +325,7 @@ export default function InvoiceLayout({
                   <td style={{ textAlign: 'center', fontWeight: 500 }}>{idx + 1}</td>
                   <td style={{ textAlign: 'center' }}>{Number(it.qty || 0).toFixed(2)}</td>
                   <td style={{ textAlign: 'center' }}>{it.unit || 'Und'}</td>
-                  <td style={{ fontWeight: 600 }}>{it.description || 'Producto'}</td>
+                   <td style={{ fontWeight: 600 }}>{it.description || it.name || 'Producto'}</td>
                   <td style={{ textAlign: 'right' }}>${Number(it.unitPrice || it.price || 0).toFixed(2)}</td>
                   <td style={{ textAlign: 'right', fontWeight: 700 }}>${Number(it.total || it.subtotal || 0).toFixed(2)}</td>
                 </tr>
