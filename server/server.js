@@ -538,7 +538,12 @@ app.delete('/api/reports/ransa/:id', async (req, res) => {
       };
       const target = colMap[log.distribution_details] || { col: 'bodega_1', factor: 1 };
       const val = scaleKg * target.factor;
-      await query(`UPDATE inventory SET ${target.col} = ${target.col} - ? WHERE product_id = ?`, [val, log.product_id]);
+      if (target.col !== 'bodega_1') {
+        // Restore to Ransa and remove from destination
+        await query(`UPDATE inventory SET bodega_1 = bodega_1 + ?, ${target.col} = ${target.col} - ?, initial_stock = initial_stock - ? WHERE product_id = ?`, [scaleKg, val, val, log.product_id]);
+      } else {
+        await query(`UPDATE inventory SET ${target.col} = ${target.col} - ?, initial_stock = initial_stock - ? WHERE product_id = ?`, [val, val, log.product_id]);
+      }
       await query('DELETE FROM ransa_requests WHERE id = ?', [id]);
     }
     res.json({ success: true });
@@ -568,12 +573,20 @@ app.put('/api/reports/ransa/:id', async (req, res) => {
       // 1. Revert OLD stock
       const oldTarget = colMap[old.distribution_details] || { col: 'bodega_1', factor: 1 };
       const oldVal = oldKg * oldTarget.factor;
-      await query(`UPDATE inventory SET ${oldTarget.col} = ${oldTarget.col} - ?, initial_stock = initial_stock - ? WHERE product_id = ?`, [oldVal, oldVal, old.product_id]);
+      if (oldTarget.col !== 'bodega_1') {
+        await query(`UPDATE inventory SET bodega_1 = bodega_1 + ?, ${oldTarget.col} = ${oldTarget.col} - ?, initial_stock = initial_stock - ? WHERE product_id = ?`, [oldKg, oldVal, oldVal, old.product_id]);
+      } else {
+        await query(`UPDATE inventory SET ${oldTarget.col} = ${oldTarget.col} - ?, initial_stock = initial_stock - ? WHERE product_id = ?`, [oldVal, oldVal, old.product_id]);
+      }
 
       // 2. Apply NEW stock
       const newTarget = colMap[distribution_details] || { col: 'bodega_1', factor: 1 };
       const newVal = newKg * newTarget.factor;
-      await query(`UPDATE inventory SET ${newTarget.col} = ${newTarget.col} + ?, initial_stock = initial_stock + ? WHERE product_id = ?`, [newVal, newVal, product_id]);
+      if (newTarget.col !== 'bodega_1') {
+        await query(`UPDATE inventory SET bodega_1 = bodega_1 - ?, ${newTarget.col} = ${newTarget.col} + ?, initial_stock = initial_stock + ? WHERE product_id = ?`, [newKg, newVal, newVal, product_id]);
+      } else {
+        await query(`UPDATE inventory SET ${newTarget.col} = ${newTarget.col} + ?, initial_stock = initial_stock + ? WHERE product_id = ?`, [newVal, newVal, product_id]);
+      }
 
       // 3. Update Record
       await query(`
@@ -608,6 +621,10 @@ app.post('/api/reports/ransa', async (req, res) => {
     };
     const target = colMap[distribution_details] || { col: 'bodega_1', value: scaleKg };
 
+    // Subtract from Ransa (bodega_1) when transferring to another warehouse
+    if (target.col !== 'bodega_1') {
+      await query(`UPDATE inventory SET bodega_1 = bodega_1 - ? WHERE product_id = ?`, [scaleKg, product_id]);
+    }
     await query(`UPDATE inventory SET ${target.col} = ${target.col} + ?, initial_stock = initial_stock + ? WHERE product_id = ?`, [target.value, target.value, product_id]);
     await query('INSERT INTO movements (product_id, origin_warehouse, dest_warehouse, weight, type) VALUES (?, ?, ?, ?, ?)', [product_id, 'Ransa (Origen)', distribution_details, scaleKg, 'INCOME']);
 
