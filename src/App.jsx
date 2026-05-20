@@ -1996,7 +1996,7 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
       )}
 
       {showCartPreview && dispatchCart.length > 0 && (
-        <div id="invoice-preview-section" style={{ marginTop: '2rem', background: '#ffffff', borderRadius: '12px', overflow: 'hidden' }}>
+        <div id="invoice-preview-section" style={{ marginTop: '1rem' }}>
           <InvoiceLayout
             company="CARNES DEL PARAGUAY S.A.S DE C.V"
             address="CALLE LA MASCOTA, CONDOMINIO GALICIA, COLONIA SAN BENITO, 18"

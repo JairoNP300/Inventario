@@ -70,13 +70,11 @@ export default function InvoiceLayout({
           font-family: Arial, Helvetica, sans-serif !important;
           font-size: 9px !important;
           line-height: 1.3 !important;
-          padding: 8px 10px !important;
-          max-width: 130mm !important;
-          margin: 0 auto !important;
+          padding: 6px 8px !important;
+          width: 100% !important;
+          box-sizing: border-box !important;
         }
         #invoice-preview-section {
-          display: flex !important;
-          justify-content: center !important;
           background: transparent !important;
           border-radius: 0;
           padding: 0;
@@ -261,33 +259,39 @@ export default function InvoiceLayout({
             background: white !important;
             margin: 0 !important;
             padding: 0 !important;
+            width: 100% !important;
           }
           #invoice-print-area {
             display: block !important;
             width: 100% !important;
-            height: auto !important;
-            padding: 6px 10px !important;
+            padding: 4px 6px !important;
             margin: 0 !important;
             box-shadow: none !important;
             border: none !important;
-            font-size: 7px !important;
+            font-size: 6px !important;
+            line-height: 1.2 !important;
           }
-          #invoice-print-area h1 { font-size: 0.9rem !important; margin: 0 0 2px 0 !important; }
-          #invoice-print-area p { margin: 1px 0 !important; font-size: 0.6rem !important; }
+          #invoice-print-area .header-badge { font-size: 5px !important; padding: 1px 4px !important; margin-bottom: 3px !important; }
+          #invoice-print-area h1 { font-size: 0.7rem !important; margin: 0 0 1px 0 !important; }
+          #invoice-print-area p { margin: 0 !important; font-size: 0.5rem !important; }
+          #invoice-print-area > div { margin-bottom: 3px !important; }
           #invoice-print-area th,
-          #invoice-print-area td { padding: 1px 3px !important; font-size: 6px !important; }
-          #invoice-print-area thead th { padding: 2px 3px !important; font-size: 5px !important; }
-          .il-totals-box { padding: 3px 6px !important; }
-          .il-totals-box .il-row { font-size: 7px !important; margin-bottom: 1px !important; }
-          .il-totals-box .il-total-row { font-size: 8px !important; padding-top: 2px !important; }
-          .il-son-box { padding: 3px 6px !important; margin-bottom: 4px !important; }
-          .il-son-box .il-son-words { font-size: 7px !important; }
-          .il-son-box .il-disclaimer { font-size: 5px !important; }
-          .il-meta { padding: 3px 5px !important; margin-bottom: 4px !important; }
-          .il-meta .il-value { font-size: 7px !important; }
-          .il-recipient-grid { padding: 3px 5px !important; font-size: 7px !important; }
-          .il-extension-grid { padding: 3px 5px !important; font-size: 7px !important; }
-          .il-section-header { font-size: 5px !important; padding: 1px 5px !important; }
+          #invoice-print-area td { padding: 1px 2px !important; font-size: 5px !important; }
+          #invoice-print-area thead th { padding: 1px 2px !important; font-size: 4px !important; }
+          .il-totals-box { padding: 2px 4px !important; margin-bottom: 3px !important; }
+          .il-totals-box .il-row { font-size: 5px !important; margin-bottom: 0 !important; }
+          .il-totals-box .il-total-row { font-size: 6px !important; padding-top: 1px !important; }
+          .il-son-box { padding: 2px 4px !important; margin-bottom: 2px !important; }
+          .il-son-box .il-son-words { font-size: 5px !important; }
+          .il-son-box .il-disclaimer { font-size: 4px !important; }
+          .il-meta { padding: 2px 4px !important; margin-bottom: 2px !important; }
+          .il-meta .il-value { font-size: 6px !important; }
+          .il-recipient-grid { padding: 2px 4px !important; font-size: 6px !important; }
+          .il-recipient-grid > div { margin-bottom: 1px !important; }
+          .il-extension-grid { padding: 2px 4px !important; font-size: 6px !important; }
+          .il-extension-grid > div { margin-bottom: 1px !important; }
+          .il-section-header { font-size: 4px !important; padding: 1px 4px !important; }
+          [style*="borderBottom"] { margin-bottom: 2px !important; padding-bottom: 2px !important; }
           @page { size: A4 portrait; margin: 0; }
         }
       `}</style>
