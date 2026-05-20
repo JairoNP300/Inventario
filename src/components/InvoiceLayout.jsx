@@ -249,22 +249,33 @@ export default function InvoiceLayout({
         .il-btn-save { background: #10b981 !important; }
         .il-btn-cancel { background: #64748b !important; }
         @media print {
-          body { background: white !important; margin: 0 !important; padding: 0 !important; }
-          body * { visibility: hidden !important; }
-          #invoice-print-area, #invoice-print-area * { visibility: visible !important; }
+          body, html {
+            width: 100% !important;
+            height: auto !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: white !important;
+          }
+          body * {
+            visibility: hidden !important;
+          }
+          #invoice-print-area, #invoice-print-area * {
+            visibility: visible !important;
+          }
           #invoice-print-area {
-            position: absolute !important;
+            position: fixed !important;
             left: 0 !important;
             top: 0 !important;
             width: 100% !important;
             max-width: 100% !important;
-            padding: 10px 14px !important;
+            padding: 8px 14px !important;
             margin: 0 !important;
             box-shadow: none !important;
             border: none !important;
+            font-size: 9px !important;
           }
           .il-no-print { display: none !important; }
-          @page { size: A4 portrait; margin: 2mm; }
+          @page { size: A4 portrait; margin: 0; }
         }
       `}</style>
       <div id="invoice-print-area">
