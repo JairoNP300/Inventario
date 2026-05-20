@@ -1573,7 +1573,7 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
     unit_type: 'Lbs', value: '', agro_id: '',
     total_to_distribute: '', distributions: {},
     discount_percent: 0,
-    client_name: '', client_deliverer: '',
+    client_name: '', client_nit: '', client_nrc: '', client_address: '', client_deliverer: '',
     payment_condition: 'CONTADO',
     observations: '',
     receiver_name: ''
@@ -1661,7 +1661,7 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
     .then(data => {
       if (data.error) { alert('Error: ' + data.error); return; }
       
-      setFormData({ product_id: '', origin: 'Ransa', destination: 'Lomas de San Francisco', weight: '', tag_weight: '', scale_weight: '', units_per_box: '', unit_type: 'Lbs', agro_id: '', value: '', discount_percent: 0, client_name: '', client_deliverer: '', payment_condition: 'CONTADO', observations: '', receiver_name: '' });
+      setFormData({ product_id: '', origin: 'Ransa', destination: 'Lomas de San Francisco', weight: '', tag_weight: '', scale_weight: '', units_per_box: '', unit_type: 'Lbs', agro_id: '', value: '', discount_percent: 0, client_name: '', client_nit: '', client_nrc: '', client_address: '', client_deliverer: '', payment_condition: 'CONTADO', observations: '', receiver_name: '' });
       setEditingId(null);
       onUpdate();
       alert(editingId ? 'Cambios actualizados correctamente' : 'Guardado correctamente');
@@ -1692,7 +1692,7 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
       }).then(r => { if (!r.ok) throw new Error('Error saving dispatch'); return r.json(); });
     }))
     .then(results => {
-      setFormData({ product_id: '', origin: 'Ransa', destination: 'Lomas de San Francisco', weight: '', tag_weight: '', scale_weight: '', units_per_box: '', unit_type: 'Lbs', agro_id: '', value: '', discount_percent: 0, client_name: '', client_deliverer: '', payment_condition: 'CONTADO', observations: '', receiver_name: '' });
+      setFormData({ product_id: '', origin: 'Ransa', destination: 'Lomas de San Francisco', weight: '', tag_weight: '', scale_weight: '', units_per_box: '', unit_type: 'Lbs', agro_id: '', value: '', discount_percent: 0, client_name: '', client_nit: '', client_nrc: '', client_address: '', client_deliverer: '', payment_condition: 'CONTADO', observations: '', receiver_name: '' });
       setEditingId(null);
       setShowCartPreview(false);
       setDispatchCart([]);
@@ -1838,14 +1838,67 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
                     <input type="text" placeholder="Nombre o Razón Social" value={formData.client_name} onChange={e => setFormData({ ...formData, client_name: e.target.value })} />
                   </div>
                   <div className="form-group">
+                    <label>NIT / DUI</label>
+                    <input type="text" placeholder="0000-000000-000-0" value={formData.client_nit} onChange={e => setFormData({ ...formData, client_nit: e.target.value })} />
+                  </div>
+                </div>
+                <div className="form-row two-col">
+                  <div className="form-group">
+                    <label>NRC</label>
+                    <input type="text" placeholder="367641-0" value={formData.client_nrc} onChange={e => setFormData({ ...formData, client_nrc: e.target.value })} />
+                  </div>
+                  <div className="form-group">
+                    <label>Dirección</label>
+                    <input type="text" placeholder="Dirección completa" value={formData.client_address} onChange={e => setFormData({ ...formData, client_address: e.target.value })} />
+                  </div>
+                </div>
+                <div className="form-row two-col">
+                  <div className="form-group">
                     <label>Nombre del que Entrega</label>
                     <input type="text" placeholder="Persona que entrega" value={formData.client_deliverer} onChange={e => setFormData({ ...formData, client_deliverer: e.target.value })} />
+                  </div>
+                  <div className="form-group">
+                    <label>Nombre del que Recibe</label>
+                    <input type="text" placeholder="Persona que recibe" value={formData.receiver_name} onChange={e => setFormData({ ...formData, receiver_name: e.target.value })} />
+                  </div>
+                </div>
+                <div className="form-row two-col">
+                  <div className="form-group">
+                    <label>Condición de la Operación</label>
+                    <select value={formData.payment_condition} onChange={e => setFormData({ ...formData, payment_condition: e.target.value })}>
+                      <option value="CONTADO">CONTADO</option>
+                      <option value="CREDITO">CRÉDITO</option>
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Observaciones</label>
+                    <input type="text" placeholder="Notas adicionales..." value={formData.observations} onChange={e => setFormData({ ...formData, observations: e.target.value })} />
                   </div>
                 </div>
               </>
             ) : (
               <>
                 <h4 style={{ color: 'var(--accent)', marginBottom: '1rem' }}>Extensión de Factura</h4>
+                <div className="form-row two-col">
+                  <div className="form-group">
+                    <label>Nombre del Cliente</label>
+                    <input type="text" placeholder="Nombre o Razón Social" value={formData.client_name} onChange={e => setFormData({ ...formData, client_name: e.target.value })} />
+                  </div>
+                  <div className="form-group">
+                    <label>NIT / DUI</label>
+                    <input type="text" placeholder="0000-000000-000-0" value={formData.client_nit} onChange={e => setFormData({ ...formData, client_nit: e.target.value })} />
+                  </div>
+                </div>
+                <div className="form-row two-col">
+                  <div className="form-group">
+                    <label>NRC</label>
+                    <input type="text" placeholder="367641-0" value={formData.client_nrc} onChange={e => setFormData({ ...formData, client_nrc: e.target.value })} />
+                  </div>
+                  <div className="form-group">
+                    <label>Dirección</label>
+                    <input type="text" placeholder="Dirección completa" value={formData.client_address} onChange={e => setFormData({ ...formData, client_address: e.target.value })} />
+                  </div>
+                </div>
                 <div className="form-row two-col">
                   <div className="form-group">
                     <label>Condición de la Operación</label>
@@ -1977,9 +2030,13 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
             nrc="367641-0"
             recipient={{
               name: formData.client_name || '---',
-              nit: '',
-              nrc: '',
-              address: ''
+              nit: formData.client_nit || '',
+              nrc: formData.client_nrc || '',
+              address: formData.client_address || '',
+              deliverer: formData.client_deliverer || '',
+              receiver: formData.receiver_name || '',
+              observations: formData.observations || '',
+              paymentCondition: formData.payment_condition || 'CONTADO'
             }}
             date={new Date().toISOString()}
             items={dispatchCart.map(ci => ({
