@@ -1573,7 +1573,10 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
     unit_type: 'Lbs', value: '', agro_id: '',
     total_to_distribute: '', distributions: {},
     discount_percent: 0,
-    client_name: '', client_deliverer: ''
+    client_name: '', client_deliverer: '',
+    payment_condition: 'CONTADO',
+    observations: '',
+    receiver_name: ''
   });
   const [showPreview, setShowPreview] = useState(false);
   const [previewData, setPreviewData] = useState(null);
@@ -1621,7 +1624,10 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
         discount_percent: formData.discount_percent,
         origin: formData.origin,
         client_name: formData.client_name,
-        client_deliverer: formData.client_deliverer
+        client_deliverer: formData.client_deliverer,
+        payment_condition: formData.payment_condition,
+        observations: formData.observations,
+        receiver_name: formData.receiver_name
       });
       setShowPreview(true);
       setTimeout(() => {
@@ -1645,7 +1651,7 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
     .then(data => {
       if (data.error) { alert('Error: ' + data.error); return; }
       
-      setFormData({ product_id: '', origin: 'Ransa', destination: 'Lomas de San Francisco', weight: '', tag_weight: '', scale_weight: '', units_per_box: '', unit_type: 'Lbs', agro_id: '', value: '', discount_percent: 0, client_name: '', client_deliverer: '' });
+      setFormData({ product_id: '', origin: 'Ransa', destination: 'Lomas de San Francisco', weight: '', tag_weight: '', scale_weight: '', units_per_box: '', unit_type: 'Lbs', agro_id: '', value: '', discount_percent: 0, client_name: '', client_deliverer: '', payment_condition: 'CONTADO', observations: '', receiver_name: '' });
       setEditingId(null);
       onUpdate();
       alert(editingId ? 'Cambios actualizados correctamente' : 'Guardado correctamente');
@@ -1677,7 +1683,7 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
     .then(data => {
       if (data.error) { alert('Error: ' + data.error); return; }
       
-      setFormData({ product_id: '', origin: 'Ransa', destination: 'Lomas de San Francisco', weight: '', tag_weight: '', scale_weight: '', units_per_box: '', unit_type: 'Lbs', agro_id: '', value: '', discount_percent: 0, client_name: '', client_deliverer: '' });
+      setFormData({ product_id: '', origin: 'Ransa', destination: 'Lomas de San Francisco', weight: '', tag_weight: '', scale_weight: '', units_per_box: '', unit_type: 'Lbs', agro_id: '', value: '', discount_percent: 0, client_name: '', client_deliverer: '', payment_condition: 'CONTADO', observations: '', receiver_name: '' });
       setEditingId(null);
       setShowPreview(false);
       setPreviewData(null);
@@ -1814,18 +1820,48 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
             
             <hr style={{ opacity: 0.1, margin: '2rem 0' }} />
             
-            <h4 style={{ color: 'var(--accent)', marginBottom: '1rem' }}>Datos del Cliente</h4>
-            
-            <div className="form-row two-col">
-              <div className="form-group">
-                <label>Nombre del Cliente</label>
-                <input type="text" placeholder="Nombre o Razón Social" value={formData.client_name} onChange={e => setFormData({ ...formData, client_name: e.target.value })} />
-              </div>
-              <div className="form-group">
-                <label>Nombre del que Entrega</label>
-                <input type="text" placeholder="Persona que entrega" value={formData.client_deliverer} onChange={e => setFormData({ ...formData, client_deliverer: e.target.value })} />
-              </div>
-            </div>
+            {formData.agro_id === 'VENTA_DIRECTA' ? (
+              <>
+                <h4 style={{ color: 'var(--accent)', marginBottom: '1rem' }}>Datos del Cliente</h4>
+                <div className="form-row two-col">
+                  <div className="form-group">
+                    <label>Nombre del Cliente</label>
+                    <input type="text" placeholder="Nombre o Razón Social" value={formData.client_name} onChange={e => setFormData({ ...formData, client_name: e.target.value })} />
+                  </div>
+                  <div className="form-group">
+                    <label>Nombre del que Entrega</label>
+                    <input type="text" placeholder="Persona que entrega" value={formData.client_deliverer} onChange={e => setFormData({ ...formData, client_deliverer: e.target.value })} />
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <h4 style={{ color: 'var(--accent)', marginBottom: '1rem' }}>Extensión de Factura</h4>
+                <div className="form-row two-col">
+                  <div className="form-group">
+                    <label>Condición de la Operación</label>
+                    <select value={formData.payment_condition} onChange={e => setFormData({ ...formData, payment_condition: e.target.value })}>
+                      <option value="CONTADO">CONTADO</option>
+                      <option value="CREDITO">CRÉDITO</option>
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Observaciones</label>
+                    <input type="text" placeholder="Notas adicionales..." value={formData.observations} onChange={e => setFormData({ ...formData, observations: e.target.value })} />
+                  </div>
+                </div>
+                <div className="form-row two-col">
+                  <div className="form-group">
+                    <label>Nombre Entrega</label>
+                    <input type="text" placeholder="Persona que entrega" value={formData.client_deliverer} onChange={e => setFormData({ ...formData, client_deliverer: e.target.value })} />
+                  </div>
+                  <div className="form-group">
+                    <label>Nombre Recibe</label>
+                    <input type="text" placeholder="Persona que recibe" value={formData.receiver_name} onChange={e => setFormData({ ...formData, receiver_name: e.target.value })} />
+                  </div>
+                </div>
+              </>
+            )}
           </>
         )}
 
@@ -1878,7 +1914,7 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
             nit="0623-160725-114-6"
             nrc="367641-0"
             recipient={{
-              name: previewData.client_name,
+              name: previewData.client_name || (previewData.agro?.name || '---'),
               nit: '',
               nrc: '',
               address: ''
@@ -1896,10 +1932,10 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
               discount: parseFloat(previewData.discount_percent) || 0,
               total: parseFloat(previewData.value)
             }}
-            paymentCondition="CONTADO"
-            observations=""
-            deliverer={previewData.client_deliverer}
-            receiver=""
+            paymentCondition={previewData.payment_condition || 'CONTADO'}
+            observations={previewData.observations || ''}
+            deliverer={previewData.client_deliverer || ''}
+            receiver={previewData.receiver_name || ''}
             onPrint={() => window.print()}
             onSave={confirmAndSave}
             onCancel={() => { setShowPreview(false); setPreviewData(null); }}
