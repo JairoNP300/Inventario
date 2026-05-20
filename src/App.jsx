@@ -1258,23 +1258,27 @@ const InvoicingSystem = ({ products, agros, productWeightData, onUpdate }) => {
           )}
         </div>
       </div>
-      <InvoiceLayout
-        company={companyInfo.name}
-        address={companyInfo.address}
-        nit={companyInfo.nit}
-        nrc={companyInfo.nrc}
-        recipient={client}
-        date={new Date().toISOString()}
-        items={printableItems}
-        totals={{ subtotal: sumatoriaVentas, discount: discountPercent, total: totalPagar }}
-        paymentCondition={client.paymentCondition}
-        observations={client.observations}
-        deliverer={client.deliverer}
-        receiver={client.receiver}
-        onPrint={() => window.print()}
-        onSave={saveAndPrint}
-        onCancel={() => setCart([])}
-      />
+      {cart.length > 0 && (
+        <div id="invoice-preview-section">
+          <InvoiceLayout
+            company={companyInfo.name}
+            address={companyInfo.address}
+            nit={companyInfo.nit}
+            nrc={companyInfo.nrc}
+            recipient={client}
+            date={new Date().toISOString()}
+            items={printableItems}
+            totals={{ subtotal: sumatoriaVentas, discount: discountPercent, total: totalPagar }}
+            paymentCondition={client.paymentCondition}
+            observations={client.observations}
+            deliverer={client.deliverer}
+            receiver={client.receiver}
+            onPrint={() => window.print()}
+            onSave={saveAndPrint}
+            onCancel={() => setCart([])}
+          />
+        </div>
+      )}
 
     </div>
   );

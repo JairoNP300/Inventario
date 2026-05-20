@@ -67,8 +67,9 @@ export default function InvoiceLayout({
         #invoice-preview-section {
           display: block;
           background: #ffffff !important;
-          border-radius: 8px;
-          padding: 1px;
+          border-radius: 0;
+          padding: 0;
+          width: 100%;
         }
         #invoice-print-area {
           background: #ffffff !important;
@@ -77,8 +78,9 @@ export default function InvoiceLayout({
           font-size: 9px !important;
           line-height: 1.3 !important;
           padding: 10px 14px !important;
-          max-width: 100% !important;
-          margin: 0 auto !important;
+          width: 100% !important;
+          margin: 0 !important;
+          box-sizing: border-box !important;
         }
         #invoice-print-area .header-badge {
           background: #f3f4f6 !important;
@@ -254,51 +256,38 @@ export default function InvoiceLayout({
         .il-btn-save { background: #10b981 !important; }
         .il-btn-cancel { background: #64748b !important; }
         @media print {
-          body, html {
-            width: 100% !important;
-            height: auto !important;
+          .no-print, .no-print * { display: none !important; }
+          body {
+            background: white !important;
             margin: 0 !important;
             padding: 0 !important;
-            background: white !important;
-          }
-          body * {
-            visibility: hidden !important;
-          }
-          #invoice-print-area, #invoice-print-area * {
-            visibility: visible !important;
           }
           #invoice-print-area {
-            position: fixed !important;
-            left: 0 !important;
-            top: 0 !important;
+            display: block !important;
             width: 100% !important;
-            max-width: 100% !important;
-            padding: 8px 12px !important;
+            height: auto !important;
+            padding: 6px 10px !important;
             margin: 0 !important;
             box-shadow: none !important;
             border: none !important;
-            font-size: 8px !important;
-          }
-          #invoice-print-area h1 {
-            font-size: 1rem !important;
-          }
-          #invoice-print-area th,
-          #invoice-print-area td {
-            padding: 2px 4px !important;
             font-size: 7px !important;
           }
-          #invoice-print-area thead th {
-            padding: 3px 4px !important;
-            font-size: 6px !important;
-          }
-          .il-totals-box {
-            padding: 4px 8px !important;
-          }
-          .il-son-box {
-            padding: 4px 8px !important;
-            margin-bottom: 6px !important;
-          }
-          .il-no-print { display: none !important; }
+          #invoice-print-area h1 { font-size: 0.9rem !important; margin: 0 0 2px 0 !important; }
+          #invoice-print-area p { margin: 1px 0 !important; font-size: 0.6rem !important; }
+          #invoice-print-area th,
+          #invoice-print-area td { padding: 1px 3px !important; font-size: 6px !important; }
+          #invoice-print-area thead th { padding: 2px 3px !important; font-size: 5px !important; }
+          .il-totals-box { padding: 3px 6px !important; }
+          .il-totals-box .il-row { font-size: 7px !important; margin-bottom: 1px !important; }
+          .il-totals-box .il-total-row { font-size: 8px !important; padding-top: 2px !important; }
+          .il-son-box { padding: 3px 6px !important; margin-bottom: 4px !important; }
+          .il-son-box .il-son-words { font-size: 7px !important; }
+          .il-son-box .il-disclaimer { font-size: 5px !important; }
+          .il-meta { padding: 3px 5px !important; margin-bottom: 4px !important; }
+          .il-meta .il-value { font-size: 7px !important; }
+          .il-recipient-grid { padding: 3px 5px !important; font-size: 7px !important; }
+          .il-extension-grid { padding: 3px 5px !important; font-size: 7px !important; }
+          .il-section-header { font-size: 5px !important; padding: 1px 5px !important; }
           @page { size: A4 portrait; margin: 0; }
         }
       `}</style>
