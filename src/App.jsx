@@ -1545,11 +1545,12 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
     weight: '', tag_weight: '', scale_weight: '', units_per_box: '',
     unit_type: 'Lbs', value: '', agro_id: '',
     total_to_distribute: '', distributions: {},
+    discount_percent: 0,
     // Client data for invoice
     client_name: '', client_nit: '', client_nrc: '', client_address: ''
   });
 
-  // Auto-calculate total value based on unit type and specific prices
+  // Auto-calculate total value based on unit type, specific prices, and discount
   useEffect(() => {
     if (activeSubTab === 'dispatch' && formData.product_id && formData.weight) {
       const product = products.find(p => String(p.id) === String(formData.product_id));
@@ -1558,10 +1559,14 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
         if (formData.unit_type === 'Lbs') price = product.price_per_lb;
         else if (formData.unit_type === 'Kg') price = product.price_per_kg;
 
-        setFormData(prev => ({ ...prev, value: (parseFloat(formData.weight) * (price || 0)).toFixed(2) }));
+        const subtotal = parseFloat(formData.weight) * (price || 0);
+        const discount = parseFloat(formData.discount_percent) || 0;
+        const total = subtotal * (1 - discount / 100);
+        
+        setFormData(prev => ({ ...prev, value: total.toFixed(2) }));
       }
     }
-  }, [formData.product_id, formData.weight, formData.unit_type, activeSubTab, products]);
+  }, [formData.product_id, formData.weight, formData.unit_type, formData.discount_percent, activeSubTab, products]);
 
   const warehouses = [
     'Ransa',
@@ -1593,6 +1598,7 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
           weight: formData.weight,
           unit_type: formData.unit_type,
           value: formData.value,
+          discount_percent: formData.discount_percent,
           origin: formData.origin,
           destination: formData.agro_id,
           client: {
@@ -1605,7 +1611,7 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
         sessionStorage.setItem('pending_invoice', JSON.stringify(dispatchData));
       }
       
-      setFormData({ product_id: '', origin: 'Ransa', destination: 'Lomas de San Francisco', weight: '', tag_weight: '', scale_weight: '', units_per_box: '', unit_type: 'Lbs', agro_id: '', value: '', client_name: '', client_nit: '', client_nrc: '', client_address: '' });
+      setFormData({ product_id: '', origin: 'Ransa', destination: 'Lomas de San Francisco', weight: '', tag_weight: '', scale_weight: '', units_per_box: '', unit_type: 'Lbs', agro_id: '', value: '', discount_percent: 0, client_name: '', client_nit: '', client_nrc: '', client_address: '' });
       setEditingId(null);
       onUpdate();
       alert(editingId ? 'Cambios actualizados correctamente' : 'Guardado correctamente');
@@ -1732,9 +1738,15 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
 
         {activeSubTab === 'dispatch' && (
           <>
-            <div className="form-group">
-              <label>Valor Monetario Total ($)</label>
-              <input type="number" step="0.01" value={formData.value} onChange={e => setFormData({ ...formData, value: e.target.value })} required />
+            <div className="form-row two-col">
+              <div className="form-group">
+                <label>Descuento (%)</label>
+                <input type="number" step="0.01" min="0" max="100" value={formData.discount_percent} onChange={e => setFormData({ ...formData, discount_percent: e.target.value })} placeholder="0" />
+              </div>
+              <div className="form-group">
+                <label>Valor Monetario Total ($)</label>
+                <input type="number" step="0.01" value={formData.value} onChange={e => setFormData({ ...formData, value: e.target.value })} required />
+              </div>
             </div>
             
             <hr style={{ opacity: 0.1, margin: '2rem 0' }} />
