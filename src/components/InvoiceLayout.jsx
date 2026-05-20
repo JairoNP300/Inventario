@@ -70,14 +70,14 @@ export default function InvoiceLayout({
           font-family: Arial, Helvetica, sans-serif !important;
           font-size: 9px !important;
           line-height: 1.3 !important;
-          padding: 10px 14px !important;
-          max-width: 160mm !important;
+          padding: 8px 10px !important;
+          max-width: 130mm !important;
           margin: 0 auto !important;
         }
         #invoice-preview-section {
           display: flex !important;
           justify-content: center !important;
-          background: #ffffff !important;
+          background: transparent !important;
           border-radius: 0;
           padding: 0;
           width: 100%;
