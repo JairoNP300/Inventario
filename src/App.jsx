@@ -1014,7 +1014,7 @@ const InvoicingSystem = ({ products, agros, productWeightData, onUpdate }) => {
   };
 
   const sumatoriaVentas = cart.reduce((acc, i) => acc + i.subtotal, 0);
-  const discountPercent = cart.length > 0 ? (cart[0].discount_percent || 0) : 0;
+  const cartDiscountPercent = cart.length > 0 ? (cart[0].discount_percent || 0) : 0;
   const totalPagar = cart.reduce((acc, i) => acc + i.total, 0);
   const printableItems = cart.map(ci => ({ qty: ci.qty, unit: ci.unit, description: ci.name || 'Sin descripción', unitPrice: ci.price, total: ci.total }));
   const saveAndPrint = () => {
@@ -1578,8 +1578,8 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
     observations: '',
     receiver_name: ''
   });
-  const [showPreview, setShowPreview] = useState(false);
-  const [previewData, setPreviewData] = useState(null);
+  const [dispatchCart, setDispatchCart] = useState([]);
+  const [showCartPreview, setShowCartPreview] = useState(false);
 
   // Auto-calculate total value based on unit type, specific prices, and discount
   useEffect(() => {
@@ -1599,6 +1599,37 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
     }
   }, [formData.product_id, formData.weight, formData.unit_type, formData.discount_percent, activeSubTab, products]);
 
+  const addToDispatchCart = () => {
+    if (!formData.product_id || !formData.weight || !formData.agro_id) {
+      return alert('Complete los datos: Producto, Cantidad y Destino');
+    }
+    const product = products.find(p => String(p.id) === String(formData.product_id));
+    if (!product) return;
+    const price = formData.unit_type === 'Lbs' ? product.price_per_lb : product.price_per_kg;
+    const subtotal = parseFloat(formData.weight) * (price || 0);
+    const discount = parseFloat(formData.discount_percent) || 0;
+    const total = subtotal * (1 - discount / 100);
+    const item = {
+      id: Date.now() + Math.random(),
+      product_id: formData.product_id,
+      agro_id: formData.agro_id,
+      origin: formData.origin,
+      name: product.name,
+      qty: parseFloat(formData.weight),
+      unit: formData.unit_type,
+      price: price || 0,
+      subtotal,
+      discount_percent: discount,
+      total
+    };
+    setDispatchCart([...dispatchCart, item]);
+    setFormData({ ...formData, product_id: '', weight: '', discount_percent: 0, value: '' });
+  };
+
+  const removeFromDispatchCart = (id) => {
+    setDispatchCart(dispatchCart.filter(i => i.id !== id));
+  };
+
   const warehouses = [
     'Ransa',
     'Lomas de San Francisco',
@@ -1610,30 +1641,9 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
     e.preventDefault();
     const isIncome = activeSubTab === 'income' || activeSubTab === 'unified';
     
-    // For dispatch, show preview first
+    // For dispatch, add to cart
     if (!isIncome && activeSubTab === 'dispatch') {
-      const product = products.find(p => String(p.id) === String(formData.product_id));
-      const agro = agros.find(a => String(a.id) === String(formData.agro_id));
-      
-      setPreviewData({
-        product,
-        agro,
-        weight: formData.weight,
-        unit_type: formData.unit_type,
-        value: formData.value,
-        discount_percent: formData.discount_percent,
-        origin: formData.origin,
-        client_name: formData.client_name,
-        client_deliverer: formData.client_deliverer,
-        payment_condition: formData.payment_condition,
-        observations: formData.observations,
-        receiver_name: formData.receiver_name
-      });
-      setShowPreview(true);
-      setTimeout(() => {
-        const el = document.getElementById('invoice-preview-section');
-        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 100);
+      addToDispatchCart();
       return;
     }
     
@@ -1665,30 +1675,29 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
   };
 
   const confirmAndSave = () => {
-    if (!previewData) return;
+    if (dispatchCart.length === 0) { alert('No hay productos en el carrito'); return; }
     
-    apiFetch(`${API_BASE}/dispatches`, {
-      method: 'POST',
-      body: JSON.stringify({
-        product_id: previewData.product.id,
-        agro_id: previewData.agro?.id || previewData.destination,
-        weight: previewData.weight,
-        unit_type: previewData.unit_type,
-        value: previewData.value,
-        origin_warehouse: previewData.origin,
-        discount_percent: previewData.discount_percent
-      })
-    })
-    .then(r => r.json())
-    .then(data => {
-      if (data.error) { alert('Error: ' + data.error); return; }
-      
+    Promise.all(dispatchCart.map(item => {
+      return apiFetch(`${API_BASE}/dispatches`, {
+        method: 'POST',
+        body: JSON.stringify({
+          product_id: item.product_id,
+          agro_id: item.agro_id,
+          weight: item.qty,
+          unit_type: item.unit,
+          value: item.total,
+          origin_warehouse: item.origin,
+          discount_percent: item.discount_percent || 0
+        })
+      }).then(r => { if (!r.ok) throw new Error('Error saving dispatch'); return r.json(); });
+    }))
+    .then(results => {
       setFormData({ product_id: '', origin: 'Ransa', destination: 'Lomas de San Francisco', weight: '', tag_weight: '', scale_weight: '', units_per_box: '', unit_type: 'Lbs', agro_id: '', value: '', discount_percent: 0, client_name: '', client_deliverer: '', payment_condition: 'CONTADO', observations: '', receiver_name: '' });
       setEditingId(null);
-      setShowPreview(false);
-      setPreviewData(null);
+      setShowCartPreview(false);
+      setDispatchCart([]);
       onUpdate();
-      alert('Despacho guardado exitosamente');
+      alert(`Venta guardada exitosamente (${results.length} producto(s)). Abriendo vista de impresión...`);
       window.print();
     })
     .catch(err => { console.error('Error saving dispatch:', err); alert('Error de conexión: ' + err.message); });
@@ -1902,43 +1911,96 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
         <button type="submit" className="btn-primary" disabled={activeSubTab === 'mass' && (parseFloat(Object.values(formData.distributions || {}).reduce((acc, v) => acc + (parseFloat(v) || 0), 0)) > (parseFloat(formData.total_to_distribute) || 0))}>
           {activeSubTab === 'mass' ? 'Confirmar Distribución Masiva' :
             activeSubTab === 'unified' ? 'Recepción -> Ir a Procesos' :
-              activeSubTab === 'dispatch' ? 'Vista Previa de Factura' : 'Ejecutar Paso'}
+              activeSubTab === 'dispatch' ? 'Agregar al Carrito' : 'Ejecutar Paso'}
         </button>
       </form>
 
-      {showPreview && previewData && (
-        <div id="invoice-preview-section" style={{ marginTop: '2rem' }}>
+      {dispatchCart.length > 0 && (
+        <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'rgba(16, 185, 129, 0.05)', borderRadius: '8px', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+          <h4 style={{ margin: '0 0 12px 0', fontSize: '0.9rem', color: '#10b981', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <ShoppingCart size={16} /> Productos en el Carrito ({dispatchCart.length})
+          </h4>
+          <table style={{ width: '100%', fontSize: '0.85rem', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                <th style={{ textAlign: 'left', padding: '8px', color: '#10b981' }}>Producto</th>
+                <th style={{ textAlign: 'center', padding: '8px', color: '#10b981' }}>Cantidad</th>
+                <th style={{ textAlign: 'center', padding: '8px', color: '#10b981' }}>Unidad</th>
+                <th style={{ textAlign: 'right', padding: '8px', color: '#10b981' }}>Precio U.</th>
+                <th style={{ textAlign: 'center', padding: '8px', color: '#10b981' }}>Dto %</th>
+                <th style={{ textAlign: 'right', padding: '8px', color: '#10b981' }}>Total</th>
+                <th style={{ textAlign: 'center', padding: '8px', color: '#10b981' }}>Acción</th>
+              </tr>
+            </thead>
+            <tbody>
+              {dispatchCart.map(item => (
+                <tr key={item.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <td style={{ padding: '8px', color: 'var(--text-main)' }}>{item.name}</td>
+                  <td style={{ padding: '8px', textAlign: 'center', color: 'var(--text-main)' }}>{item.qty.toFixed(2)}</td>
+                  <td style={{ padding: '8px', textAlign: 'center', color: 'var(--text-main)' }}>{item.unit}</td>
+                  <td style={{ padding: '8px', textAlign: 'right', color: 'var(--text-main)' }}>${item.price.toFixed(2)}</td>
+                  <td style={{ padding: '8px', textAlign: 'center', color: item.discount_percent > 0 ? '#f59e0b' : 'var(--text-muted)' }}>{item.discount_percent > 0 ? `${item.discount_percent}%` : '-'}</td>
+                  <td style={{ padding: '8px', textAlign: 'right', color: '#10b981', fontWeight: 600 }}>${item.total.toFixed(2)}</td>
+                  <td style={{ padding: '8px', textAlign: 'center' }}>
+                    <button onClick={() => removeFromDispatchCart(item.id)} style={{ background: '#ef4444', border: 'none', borderRadius: '4px', padding: '4px 8px', color: 'white', cursor: 'pointer', fontSize: '0.75rem' }}><Trash2 size={12} /></button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr style={{ borderTop: '2px solid rgba(16, 185, 129, 0.3)' }}>
+                <td colSpan="5" style={{ padding: '8px', textAlign: 'right', fontWeight: 700, color: '#10b981' }}>Total Carrito:</td>
+                <td style={{ padding: '8px', textAlign: 'right', fontWeight: 800, color: '#10b981', fontSize: '1rem' }}>
+                  ${dispatchCart.reduce((sum, item) => sum + item.total, 0).toFixed(2)}
+                </td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+          <div style={{ marginTop: '1rem', display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+            <button onClick={() => { setDispatchCart([]); }} className="btn-primary" style={{ background: '#64748b' }}>
+              Vaciar Carrito
+            </button>
+            <button onClick={() => { setShowCartPreview(true); setTimeout(() => { const el = document.getElementById('invoice-preview-section'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 100); }} className="btn-primary" style={{ background: '#10b981' }}>
+              Generar Factura ({dispatchCart.length} items)
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showCartPreview && dispatchCart.length > 0 && (
+        <div id="invoice-preview-section" style={{ marginTop: '2rem', background: '#ffffff', borderRadius: '12px', overflow: 'hidden' }}>
           <InvoiceLayout
             company="CARNES DEL PARAGUAY S.A.S DE C.V"
             address="CALLE LA MASCOTA, CONDOMINIO GALICIA, COLONIA SAN BENITO, 18"
             nit="0623-160725-114-6"
             nrc="367641-0"
             recipient={{
-              name: previewData.client_name || (previewData.agro?.name || '---'),
+              name: formData.client_name || '---',
               nit: '',
               nrc: '',
               address: ''
             }}
             date={new Date().toISOString()}
-            items={[{
-              qty: parseFloat(previewData.weight),
-              unit: previewData.unit_type,
-              description: previewData.product?.name || '',
-              unitPrice: previewData.unit_type === 'Lbs' ? (previewData.product?.price_per_lb || 0) : (previewData.product?.price_per_kg || 0),
-              total: parseFloat(previewData.value)
-            }]}
+            items={dispatchCart.map(ci => ({
+              qty: ci.qty,
+              unit: ci.unit,
+              description: ci.name,
+              unitPrice: ci.price,
+              total: ci.total
+            }))}
             totals={{
-              subtotal: parseFloat(previewData.value) / (1 - (parseFloat(previewData.discount_percent) || 0) / 100),
-              discount: parseFloat(previewData.discount_percent) || 0,
-              total: parseFloat(previewData.value)
+              subtotal: dispatchCart.reduce((s, i) => s + i.subtotal, 0),
+              discount: dispatchCart.length > 0 ? (dispatchCart[0].discount_percent || 0) : 0,
+              total: dispatchCart.reduce((s, i) => s + i.total, 0)
             }}
-            paymentCondition={previewData.payment_condition || 'CONTADO'}
-            observations={previewData.observations || ''}
-            deliverer={previewData.client_deliverer || ''}
-            receiver={previewData.receiver_name || ''}
+            paymentCondition={formData.payment_condition || 'CONTADO'}
+            observations={formData.observations || ''}
+            deliverer={formData.client_deliverer || ''}
+            receiver={formData.receiver_name || ''}
             onPrint={() => window.print()}
             onSave={confirmAndSave}
-            onCancel={() => { setShowPreview(false); setPreviewData(null); }}
+            onCancel={() => { setShowCartPreview(false); }}
           />
         </div>
       )}
@@ -4122,23 +4184,9 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
   return (
     <div className="app-container">
       <style>{`
+        /* Print handled by InvoiceLayout component */
         @media print {
-          body * { visibility: hidden; }
-          #invoice-print-area, #invoice-print-area * { visibility: visible; }
-          #invoice-print-area { 
-            position: absolute; 
-            left: 0; 
-            top: 0; 
-            width: 100%; 
-            padding: 10mm !important;
-            margin: 0 !important;
-            box-shadow: none !important;
-            border: none !important;
-            max-width: 100% !important;
-          }
-          .no-print { display: none !important; }
-          .invoice-container { page-break-inside: avoid; }
-          @page { size: A4 portrait; margin: 5mm; }
+          @page { size: A4 portrait; margin: 4mm; }
         }
       `}</style>
       <header>
