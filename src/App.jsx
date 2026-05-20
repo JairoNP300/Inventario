@@ -65,7 +65,7 @@ const ROLES = {
     label: 'Administrador',
     group: 'Administración',
     password: 'admin2026',
-    tabs: ['income','production','distribution','invoice','status','reports','comida','monitor','config'],
+    tabs: ['income','production','distribution','status','reports','comida','monitor','config'],
     defaultTab: 'income'
   },
   // ── Soyapango ───────────────────────────────────────────────────────────────
@@ -3505,8 +3505,7 @@ const ProcessStepper = ({ currentTab }) => {
   const steps = [
     { id: 'income', label: 'Recepción', icon: <Store size={16} /> },
     { id: 'production', label: 'Procesamiento', icon: <Cpu size={16} /> },
-    { id: 'distribution', label: 'Despacho', icon: <Truck size={16} /> },
-    { id: 'invoice', label: 'Venta / Factura', icon: <FileText size={16} /> }
+    { id: 'distribution', label: 'Despacho / Factura', icon: <Truck size={16} /> }
   ];
 
   const currentIdx = steps.findIndex(s => s.id === currentTab);
@@ -4010,8 +4009,7 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
   const allTabs = [
     { id: 'income',       label: 'Recepción',  icon: <Store size={18} /> },
     { id: 'production',   label: 'Procesos',   icon: <Cpu size={18} /> },
-    { id: 'distribution', label: 'Despacho',   icon: <Truck size={18} /> },
-    { id: 'invoice',      label: 'Factura',    icon: <FileText size={18} /> },
+    { id: 'distribution', label: 'Despacho / Factura',   icon: <Truck size={18} /> },
     { id: 'status',       label: 'Stock',      icon: <BarChart3 size={18} /> },
     { id: 'reports',      label: 'Export',     icon: <DownloadCloud size={18} /> },
     { id: 'comida',       label: 'Comida',     icon: <Utensils size={18} /> },
@@ -4093,7 +4091,7 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
               {activeTab === 'income' && <LogisticsHub products={products} agros={agros} productWeightData={PRODUCT_WEIGHT_DATA} refreshTrigger={refresh} onUpdate={triggerRefresh} forceMode="unified" incomeLogs={incomeLogs} dispatchLogs={dispatchLogs} />}
               {activeTab === 'production' && <ProductionReport products={products} onUpdate={triggerRefresh} productionLogs={productionLogs} />}
               {activeTab === 'distribution' && <LogisticsHub products={products} agros={agros} productWeightData={PRODUCT_WEIGHT_DATA} refreshTrigger={refresh} onUpdate={triggerRefresh} forceMode="distribution" incomeLogs={incomeLogs} dispatchLogs={dispatchLogs} />}
-              {activeTab === 'invoice' && <InvoicingSystem products={products} agros={agros} productWeightData={PRODUCT_WEIGHT_DATA} onUpdate={triggerRefresh} />}
+              {activeTab === 'invoice' && <LogisticsHub products={products} agros={agros} productWeightData={PRODUCT_WEIGHT_DATA} refreshTrigger={refresh} onUpdate={triggerRefresh} forceMode="distribution" incomeLogs={incomeLogs} dispatchLogs={dispatchLogs} />}
               {activeTab === 'status' && <StatusReport products={products} agros={agros} productWeightData={PRODUCT_WEIGHT_DATA} refreshTrigger={refresh} onUpdate={triggerRefresh} />}
               {activeTab === 'reports' && <ExportReport products={products} agros={agros} productWeightData={PRODUCT_WEIGHT_DATA} refreshTrigger={refresh} />}
               {activeTab === 'comida' && <FoodCostingSystem products={products} onUpdate={triggerRefresh} logs={foodCostingLogs} />}
