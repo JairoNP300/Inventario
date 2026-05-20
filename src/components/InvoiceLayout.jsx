@@ -64,13 +64,6 @@ export default function InvoiceLayout({
   return (
     <>
       <style>{`
-        #invoice-preview-section {
-          display: block;
-          background: #ffffff !important;
-          border-radius: 0;
-          padding: 0;
-          width: 100%;
-        }
         #invoice-print-area {
           background: #ffffff !important;
           color: #111827 !important;
@@ -78,9 +71,16 @@ export default function InvoiceLayout({
           font-size: 9px !important;
           line-height: 1.3 !important;
           padding: 10px 14px !important;
-          width: 100% !important;
-          margin: 0 !important;
-          box-sizing: border-box !important;
+          max-width: 210mm !important;
+          margin: 0 auto !important;
+        }
+        #invoice-preview-section {
+          display: flex !important;
+          justify-content: center !important;
+          background: #ffffff !important;
+          border-radius: 0;
+          padding: 0;
+          width: 100%;
         }
         #invoice-print-area .header-badge {
           background: #f3f4f6 !important;
