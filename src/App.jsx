@@ -1573,8 +1573,7 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
     unit_type: 'Lbs', value: '', agro_id: '',
     total_to_distribute: '', distributions: {},
     discount_percent: 0,
-    // Client data for invoice
-    client_name: '', client_nit: '', client_nrc: '', client_address: ''
+    client_name: '', client_deliverer: ''
   });
   const [showPreview, setShowPreview] = useState(false);
   const [previewData, setPreviewData] = useState(null);
@@ -1621,15 +1620,14 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
         value: formData.value,
         discount_percent: formData.discount_percent,
         origin: formData.origin,
-        client: {
-          name: formData.client_name,
-          nit: formData.client_nit,
-          nrc: formData.client_nrc,
-          address: formData.client_address
-        }
+        client_name: formData.client_name,
+        client_deliverer: formData.client_deliverer
       });
       setShowPreview(true);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setTimeout(() => {
+        const el = document.getElementById('invoice-preview-section');
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
       return;
     }
     
@@ -1647,7 +1645,7 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
     .then(data => {
       if (data.error) { alert('Error: ' + data.error); return; }
       
-      setFormData({ product_id: '', origin: 'Ransa', destination: 'Lomas de San Francisco', weight: '', tag_weight: '', scale_weight: '', units_per_box: '', unit_type: 'Lbs', agro_id: '', value: '', discount_percent: 0, client_name: '', client_nit: '', client_nrc: '', client_address: '' });
+      setFormData({ product_id: '', origin: 'Ransa', destination: 'Lomas de San Francisco', weight: '', tag_weight: '', scale_weight: '', units_per_box: '', unit_type: 'Lbs', agro_id: '', value: '', discount_percent: 0, client_name: '', client_deliverer: '' });
       setEditingId(null);
       onUpdate();
       alert(editingId ? 'Cambios actualizados correctamente' : 'Guardado correctamente');
@@ -1679,7 +1677,7 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
     .then(data => {
       if (data.error) { alert('Error: ' + data.error); return; }
       
-      setFormData({ product_id: '', origin: 'Ransa', destination: 'Lomas de San Francisco', weight: '', tag_weight: '', scale_weight: '', units_per_box: '', unit_type: 'Lbs', agro_id: '', value: '', discount_percent: 0, client_name: '', client_nit: '', client_nrc: '', client_address: '' });
+      setFormData({ product_id: '', origin: 'Ransa', destination: 'Lomas de San Francisco', weight: '', tag_weight: '', scale_weight: '', units_per_box: '', unit_type: 'Lbs', agro_id: '', value: '', discount_percent: 0, client_name: '', client_deliverer: '' });
       setEditingId(null);
       setShowPreview(false);
       setPreviewData(null);
@@ -1816,25 +1814,17 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
             
             <hr style={{ opacity: 0.1, margin: '2rem 0' }} />
             
-            <h4 style={{ color: 'var(--accent)', marginBottom: '1rem' }}>Datos del Cliente para Factura</h4>
+            <h4 style={{ color: 'var(--accent)', marginBottom: '1rem' }}>Datos del Cliente</h4>
             
-            <div className="form-group">
-              <label>Razón Social / Nombre Cliente</label>
-              <input type="text" placeholder="Ej: INDUSTRIAS BENDEK S.A DE C.V" value={formData.client_name} onChange={e => setFormData({ ...formData, client_name: e.target.value })} />
-            </div>
             <div className="form-row two-col">
               <div className="form-group">
-                <label>NIT / DUI</label>
-                <input type="text" placeholder="0000-000000-000-0" value={formData.client_nit} onChange={e => setFormData({ ...formData, client_nit: e.target.value })} />
+                <label>Nombre del Cliente</label>
+                <input type="text" placeholder="Nombre o Razón Social" value={formData.client_name} onChange={e => setFormData({ ...formData, client_name: e.target.value })} />
               </div>
               <div className="form-group">
-                <label>NRC</label>
-                <input type="text" placeholder="367641-0" value={formData.client_nrc} onChange={e => setFormData({ ...formData, client_nrc: e.target.value })} />
+                <label>Nombre del que Entrega</label>
+                <input type="text" placeholder="Persona que entrega" value={formData.client_deliverer} onChange={e => setFormData({ ...formData, client_deliverer: e.target.value })} />
               </div>
-            </div>
-            <div className="form-group">
-              <label>Dirección Completa</label>
-              <input type="text" placeholder="Colonia San Benito..." value={formData.client_address} onChange={e => setFormData({ ...formData, client_address: e.target.value })} />
             </div>
           </>
         )}
@@ -1881,18 +1871,17 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
       </form>
 
       {showPreview && previewData && (
-        <div className="form-card" style={{ marginTop: '2rem', background: 'rgba(255,255,255,0.02)' }}>
-          <h3 style={{ marginBottom: '1.5rem', color: 'var(--accent)' }}>Vista Previa de Factura</h3>
+        <div id="invoice-preview-section" className="form-card" style={{ marginTop: '2rem', background: 'rgba(255,255,255,0.02)' }}>
           <InvoiceLayout
             company="CARNES DEL PARAGUAY S.A.S DE C.V"
             address="CALLE LA MASCOTA, CONDOMINIO GALICIA, COLONIA SAN BENITO, 18"
             nit="0623-160725-114-6"
             nrc="367641-0"
             recipient={{
-              name: previewData.client.name,
-              nit: previewData.client.nit,
-              nrc: previewData.client.nrc,
-              address: previewData.client.address
+              name: previewData.client_name,
+              nit: '',
+              nrc: '',
+              address: ''
             }}
             date={new Date().toISOString()}
             items={[{
@@ -1905,12 +1894,11 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
             totals={{
               subtotal: parseFloat(previewData.value) / (1 - (parseFloat(previewData.discount_percent) || 0) / 100),
               discount: parseFloat(previewData.discount_percent) || 0,
-              tax: parseFloat(previewData.value) * 0.13,
-              total: parseFloat(previewData.value) * 1.13
+              total: parseFloat(previewData.value)
             }}
             paymentCondition="CONTADO"
             observations=""
-            deliverer=""
+            deliverer={previewData.client_deliverer}
             receiver=""
             onPrint={() => window.print()}
             onSave={confirmAndSave}
@@ -4097,6 +4085,14 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
 
   return (
     <div className="app-container">
+      <style>{`
+        @media print {
+          body * { visibility: hidden; }
+          #invoice-print-area, #invoice-print-area * { visibility: visible; }
+          #invoice-print-area { position: absolute; left: 0; top: 0; width: 100%; }
+          .btn-primary, .no-print { display: none !important; }
+        }
+      `}</style>
       <header>
         <div className="subtitle">Carnes del Paraguay</div>
         <h1>Logística & Control de Inventario</h1>

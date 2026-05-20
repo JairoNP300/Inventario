@@ -1,6 +1,5 @@
 import React from 'react';
 
-// Unified Invoice Layout - Diseño Profesional de Factura
 export default function InvoiceLayout({
   company = 'CARNES DEL PARAGUAY S.A.S DE C.V',
   address = 'CALLE LA MASCOTA, CONDOMINIO GALICIA, COLONIA SAN BENITO, 18. MUNICIPIO DE SAN SALVADOR CENTRO.',
@@ -20,9 +19,8 @@ export default function InvoiceLayout({
   onSave,
   onCancel
 }) {
-  const { subtotal = 0, tax = 0, total = 0 } = totals || {};
+  const { subtotal = 0, discount = 0, total = 0 } = totals || {};
   
-  // Conversor simple de números a letras (español, versión simplificada)
   const numberToWords = (n) => {
     if (n < 0) return 'MENOS ' + numberToWords(-n);
     if (n === 0) return 'CERO';
@@ -61,11 +59,10 @@ export default function InvoiceLayout({
   const cents = Math.round(((total || 0) - totalInt) * 100);
   const totalInWords = cents > 0 ? numberToWords(totalInt) + ' CON ' + numberToWords(cents) + ' CENTAVOS' : numberToWords(totalInt);
   
-  // Generar código de factura aleatorio
   const codigoFactura = `DTE-03-M001P001-${Math.random().toString(36).toUpperCase().substring(2, 10)}`;
   
   return (
-    <div className="invoice-container" style={{ 
+    <div id="invoice-print-area" className="invoice-container" style={{ 
       padding: 24,
       fontFamily: 'Arial, sans-serif',
       color: '#111827',
@@ -76,7 +73,6 @@ export default function InvoiceLayout({
       boxShadow: '0 2px 10px rgba(0,0,0,0.08)',
       border: '1px solid #d1d5db'
     }}>
-      {/* Badge de documento */}
       <div className="header-badge" style={{
         background: '#111827',
         color: '#ffffff',
@@ -91,7 +87,6 @@ export default function InvoiceLayout({
         DOCUMENTO TRIBUTARIO ELECTRÓNICO
       </div>
       
-      {/* Encabezado de la empresa */}
       <div style={{ marginBottom: 16, borderBottom: '1px solid #d1d5db', paddingBottom: 12 }}>
         <h1 style={{ fontSize: '1.8rem', fontWeight: 900, color: '#111827', margin: 0, letterSpacing: -0.5 }}>
           {company}
@@ -107,7 +102,6 @@ export default function InvoiceLayout({
         </p>
       </div>
       
-      {/* Información del documento */}
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 14, padding: 10, background: '#f3f4f6', border: '1px solid #d1d5db' }}>
         <div>
           <div style={{ fontSize: 10, color: '#4b5563', textTransform: 'uppercase', fontWeight: 700 }}>Tipo de Documento</div>
@@ -125,7 +119,6 @@ export default function InvoiceLayout({
         </div>
       </div>
       
-      {/* Datos del receptor */}
       <div style={{ marginBottom: 14, padding: 10, background: '#ffffff', border: '1px solid #d1d5db' }}>
         <div style={{ fontSize: 10, color: '#ffffff', textTransform: 'uppercase', fontWeight: 700, marginBottom: 8, background: '#111827', padding: '4px 8px' }}>
           DATOS DEL RECEPTOR
@@ -138,7 +131,6 @@ export default function InvoiceLayout({
         </div>
       </div>
       
-      {/* Tabla de items */}
       <div style={{ marginBottom: 14, overflow: 'hidden', border: '1px solid #d1d5db' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
@@ -169,17 +161,18 @@ export default function InvoiceLayout({
         </table>
       </div>
       
-      {/* Totales */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 14 }}>
         <div style={{ width: 320, padding: 12, background: '#ffffff', border: '1px solid #d1d5db' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: 13 }}>
             <span style={{ color: '#64748b' }}>Sumatoria Ventas Gravadas</span>
             <span style={{ fontWeight: 700 }}>${subtotal.toFixed(2)}</span>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: 13 }}>
-            <span style={{ color: '#64748b' }}>13% IVA</span>
-            <span style={{ fontWeight: 700 }}>${tax.toFixed(2)}</span>
-          </div>
+          {discount > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: 13 }}>
+              <span style={{ color: '#f59e0b' }}>Descuento ({discount}%)</span>
+              <span style={{ fontWeight: 700, color: '#f59e0b' }}>${(subtotal * discount / 100).toFixed(2)}</span>
+            </div>
+          )}
           <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 8, borderTop: '1px solid #e2e8f0', fontSize: 16, fontWeight: 900 }}>
             <span>MONTO TOTAL A PAGAR</span>
             <span>${total.toFixed(2)}</span>
@@ -197,14 +190,12 @@ export default function InvoiceLayout({
         </div>
       </div>
       
-      {/* Notas */}
       <div style={{ marginBottom: 30, padding: 15, background: '#fefce8', borderRadius: 8, border: '1px solid #fef08a' }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: '#a16207', marginBottom: 5 }}>SON:</div>
         <div style={{ fontSize: 14, color: '#713f12' }}>{totalInWords} DÓLARES</div>
         <div style={{ fontSize: 11, color: '#a16207', marginTop: 8 }}>Esta factura no incluye retenciones adicionales sujetas al comprador salvo que se especifique. Operación sujeta a revisión.</div>
       </div>
       
-      {/* Botones de acción */}
       <div style={{ display: 'flex', gap: 12, marginTop: 20 }}>
         <button 
           onClick={onSave || onPrint} 
@@ -228,10 +219,10 @@ export default function InvoiceLayout({
           Guardar Venta & Imprimir
         </button>
         <button 
-          onClick={onCancel || (() => window.print())} 
+          onClick={onCancel} 
           style={{ 
             flex: 1, 
-            background: '#ef4444', 
+            background: '#64748b', 
             color: 'white',
             padding: '14px 24px',
             borderRadius: 12,
@@ -245,7 +236,7 @@ export default function InvoiceLayout({
             gap: 8
           }}
         >
-          Cancelar Operación
+          Volver al Formulario
         </button>
       </div>
       <div style={{ textAlign: 'right', fontFamily: 'monospace', marginTop: 6 }}>
