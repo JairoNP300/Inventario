@@ -1783,7 +1783,7 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
               <select value={formData.agro_id} onChange={e => {
                 const val = e.target.value;
                 if (val === 'VENTA_DIRECTA') {
-                  setFormData({ ...formData, agro_id: val, client_nit: '', client_nrc: '', client_address: '' });
+                  setFormData({ ...formData, agro_id: val, client_name: '', client_nit: '', client_nrc: '', client_address: '' });
                 } else {
                   setFormData({ ...formData, agro_id: val, client_name: '' });
                 }
@@ -1838,15 +1838,15 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
             
             {formData.agro_id === 'VENTA_DIRECTA' ? (
               <>
-                <h4 style={{ color: 'var(--accent)', marginBottom: '1rem' }}>Datos del Cliente</h4>
+                <h4 style={{ color: 'var(--accent)', marginBottom: '1rem' }}>Datos de Entrega</h4>
                 <div className="form-row two-col">
-                  <div className="form-group">
-                    <label>Nombre del Cliente</label>
-                    <input type="text" placeholder="Nombre o Razón Social" value={formData.client_name} onChange={e => setFormData({ ...formData, client_name: e.target.value })} />
-                  </div>
                   <div className="form-group">
                     <label>Nombre del que Entrega</label>
                     <input type="text" placeholder="Persona que entrega" value={formData.client_deliverer} onChange={e => setFormData({ ...formData, client_deliverer: e.target.value })} />
+                  </div>
+                  <div className="form-group">
+                    <label>Nombre del que Recibe</label>
+                    <input type="text" placeholder="Persona que recibe" value={formData.receiver_name} onChange={e => setFormData({ ...formData, receiver_name: e.target.value })} />
                   </div>
                 </div>
               </>
@@ -1999,7 +1999,7 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
             nit="0623-160725-114-6"
             nrc="367641-0"
             recipient={{
-              name: formData.agro_id === 'VENTA_DIRECTA' ? (formData.client_name || '---') : (agros.find(a => String(a.id) === String(formData.agro_id))?.name || '---'),
+              name: formData.agro_id === 'VENTA_DIRECTA' ? (formData.client_deliverer || '---') : (agros.find(a => String(a.id) === String(formData.agro_id))?.name || '---'),
               nit: formData.client_nit || '',
               nrc: formData.client_nrc || '',
               address: formData.client_address || '',

@@ -74,10 +74,10 @@ export default function InvoiceLayout({
           background: #ffffff !important;
           color: #111827 !important;
           font-family: Arial, Helvetica, sans-serif !important;
-          font-size: 10px !important;
-          line-height: 1.25 !important;
-          padding: 14px 18px !important;
-          max-width: 800px !important;
+          font-size: 9px !important;
+          line-height: 1.3 !important;
+          padding: 10px 14px !important;
+          max-width: 100% !important;
           margin: 0 auto !important;
         }
         #invoice-print-area .header-badge {
@@ -140,9 +140,9 @@ export default function InvoiceLayout({
           background: #ffffff !important;
           border: 1px solid #e5e7eb !important;
           padding: 6px 10px !important;
-          width: 260px !important;
-          margin-left: auto !important;
+          width: 100% !important;
           margin-bottom: 8px !important;
+          box-sizing: border-box !important;
         }
         .il-totals-box .il-row {
           display: flex !important;
@@ -193,8 +193,7 @@ export default function InvoiceLayout({
           margin-bottom: 0 !important;
         }
         .il-meta {
-          display: flex !important;
-          justify-content: space-between !important;
+          display: block !important;
           margin-bottom: 8px !important;
           padding: 5px 7px !important;
           background: #f9fafb !important;
@@ -203,6 +202,10 @@ export default function InvoiceLayout({
         .il-meta > div {
           font-size: 7px !important;
           color: #6b7280 !important;
+          margin-bottom: 4px !important;
+        }
+        .il-meta > div:last-child {
+          margin-bottom: 0 !important;
         }
         .il-meta .il-label {
           font-size: 7px !important;
@@ -216,20 +219,22 @@ export default function InvoiceLayout({
           color: #111827 !important;
         }
         .il-recipient-grid {
-          display: grid !important;
-          grid-template-columns: 1fr 1fr !important;
-          gap: 2px !important;
+          display: block !important;
           font-size: 9px !important;
           padding: 6px 8px !important;
           color: #111827 !important;
         }
+        .il-recipient-grid > div {
+          margin-bottom: 3px !important;
+        }
         .il-extension-grid {
-          display: grid !important;
-          grid-template-columns: 1fr 1fr !important;
-          gap: 2px !important;
+          display: block !important;
           padding: 5px 7px !important;
           font-size: 9px !important;
           color: #111827 !important;
+        }
+        .il-extension-grid > div {
+          margin-bottom: 3px !important;
         }
         #invoice-print-area .il-no-print {
           display: flex !important;
@@ -268,11 +273,30 @@ export default function InvoiceLayout({
             top: 0 !important;
             width: 100% !important;
             max-width: 100% !important;
-            padding: 8px 14px !important;
+            padding: 8px 12px !important;
             margin: 0 !important;
             box-shadow: none !important;
             border: none !important;
-            font-size: 9px !important;
+            font-size: 8px !important;
+          }
+          #invoice-print-area h1 {
+            font-size: 1rem !important;
+          }
+          #invoice-print-area th,
+          #invoice-print-area td {
+            padding: 2px 4px !important;
+            font-size: 7px !important;
+          }
+          #invoice-print-area thead th {
+            padding: 3px 4px !important;
+            font-size: 6px !important;
+          }
+          .il-totals-box {
+            padding: 4px 8px !important;
+          }
+          .il-son-box {
+            padding: 4px 8px !important;
+            margin-bottom: 6px !important;
           }
           .il-no-print { display: none !important; }
           @page { size: A4 portrait; margin: 0; }
