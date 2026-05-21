@@ -87,23 +87,23 @@ export default function InvoiceLayout({
         #invoice-print-area .header-badge {
           background: #f3f4f6 !important;
           color: #4b5563 !important;
-          font-size: 7px !important;
+          font-size: 8px !important;
           font-weight: 700 !important;
           letter-spacing: 0.5px !important;
-          padding: 3px 8px !important;
+          padding: 4px 10px !important;
           display: inline-block !important;
-          margin-bottom: 8px !important;
+          margin-bottom: 10px !important;
         }
         #invoice-print-area h1 {
-          font-size: 1.2rem !important;
+          font-size: 1.4rem !important;
           font-weight: 900 !important;
           color: #111827 !important;
-          margin: 0 0 4px 0 !important;
+          margin: 0 0 5px 0 !important;
           letter-spacing: -0.5px !important;
         }
         #invoice-print-area p {
           margin: 3px 0 !important;
-          font-size: 0.7rem !important;
+          font-size: 0.8rem !important;
           color: #374151 !important;
         }
         #invoice-print-area table {
