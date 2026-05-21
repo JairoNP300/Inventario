@@ -68,11 +68,11 @@ export default function InvoiceLayout({
           background: #ffffff !important;
           color: #111827 !important;
           font-family: Arial, Helvetica, sans-serif !important;
-          font-size: 9px !important;
-          line-height: 1.3 !important;
-          padding: 6px 8px !important;
+          font-size: 10px !important;
+          line-height: 1.4 !important;
+          padding: 10px 14px !important;
           width: 100% !important;
-          max-width: 120mm !important;
+          max-width: 190mm !important;
           margin: 0 auto !important;
           box-sizing: border-box !important;
         }
