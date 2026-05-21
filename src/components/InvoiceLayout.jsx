@@ -143,102 +143,102 @@ export default function InvoiceLayout({
         .il-totals-box {
           background: #ffffff !important;
           border: 1px solid #e5e7eb !important;
-          padding: 6px 10px !important;
+          padding: 8px 12px !important;
           width: 100% !important;
-          margin-bottom: 8px !important;
+          margin-bottom: 10px !important;
           box-sizing: border-box !important;
         }
         .il-totals-box .il-row {
           display: flex !important;
           justify-content: space-between !important;
-          font-size: 9px !important;
-          margin-bottom: 3px !important;
+          font-size: 10px !important;
+          margin-bottom: 4px !important;
           color: #111827 !important;
         }
         .il-totals-box .il-total-row {
           display: flex !important;
           justify-content: space-between !important;
           border-top: 2px solid #1f2937 !important;
-          padding-top: 4px !important;
-          font-size: 11px !important;
+          padding-top: 5px !important;
+          font-size: 12px !important;
           font-weight: 900 !important;
           color: #111827 !important;
         }
         .il-son-box {
-          padding: 7px 10px !important;
+          padding: 8px 12px !important;
           background: #fefce8 !important;
           border: 1px solid #fef08a !important;
           border-radius: 5px !important;
-          margin-bottom: 12px !important;
+          margin-bottom: 14px !important;
         }
         .il-son-box .il-son-label {
-          font-size: 8px !important;
+          font-size: 9px !important;
           font-weight: 700 !important;
           color: #a16207 !important;
-          margin-bottom: 2px !important;
+          margin-bottom: 3px !important;
         }
         .il-son-box .il-son-words {
-          font-size: 9px !important;
+          font-size: 10px !important;
           color: #713f12 !important;
           font-weight: 600 !important;
         }
         .il-son-box .il-disclaimer {
-          font-size: 7px !important;
+          font-size: 8px !important;
           color: #a16207 !important;
-          margin-top: 4px !important;
+          margin-top: 5px !important;
         }
         .il-section-header {
-          font-size: 7px !important;
+          font-size: 8px !important;
           color: #ffffff !important;
           font-weight: 700 !important;
           text-transform: uppercase !important;
-          padding: 2px 7px !important;
+          padding: 3px 8px !important;
           background: #1f2937 !important;
           margin-bottom: 0 !important;
         }
         .il-meta {
           display: block !important;
-          margin-bottom: 8px !important;
-          padding: 5px 7px !important;
+          margin-bottom: 10px !important;
+          padding: 6px 8px !important;
           background: #f9fafb !important;
           border: 1px solid #e5e7eb !important;
         }
         .il-meta > div {
-          font-size: 7px !important;
+          font-size: 8px !important;
           color: #6b7280 !important;
-          margin-bottom: 4px !important;
+          margin-bottom: 5px !important;
         }
         .il-meta > div:last-child {
           margin-bottom: 0 !important;
         }
         .il-meta .il-label {
-          font-size: 7px !important;
+          font-size: 8px !important;
           color: #6b7280 !important;
           font-weight: 700 !important;
           text-transform: uppercase !important;
         }
         .il-meta .il-value {
-          font-size: 9px !important;
+          font-size: 10px !important;
           font-weight: 800 !important;
           color: #111827 !important;
         }
         .il-recipient-grid {
           display: block !important;
-          font-size: 9px !important;
-          padding: 6px 8px !important;
+          font-size: 10px !important;
+          padding: 7px 10px !important;
           color: #111827 !important;
         }
         .il-recipient-grid > div {
-          margin-bottom: 3px !important;
+          margin-bottom: 4px !important;
         }
         .il-extension-grid {
           display: block !important;
-          padding: 5px 7px !important;
-          font-size: 9px !important;
+          padding: 6px 8px !important;
+          font-size: 10px !important;
           color: #111827 !important;
         }
         .il-extension-grid > div {
-          margin-bottom: 3px !important;
+          margin-bottom: 4px !important;
         }
         #invoice-print-area .il-no-print {
           display: flex !important;
