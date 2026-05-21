@@ -279,13 +279,13 @@ export default function InvoiceLayout({
           #invoice-print-area {
             display: block !important;
             width: 100% !important;
-            max-width: 140mm !important;
+            max-width: 195mm !important;
             margin: 0 auto !important;
-            padding: 10px 15px !important;
+            padding: 12px 16px !important;
             box-shadow: none !important;
             border: none !important;
-            font-size: 9px !important;
-            line-height: 1.3 !important;
+            font-size: 10px !important;
+            line-height: 1.4 !important;
           }
           #invoice-print-area .header-badge { font-size: 7px !important; padding: 3px 8px !important; margin-bottom: 6px !important; }
           #invoice-print-area h1 { font-size: 1.1rem !important; margin: 0 0 3px 0 !important; }
