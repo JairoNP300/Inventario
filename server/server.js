@@ -4,6 +4,7 @@ import express from 'express';
 import cors from 'cors';
 import { fileURLToPath } from 'url';
 import { promises as fs } from 'fs';
+import { spawn } from 'child_process';
 import { dirname, join } from 'path';
 import { resolve4 } from 'dns/promises';
 import { setDefaultResultOrder } from 'dns';
@@ -658,6 +659,7 @@ app.get('/api/reports/dispatches', async (req, res) => {
 
 app.post('/api/dispatches', async (req, res) => {
   const { product_id, agro_id, weight, unit_type, value, origin_warehouse, discount_percent } = req.body;
+  console.log('DISPATCH RECEIVED:', JSON.stringify({ product_id, agro_id, weight, unit_type, value, origin_warehouse, discount_percent }));
   try {
     const info = await query(`
       INSERT INTO dispatches (product_id, agro_id, weight, unit_type, value, discount_percent)
@@ -674,9 +676,11 @@ app.post('/api/dispatches', async (req, res) => {
       'Usulután': 'bodega_3'
     };
     const bodegaCol = colMap[origin_warehouse] || 'bodega_2';
+    console.log('DISPATCH bodegaCol:', bodegaCol);
 
     // bodega_1 (Ransa) is in KG, others in LBS
     let weightInUnits = parseFloat(weight);
+    console.log('DISPATCH raw weight parse:', weightInUnits);
     if (bodegaCol === 'bodega_1') {
       // Ransa: convert dispatch weight to KG if it came in Lbs
       if (unit_type === 'Lbs') weightInUnits = weightInUnits / 2.20462;
@@ -684,8 +688,15 @@ app.post('/api/dispatches', async (req, res) => {
       // Other bodegas: convert to LBS if came in Kg
       if (unit_type === 'Kg') weightInUnits = weightInUnits * 2.20462;
     }
+    console.log('DISPATCH weightInUnits:', weightInUnits, 'product_id:', product_id);
 
-    await query(`UPDATE inventory SET ${bodegaCol} = ${bodegaCol} - ?, sold_stock = sold_stock + ? WHERE product_id = ?`, [weightInUnits, weightInUnits, product_id]);
+    const updateResult = await query(`UPDATE inventory SET ${bodegaCol} = ${bodegaCol} - ?, sold_stock = sold_stock + ? WHERE product_id = ?`, [weightInUnits, weightInUnits, product_id]);
+    console.log('DISPATCH update result:', JSON.stringify(updateResult));
+
+    // Verify the update worked: read back the new value
+    const { rows: checkRows } = await query(`SELECT ${bodegaCol} FROM inventory WHERE product_id = ?`, [product_id]);
+    console.log('DISPATCH verify after update:', JSON.stringify(checkRows));
+
     await query('INSERT INTO movements (product_id, origin_warehouse, dest_warehouse, weight, type) VALUES (?, ?, ?, ?, ?)', [product_id, origin_warehouse || 'Soyapango', 'Despacho', weight, 'DISPATCH']);
 
     // Log actividad
@@ -698,6 +709,7 @@ app.post('/api/dispatches', async (req, res) => {
 
     res.json({ id: info.lastInsertRowid });
   } catch (err) {
+    console.error('DISPATCH ERROR:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
@@ -1302,6 +1314,18 @@ initDb().then(() => {
     app.listen(port, '0.0.0.0', () => {
       console.log(`Server running at port ${port}`);
       console.log('All changes applied: New locations, stock levels, and deduction logic');
+
+      // Auto-deploy watcher: starts automatically when running locally
+      if (!process.env.RENDER) {
+        console.log('👀 Iniciando auto-deploy watcher (local)...');
+        const watcher = spawn('node', [join(__dirname, '../scripts/watch-deploy.js')], {
+          cwd: join(__dirname, '..'),
+          stdio: 'inherit',
+          env: { ...process.env }
+        });
+        watcher.on('error', (err) => console.error('⚠️ Auto-deploy watcher error:', err.message));
+        watcher.on('exit', (code) => console.log(`Auto-deploy watcher exited with code ${code}`));
+      }
     });
   }).catch(err => {
     console.error('Migration failed:', err);

@@ -1683,17 +1683,19 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
     if (dispatchCart.length === 0) { alert('No hay productos en el carrito'); return; }
     
     Promise.all(dispatchCart.map(item => {
+      const payload = {
+        product_id: item.product_id,
+        agro_id: item.agro_id,
+        weight: item.qty,
+        unit_type: item.unit,
+        value: item.total,
+        origin_warehouse: item.origin,
+        discount_percent: item.discount_percent || 0
+      };
+      console.log('CONFIRM SENDING:', JSON.stringify(payload));
       return apiFetch(`${API_BASE}/dispatches`, {
         method: 'POST',
-        body: JSON.stringify({
-          product_id: item.product_id,
-          agro_id: item.agro_id,
-          weight: item.qty,
-          unit_type: item.unit,
-          value: item.total,
-          origin_warehouse: item.origin,
-          discount_percent: item.discount_percent || 0
-        })
+        body: JSON.stringify(payload)
       }).then(r => { if (!r.ok) throw new Error('Error saving dispatch'); return r.json(); });
     }))
     .then(results => {
