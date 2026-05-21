@@ -115,8 +115,8 @@ export default function InvoiceLayout({
         }
         #invoice-print-area th,
         #invoice-print-area td {
-          padding: 4px 6px !important;
-          font-size: 9px !important;
+          padding: 6px 8px !important;
+          font-size: 10px !important;
           color: #111827 !important;
           background: transparent !important;
           border: 0 !important;
@@ -125,16 +125,16 @@ export default function InvoiceLayout({
           font-weight: 400 !important;
           text-align: left !important;
           vertical-align: middle !important;
-          line-height: 1.2 !important;
+          line-height: 1.3 !important;
         }
         #invoice-print-area thead th {
           background: #1f2937 !important;
           color: #ffffff !important;
           font-weight: 800 !important;
-          font-size: 7px !important;
+          font-size: 8px !important;
           text-transform: uppercase !important;
           letter-spacing: 0.5px !important;
-          padding: 5px 6px !important;
+          padding: 6px 8px !important;
           border-bottom: 0 !important;
         }
         #invoice-print-area tbody tr:last-child td {
