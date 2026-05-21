@@ -287,26 +287,26 @@ export default function InvoiceLayout({
             font-size: 10px !important;
             line-height: 1.4 !important;
           }
-          #invoice-print-area .header-badge { font-size: 7px !important; padding: 3px 8px !important; margin-bottom: 6px !important; }
-          #invoice-print-area h1 { font-size: 1.1rem !important; margin: 0 0 3px 0 !important; }
-          #invoice-print-area p { margin: 2px 0 !important; font-size: 0.65rem !important; }
-          #invoice-print-area > div { margin-bottom: 5px !important; }
+          #invoice-print-area .header-badge { font-size: 8px !important; padding: 4px 10px !important; margin-bottom: 8px !important; }
+          #invoice-print-area h1 { font-size: 1.3rem !important; margin: 0 0 4px 0 !important; }
+          #invoice-print-area p { margin: 3px 0 !important; font-size: 0.75rem !important; }
+          #invoice-print-area > div { margin-bottom: 6px !important; }
           #invoice-print-area th,
-          #invoice-print-area td { padding: 3px 5px !important; font-size: 8px !important; }
-          #invoice-print-area thead th { padding: 4px 5px !important; font-size: 6px !important; }
-          .il-totals-box { padding: 5px 8px !important; margin-bottom: 6px !important; }
-          .il-totals-box .il-row { font-size: 8px !important; margin-bottom: 2px !important; }
-          .il-totals-box .il-total-row { font-size: 10px !important; padding-top: 3px !important; }
-          .il-son-box { padding: 5px 8px !important; margin-bottom: 6px !important; }
-          .il-son-box .il-son-words { font-size: 8px !important; }
-          .il-son-box .il-disclaimer { font-size: 6px !important; }
-          .il-meta { padding: 4px 6px !important; margin-bottom: 5px !important; }
-          .il-meta .il-value { font-size: 8px !important; }
-          .il-recipient-grid { padding: 4px 6px !important; font-size: 8px !important; }
-          .il-recipient-grid > div { margin-bottom: 2px !important; }
-          .il-extension-grid { padding: 4px 6px !important; font-size: 8px !important; }
-          .il-extension-grid > div { margin-bottom: 2px !important; }
-          .il-section-header { font-size: 6px !important; padding: 1px 6px !important; }
+          #invoice-print-area td { padding: 5px 7px !important; font-size: 9px !important; }
+          #invoice-print-area thead th { padding: 5px 7px !important; font-size: 7px !important; }
+          .il-totals-box { padding: 6px 10px !important; margin-bottom: 8px !important; }
+          .il-totals-box .il-row { font-size: 9px !important; margin-bottom: 3px !important; }
+          .il-totals-box .il-total-row { font-size: 11px !important; padding-top: 4px !important; }
+          .il-son-box { padding: 6px 10px !important; margin-bottom: 8px !important; }
+          .il-son-box .il-son-words { font-size: 9px !important; }
+          .il-son-box .il-disclaimer { font-size: 7px !important; }
+          .il-meta { padding: 5px 7px !important; margin-bottom: 6px !important; }
+          .il-meta .il-value { font-size: 9px !important; }
+          .il-recipient-grid { padding: 5px 8px !important; font-size: 9px !important; }
+          .il-recipient-grid > div { margin-bottom: 3px !important; }
+          .il-extension-grid { padding: 5px 7px !important; font-size: 9px !important; }
+          .il-extension-grid > div { margin-bottom: 3px !important; }
+          .il-section-header { font-size: 7px !important; padding: 2px 7px !important; }
           #invoice-print-area .il-no-print { display: none !important; }
           [style*="borderBottom"] { margin-bottom: 4px !important; padding-bottom: 4px !important; }
           @page { size: A4 portrait; margin: 8mm; }
