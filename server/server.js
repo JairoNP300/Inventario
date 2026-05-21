@@ -983,29 +983,8 @@ app.put('/api/dispatches/:id', async (req, res) => {
 app.delete('/api/dispatches/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    const { rows } = await query('SELECT * FROM dispatches WHERE id = ?', [id]);
-    if (rows.length > 0) {
-      const log = rows[0];
-
-      // Map agro_id to bodega column
-      const agroToBodegaMap = {
-        1: 'bodega_1', // Ransa
-        2: 'bodega_2', // Soyapango
-        3: 'bodega_3', // Usulután
-        4: 'bodega_4'  // Lomas de San Francisco
-      };
-      const bodegaCol = agroToBodegaMap[log.agro_id] || 'bodega_1';
-
-      // Convert weight to lbs for inventory
-      let weightInLbs = parseFloat(log.weight);
-      if (log.unit_type === 'Kg') {
-        weightInLbs = weightInLbs * 2.20462;
-      }
-
-      // Revert: Add back to the correct bodega
-      await query(`UPDATE inventory SET ${bodegaCol} = ${bodegaCol} + ?, sold_stock = sold_stock - ? WHERE product_id = ?`, [weightInLbs, weightInLbs, log.product_id]);
-      await query('DELETE FROM dispatches WHERE id = ?', [id]);
-    }
+    // Simple delete — dispatches are final sales, inventory is NOT restored
+    await query('DELETE FROM dispatches WHERE id = ?', [id]);
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
