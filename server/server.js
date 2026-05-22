@@ -755,37 +755,48 @@ app.post('/api/inventory/adjust', async (req, res) => {
   const { product_id, current_stock, initial_stock, cajas, warehouse, mode } = req.body;
   try {
     const colMap = {
-      'Ransa': 'bodega_1',
-      'Central de abasto - Soyapango (Cuarto Frío)': 'bodega_2',
-      'Central de abasto - Usulután (Cuarto Frío)': 'bodega_3',
-      'Lomas de San Francisco': 'bodega_4'
+      'Ransa': { col: 'bodega_1', unit: 'KG' },
+      'Central de abasto - Soyapango (Cuarto Frío)': { col: 'bodega_2', unit: 'Lbs' },
+      'Central de abasto - Usulután (Cuarto Frío)': { col: 'bodega_3', unit: 'Lbs' },
+      'Lomas de San Francisco': { col: 'bodega_4', unit: 'Lbs' }
     };
-    const targetCol = colMap[warehouse] || 'bodega_1';
+    const target = colMap[warehouse] || { col: 'bodega_1', unit: 'KG' };
+    const targetCol = target.col;
+
+    let weightChange = 0;
+    let cajasChange = 0;
 
     if (initial_stock !== undefined) {
       await query('UPDATE inventory SET initial_stock = ? WHERE product_id = ?', [initial_stock, product_id]);
     }
     if (current_stock !== undefined) {
-      // mode='add' sums to existing; otherwise replaces (legacy)
       if (mode === 'add') {
         await query(`UPDATE inventory SET ${targetCol} = ${targetCol} + ? WHERE product_id = ?`, [current_stock, product_id]);
+        weightChange = current_stock;
       } else {
         await query(`UPDATE inventory SET ${targetCol} = ? WHERE product_id = ?`, [current_stock, product_id]);
+        weightChange = current_stock; // for logging
       }
     }
     if (cajas !== undefined) {
       await query(`UPDATE inventory SET cajas = cajas + ? WHERE product_id = ?`, [cajas, product_id]);
+      cajasChange = cajas;
     }
+
+    // Record in stock_adjustments
+    const adjInfo = await query(
+      `INSERT INTO stock_adjustments (product_id, warehouse, bodega_col, weight_change, cajas_change, role) VALUES (?, ?, ?, ?, ?, ?) RETURNING id`,
+      [product_id, warehouse, targetCol, weightChange, cajasChange, req.headers['x-role'] || 'desconocido']
+    );
 
     const { rows: pRowsAdj } = await query('SELECT name FROM products WHERE id = ?', [product_id]);
     const pNameAdj = pRowsAdj[0]?.name || `Producto #${product_id}`;
-    const unit = (warehouse === 'Ransa') ? 'KG' : 'Lbs';
     let details = '';
-    if (current_stock !== undefined) details += `Agregado: ${current_stock} ${unit} a ${warehouse}. `;
+    if (current_stock !== undefined) details += `Agregado: ${current_stock} ${target.unit} a ${warehouse}. `;
     if (cajas !== undefined) details += `Cajas: +${cajas}.`;
-    await logActivity({ role: req.headers['x-role'] || 'desconocido', action: 'AJUSTE STOCK', entity: 'inventory', product_name: pNameAdj, quantity: current_stock ?? cajas ?? 0, unit, location: warehouse || 'Bodega', details });
+    await logActivity({ role: req.headers['x-role'] || 'desconocido', action: 'AJUSTE STOCK', entity: 'inventory', product_name: pNameAdj, quantity: current_stock ?? cajas ?? 0, unit: target.unit, location: warehouse || 'Bodega', details });
 
-    res.json({ success: true });
+    res.json({ success: true, adjustment_id: adjInfo.lastInsertRowid });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
