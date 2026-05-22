@@ -600,6 +600,7 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
   const toNum = (v) => Number(v) || 0;
   const productRows = Array.isArray(products) ? products : [];
   const [inventory, setInventory] = useState([]);
+  const [adjustments, setAdjustments] = useState([]);
   const [viewUnit, setViewUnit] = useState('Lbs');
   const [adjData, setAdjData] = useState({ product_id: '', current_stock: '', cajas: '', warehouse: 'Ransa' });
   const [quickKg, setQuickKg] = useState('100');
