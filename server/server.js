@@ -364,6 +364,17 @@ const initDb = async () => {
       cooked_weight DECIMAL(10,2),
       json_data TEXT
     );
+
+    CREATE TABLE IF NOT EXISTS stock_adjustments (
+      id ${idType},
+      product_id INTEGER,
+      warehouse TEXT,
+      bodega_col TEXT,
+      weight_change DECIMAL(10,2) DEFAULT 0,
+      cajas_change INTEGER DEFAULT 0,
+      role TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
   `);
 
   if (!isProduction) {
