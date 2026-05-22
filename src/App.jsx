@@ -689,6 +689,10 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then(data => { if (!cancelled) setInventory(Array.isArray(data) ? data : []); })
       .catch(err => { console.error('Error loading inventory status', err); if (!cancelled) setInventory([]); });
+    fetch(`${API_BASE}/inventory/adjustments`)
+      .then(r => r.json())
+      .then(data => { if (!cancelled) setAdjustments(Array.isArray(data) ? data : []); })
+      .catch(err => console.error('Error loading adjustments', err));
     return () => { cancelled = true; };
   }, [refreshTrigger]);
 
@@ -898,6 +902,42 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
             </table>
           </div>
         </div>
+      </div>
+
+      <div className="form-card" style={{ marginTop: '2rem' }}>
+        <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Clock size={16} /> Últimos Ajustes</h4>
+        {adjustments.length === 0 ? (
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No hay ajustes recientes.</p>
+        ) : (
+          <table style={{ width: '100%', fontSize: '0.85rem', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                <th style={{ textAlign: 'left', padding: '8px', color: 'var(--text-muted)' }}>Producto</th>
+                <th style={{ textAlign: 'left', padding: '8px', color: 'var(--text-muted)' }}>Bodega</th>
+                <th style={{ textAlign: 'right', padding: '8px', color: 'var(--text-muted)' }}>Peso +</th>
+                <th style={{ textAlign: 'right', padding: '8px', color: 'var(--text-muted)' }}>Cajas +</th>
+                <th style={{ textAlign: 'center', padding: '8px', color: 'var(--text-muted)' }}>Fecha</th>
+                <th style={{ textAlign: 'center', padding: '8px', color: 'var(--text-muted)' }}>Acción</th>
+              </tr>
+            </thead>
+            <tbody>
+              {adjustments.map(a => (
+                <tr key={a.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <td style={{ padding: '8px', fontWeight: 600 }}>{a.product_code}: {a.product_name}</td>
+                  <td style={{ padding: '8px' }}>{a.warehouse}</td>
+                  <td style={{ padding: '8px', textAlign: 'right', color: 'var(--success)' }}>{parseFloat(a.weight_change) > 0 ? '+' + parseFloat(a.weight_change).toFixed(1) : '-'}</td>
+                  <td style={{ padding: '8px', textAlign: 'right', color: '#f59e0b' }}>{parseInt(a.cajas_change) > 0 ? '+' + a.cajas_change : '-'}</td>
+                  <td style={{ padding: '8px', textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-muted)' }}>{new Date(a.created_at).toLocaleString('es-SV')}</td>
+                  <td style={{ padding: '8px', textAlign: 'center' }}>
+                    <button onClick={() => handleUndoAdjustment(a.id)} style={{ background: '#ef4444', border: 'none', borderRadius: '6px', padding: '5px 12px', color: 'white', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700 }}>
+                      Revertir
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
 
       <div style={{ marginTop: '3.5rem', padding: '2.5rem', background: 'rgba(239, 68, 68, 0.05)', borderRadius: '24px', border: '1px solid rgba(239, 68, 68, 0.2)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
