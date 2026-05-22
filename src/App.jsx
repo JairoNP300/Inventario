@@ -601,9 +601,10 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
   const productRows = Array.isArray(products) ? products : [];
   const [inventory, setInventory] = useState([]);
   const [viewUnit, setViewUnit] = useState('Lbs');
-  const [adjData, setAdjData] = useState({ product_id: '', current_stock: '', warehouse: 'Ransa' });
+  const [adjData, setAdjData] = useState({ product_id: '', current_stock: '', cajas: '', warehouse: 'Ransa' });
   const [quickKg, setQuickKg] = useState('100');
   const [quickWarehouse, setQuickWarehouse] = useState('Ransa');
+  const [quickType, setQuickType] = useState('kg'); // 'kg' or 'cajas'
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [quickLoading, setQuickLoading] = useState(false);
   const inventoryRows = Array.isArray(inventory) ? inventory : [];
@@ -693,13 +694,17 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
   const handleAdjust = (e) => {
     e.preventDefault();
     const val = parseFloat(adjData.current_stock);
-    if (isNaN(val)) { alert('Ingresa una cantidad válida'); return; }
+    const cajasVal = parseInt(adjData.cajas) || 0;
+    if (isNaN(val) && cajasVal <= 0) { alert('Ingresa una cantidad (stock o cajas)'); return; }
+    const payload = { product_id: adjData.product_id, warehouse: adjData.warehouse, mode: 'add' };
+    if (!isNaN(val)) payload.current_stock = val;
+    if (cajasVal > 0) payload.cajas = cajasVal;
     apiFetch(`${API_BASE}/inventory/adjust`, {
       method: 'POST',
-      body: JSON.stringify({ product_id: adjData.product_id, current_stock: val, warehouse: adjData.warehouse })
+      body: JSON.stringify(payload)
     })
     .then(r => r.json())
-    .then(d => { if (d.error) { alert('Error: ' + d.error); return; } onUpdate(); setAdjData({ product_id: '', current_stock: '', warehouse: 'Ransa' }); alert('Ajuste guardado'); })
+    .then(d => { if (d.error) { alert('Error: ' + d.error); return; } onUpdate(); setAdjData({ product_id: '', current_stock: '', cajas: '', warehouse: 'Ransa' }); alert('Ajuste guardado'); })
     .catch(err => alert('Error de conexión: ' + err.message));
   };
 
@@ -707,23 +712,28 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
   const toggleAll = () => setSelectedProducts(selectedProducts.length === productRows.length ? [] : productRows.map(p => p.id));
 
   const handleQuickLoad = async () => {
-    const kg = parseFloat(quickKg);
-    if (isNaN(kg) || kg <= 0) { alert('Ingresa una cantidad válida en KG'); return; }
+    const val = parseFloat(quickKg);
+    if (isNaN(val) || val <= 0) { alert('Ingresa una cantidad válida'); return; }
     if (selectedProducts.length === 0) { alert('Selecciona al menos un producto'); return; }
     setQuickLoading(true);
-    const isRansa = quickWarehouse === 'Ransa';
-    const valueToStore = isRansa ? kg : kg * 2.20462;
     try {
       for (const pid of selectedProducts) {
+        const payload = { product_id: pid, warehouse: quickWarehouse, mode: 'add' };
+        if (quickType === 'cajas') {
+          payload.cajas = val;
+        } else {
+          const isRansa = quickWarehouse === 'Ransa';
+          payload.current_stock = isRansa ? val : val * 2.20462;
+        }
         const r = await apiFetch(`${API_BASE}/inventory/adjust`, {
           method: 'POST',
-          body: JSON.stringify({ product_id: pid, current_stock: valueToStore, warehouse: quickWarehouse })
+          body: JSON.stringify(payload)
         });
         const d = await r.json();
         if (d.error) throw new Error(d.error);
       }
       onUpdate(); setSelectedProducts([]);
-      alert(`✅ ${selectedProducts.length} producto(s) actualizados con ${kg} KG`);
+      alert(`✅ ${selectedProducts.length} producto(s) actualizados con ${val} ${quickType === 'cajas' ? 'cajas' : 'KG'}`);
     } catch (err) { alert('Error: ' + err.message); }
     setQuickLoading(false);
   };
@@ -739,12 +749,16 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
         </h4>
         <div className="grid-3col" style={{ marginBottom: '1rem' }}>
           <div className="form-group">
-            <label>Cantidad (KG)</label>
-            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+            <label>Cantidad</label>
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '6px' }}>
               {['100', '200', '300', '500'].map(v => (
-                <button key={v} type="button" onClick={() => setQuickKg(v)} style={{ padding: '8px 14px', borderRadius: '10px', border: 'none', cursor: 'pointer', fontWeight: 800, fontSize: '0.85rem', background: quickKg === v ? 'var(--accent)' : 'rgba(255,255,255,0.07)', color: quickKg === v ? '#020617' : 'var(--text-muted)' }}>{v} kg</button>
+                <button key={v} type="button" onClick={() => setQuickKg(v)} style={{ padding: '8px 14px', borderRadius: '10px', border: 'none', cursor: 'pointer', fontWeight: 800, fontSize: '0.85rem', background: quickKg === v ? 'var(--accent)' : 'rgba(255,255,255,0.07)', color: quickKg === v ? '#020617' : 'var(--text-muted)' }}>{v}</button>
               ))}
               <input type="number" value={quickKg} onChange={e => setQuickKg(e.target.value)} placeholder="Otro..." style={{ width: '90px', padding: '8px 10px', borderRadius: '10px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border-light)', color: '#fff', fontSize: '0.9rem' }} />
+            </div>
+            <div style={{ display: 'flex', gap: '6px' }}>
+              <button type="button" onClick={() => setQuickType('kg')} style={{ padding: '6px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '0.8rem', background: quickType === 'kg' ? 'var(--accent)' : 'rgba(255,255,255,0.07)', color: quickType === 'kg' ? '#020617' : 'var(--text-muted)' }}>KG</button>
+              <button type="button" onClick={() => setQuickType('cajas')} style={{ padding: '6px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '0.8rem', background: quickType === 'cajas' ? 'var(--accent)' : 'rgba(255,255,255,0.07)', color: quickType === 'cajas' ? '#020617' : 'var(--text-muted)' }}>Cajas</button>
             </div>
           </div>
           <div className="form-group">
@@ -778,7 +792,7 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
                   </div>
                   <div>
                     <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-main)', lineHeight: 1.2 }}>{p.code}: {p.name.length > 22 ? p.name.slice(0, 22) + '…' : p.name}</div>
-                    <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Ransa: {toNum(inv?.bodega_1).toFixed(1)} kg</div>
+                    <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Ransa: {toNum(inv?.bodega_1).toFixed(1)} kg | Cajas: {toNum(inv?.cajas).toFixed(0)}</div>
                   </div>
                 </div>
               );
@@ -790,14 +804,14 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
       {/* === AJUSTE INDIVIDUAL + TABLA === */}
       <div className="card-grid">
         <form className="form-card" onSubmit={handleAdjust}>
-          <h4><Edit2 size={16} /> Ajuste Individual</h4>
+          <h4><Edit2 size={16} /> Ajuste Individual (suma al existente)</h4>
           <div className="form-group">
             <label>Producto</label>
             <select value={adjData.product_id} onChange={e => setAdjData({ ...adjData, product_id: e.target.value })} required>
               <option value="">Seleccione Producto...</option>
               {productRows.map(p => {
                 const inv = inventoryRows.find(i => i.name === p.name);
-                return <option key={p.id} value={p.id}>{p.code}: {p.name} — {toNum(inv?.bodega_1).toFixed(1)} kg</option>;
+                return <option key={p.id} value={p.id}>{p.code}: {p.name} — {toNum(inv?.bodega_1).toFixed(1)} kg | {toNum(inv?.cajas).toFixed(0)} cajas</option>;
               })}
             </select>
           </div>
@@ -808,8 +822,12 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
             </select>
           </div>
           <div className="form-group">
-            <label>Nuevo Stock ({adjData.warehouse === 'Ransa' ? 'KG' : 'Lbs'})</label>
-            <input type="number" step="0.01" value={adjData.current_stock} onChange={e => setAdjData({ ...adjData, current_stock: e.target.value })} placeholder={adjData.warehouse === 'Ransa' ? 'Ej: 150 kg' : 'Ej: 330 lbs'} required />
+            <label>Agregar Stock ({adjData.warehouse === 'Ransa' ? 'KG' : 'Lbs'})</label>
+            <input type="number" step="0.01" value={adjData.current_stock} onChange={e => setAdjData({ ...adjData, current_stock: e.target.value })} placeholder={adjData.warehouse === 'Ransa' ? 'Ej: 150 kg' : 'Ej: 330 lbs'} />
+          </div>
+          <div className="form-group">
+            <label>Agregar Cajas</label>
+            <input type="number" step="1" min="0" value={adjData.cajas} onChange={e => setAdjData({ ...adjData, cajas: e.target.value })} placeholder="Ej: 10" />
           </div>
           <button type="submit" className="btn-primary">Guardar Ajuste</button>
         </form>
@@ -841,14 +859,15 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
           <div className="grid-table-container">
             <table>
               <thead>
-                <tr>
-                  <th className="col-carne">Producto</th>
-                  <th className="col-qty">Ransa ({viewUnit})</th>
-                  <th className="col-qty">Soyapango ({viewUnit})</th>
-                  <th className="col-qty">Usulután ({viewUnit})</th>
-                  <th className="col-qty">Lomas ({viewUnit})</th>
-                  <th className="col-qty">Total ({viewUnit})</th>
-                </tr>
+                  <tr>
+                    <th className="col-carne">Producto</th>
+                    <th className="col-qty">Ransa ({viewUnit})</th>
+                    <th className="col-qty">Soyapango ({viewUnit})</th>
+                    <th className="col-qty">Usulután ({viewUnit})</th>
+                    <th className="col-qty">Lomas ({viewUnit})</th>
+                    <th className="col-qty">Cajas</th>
+                    <th className="col-qty">Total ({viewUnit})</th>
+                  </tr>
               </thead>
               <tbody>
 {displayRows.length > 0 ? displayRows.map(i => {
@@ -867,12 +886,13 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
                       <td className="col-qty" style={{ color: 'var(--success)' }}>{b2.toFixed(1)}</td>
                       <td className="col-qty" style={{ color: 'var(--success)' }}>{b3.toFixed(1)}</td>
                       <td className="col-qty" style={{ color: 'var(--secondary)' }}>{b4.toFixed(1)}</td>
+                      <td className="col-qty" style={{ color: '#f59e0b', fontWeight: 700 }}>{toNum(i.cajas).toFixed(0)}</td>
                       <td className="col-qty" style={{ background: 'rgba(14,165,233,0.05)', fontWeight: 800 }}>
                         <span style={{ color: total < 20 ? 'var(--danger)' : 'var(--accent)' }}>{total.toFixed(1)} <small>{viewUnit.toLowerCase()}</small></span>
                       </td>
                     </tr>
                   );
-                }) : <tr><td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '20px' }}>Sin datos de inventario</td></tr>}
+                }) : <tr><td colSpan={7} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '20px' }}>Sin datos de inventario</td></tr>}
               </tbody>
             </table>
           </div>
@@ -1574,7 +1594,7 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
     product_id: '', origin: 'Ransa', destination: 'Lomas de San Francisco',
-    weight: '', tag_weight: '', scale_weight: '', units_per_box: '',
+    weight: '', tag_weight: '', scale_weight: '', units_per_box: '', cajas: '',
     unit_type: 'Lbs', value: '', agro_id: '',
     total_to_distribute: '', distributions: {},
     discount_percent: 0,
@@ -1659,14 +1679,14 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
     apiFetch(url, {
       method: editingId ? 'PUT' : 'POST',
       body: JSON.stringify(isIncome ?
-        { product_id: formData.product_id, tag_weight: formData.tag_weight, scale_weight: formData.scale_weight, units_per_box: formData.units_per_box, unit_type: formData.unit_type, distribution_details: formData.destination } :
+        { product_id: formData.product_id, tag_weight: formData.tag_weight, scale_weight: formData.scale_weight, units_per_box: formData.units_per_box, cajas: formData.cajas, unit_type: formData.unit_type, distribution_details: formData.destination } :
         { product_id: formData.product_id, agro_id: formData.agro_id, weight: formData.weight, unit_type: formData.unit_type, value: formData.value, origin_warehouse: formData.origin })
     })
     .then(r => r.json())
     .then(data => {
       if (data.error) { alert('Error: ' + data.error); return; }
       
-      setFormData({ product_id: '', origin: 'Ransa', destination: 'Lomas de San Francisco', weight: '', tag_weight: '', scale_weight: '', units_per_box: '', unit_type: 'Lbs', agro_id: '', value: '', discount_percent: 0, client_name: '', client_nit: '', client_nrc: '', client_address: '', client_deliverer: '', payment_condition: 'CONTADO', observations: '', receiver_name: '' });
+      setFormData({ product_id: '', origin: 'Ransa', destination: 'Lomas de San Francisco', weight: '', tag_weight: '', scale_weight: '', units_per_box: '', cajas: '', unit_type: 'Lbs', agro_id: '', value: '', discount_percent: 0, client_name: '', client_nit: '', client_nrc: '', client_address: '', client_deliverer: '', payment_condition: 'CONTADO', observations: '', receiver_name: '' });
       setEditingId(null);
       onUpdate();
       alert(editingId ? 'Cambios actualizados correctamente' : 'Guardado correctamente');
@@ -1759,15 +1779,15 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
             <div className="grid-3col">
               <div className="form-group">
                 <label>Peso según Viñeta (Kg)</label>
-                <input type="number" step="0.01" value={formData.tag_weight} onChange={e => setFormData({ ...formData, tag_weight: e.target.value })} required />
+                <input type="number" step="0.01" value={formData.tag_weight} onChange={e => setFormData({ ...formData, tag_weight: e.target.value })} />
               </div>
               <div className="form-group">
                 <label>Peso según Báscula (Kg)</label>
-                <input type="number" step="0.01" value={formData.scale_weight} onChange={e => setFormData({ ...formData, scale_weight: e.target.value })} required />
+                <input type="number" step="0.01" value={formData.scale_weight} onChange={e => setFormData({ ...formData, scale_weight: e.target.value })} />
               </div>
               <div className="form-group">
-                <label>Unidad</label>
-                <input type="text" value="Kilogramos (KG)" readOnly style={{ background: 'rgba(15, 23, 42, 0.4)', borderColor: 'rgba(255,255,255,0.05)' }} />
+                <label>Cajas</label>
+                <input type="number" step="1" min="0" value={formData.units_per_box} onChange={e => setFormData({ ...formData, units_per_box: e.target.value })} placeholder="Ej: 10" />
               </div>
             </div>
             <div className="form-group" style={{ background: 'rgba(255,255,255,0.03)', padding: '20px', borderRadius: '16px', border: '1px solid var(--border)' }}>
@@ -4240,20 +4260,27 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
       </header>
 
       <div className="global-status-banner">
-        {[
-          { label: 'Ransa', col: 'bodega_1' },
-          { label: 'Soyapango', col: 'bodega_2' },
-          { label: 'Usulután', col: 'bodega_3' },
-          { label: 'Lomas', col: 'bodega_4' }
-        ].map((w) => {
-          const val = inventorySummary.reduce((acc, i) => acc + (parseFloat(i[w.col]) || 0), 0);
-          return (
-            <div key={w.col} className="status-item">
-              <div className="status-label">{w.label}</div>
-              <div className="status-value">{Math.round(val).toLocaleString()} <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>{w.label === 'Ransa' ? 'KG' : 'LBS'}</span></div>
+          {[
+            { label: 'Ransa', col: 'bodega_1' },
+            { label: 'Soyapango', col: 'bodega_2' },
+            { label: 'Usulután', col: 'bodega_3' },
+            { label: 'Lomas', col: 'bodega_4' }
+          ].map((w) => {
+            const val = inventorySummary.reduce((acc, i) => acc + (parseFloat(i[w.col]) || 0), 0);
+            return (
+              <div key={w.col} className="status-item">
+                <div className="status-label">{w.label}</div>
+                <div className="status-value">{Math.round(val).toLocaleString()} <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>{w.label === 'Ransa' ? 'KG' : 'LBS'}</span></div>
+              </div>
+            );
+          })}
+
+          <div className="status-item" style={{ borderColor: 'rgba(245,158,11,0.3)' }}>
+            <div className="status-label">CAJAS TOTALES</div>
+            <div className="status-value" style={{ color: '#f59e0b' }}>
+              {Math.round(inventorySummary.reduce((acc, i) => acc + (parseFloat(i.cajas) || 0), 0)).toLocaleString()}
             </div>
-          );
-        })}
+          </div>
 
         <div className="status-item global">
           <div className="status-label">EXISTENCIA GLOBAL</div>

@@ -231,6 +231,18 @@ const migrateDatabase = async () => {
     console.log('discount_percent column already exists in dispatches');
   }
 
+  // Add cajas column to inventory if not exists
+  try {
+    if (isProduction) {
+      await query(`ALTER TABLE inventory ADD COLUMN cajas DECIMAL(10,2) DEFAULT 0`);
+    } else {
+      sqliteDb.prepare('ALTER TABLE inventory ADD COLUMN cajas DECIMAL(10,2) DEFAULT 0').run();
+    }
+    console.log('cajas column added to inventory');
+  } catch(e) {
+    console.log('cajas column already exists in inventory');
+  }
+
   console.log('Database migration completed successfully');
 };
 
@@ -600,12 +612,12 @@ app.put('/api/reports/ransa/:id', async (req, res) => {
 });
 
 app.post('/api/reports/ransa', async (req, res) => {
-  const { product_id, tag_weight, scale_weight, units_per_box, unit_type, distribution_details } = req.body;
+  const { product_id, tag_weight, scale_weight, units_per_box, cajas, unit_type, distribution_details } = req.body;
   try {
-    // Ransa always receives in KG. scale_weight is in KG.
     const scaleKg = parseFloat(scale_weight) || 0;
     const tagKg = parseFloat(tag_weight) || 0;
-    const scaleLbs = scaleKg * 2.20462; // convert to lbs for non-Ransa bodegas
+    const boxCount = parseInt(cajas) || 0;
+    const scaleLbs = scaleKg * 2.20462;
     const unitsPerBox = (units_per_box !== '' && units_per_box != null) ? parseInt(units_per_box) : null;
 
     const info = await query(`
@@ -613,7 +625,6 @@ app.post('/api/reports/ransa', async (req, res) => {
       VALUES (?, ?, ?, ?, ?, ?) RETURNING id
     `, [product_id, tagKg, scaleKg, unitsPerBox, 'Kg', distribution_details]);
 
-    // bodega_1 (Ransa) stores KG. bodega_2/3/4 store LBS.
     const colMap = {
       'Ransa': { col: 'bodega_1', value: scaleKg },
       'Lomas de San Francisco': { col: 'bodega_4', value: scaleLbs },
@@ -622,18 +633,18 @@ app.post('/api/reports/ransa', async (req, res) => {
     };
     const target = colMap[distribution_details] || { col: 'bodega_1', value: scaleKg };
 
-    // Subtract from Ransa (bodega_1) when transferring to another warehouse
     if (target.col !== 'bodega_1') {
       await query(`UPDATE inventory SET bodega_1 = bodega_1 - ? WHERE product_id = ?`, [scaleKg, product_id]);
     }
-    await query(`UPDATE inventory SET ${target.col} = ${target.col} + ?, initial_stock = initial_stock + ? WHERE product_id = ?`, [target.value, target.value, product_id]);
+    await query(`UPDATE inventory SET ${target.col} = ${target.col} + ?, initial_stock = initial_stock + ?, cajas = cajas + ? WHERE product_id = ?`, [target.value, target.value, boxCount, product_id]);
+
     await query('INSERT INTO movements (product_id, origin_warehouse, dest_warehouse, weight, type) VALUES (?, ?, ?, ?, ?)', [product_id, 'Ransa (Origen)', distribution_details, scaleKg, 'INCOME']);
 
-    // Obtener nombre del producto para el log
     const { rows: pRows } = await query('SELECT name FROM products WHERE id = ?', [product_id]);
     const pName = pRows[0]?.name || `Producto #${product_id}`;
     const role = req.headers['x-role'] || 'desconocido';
-    await logActivity({ role, action: 'RECEPCIÓN', entity: 'ransa_requests', product_name: pName, quantity: scaleKg, unit: 'KG', location: distribution_details, details: `Viñeta: ${tagKg} kg → Báscula: ${scaleKg} kg → ${distribution_details}` });
+    const details = boxCount > 0 ? `Viñeta: ${tagKg} kg → Báscula: ${scaleKg} kg → ${distribution_details} | Cajas: ${boxCount}` : `Viñeta: ${tagKg} kg → Báscula: ${scaleKg} kg → ${distribution_details}`;
+    await logActivity({ role, action: 'RECEPCIÓN', entity: 'ransa_requests', product_name: pName, quantity: scaleKg, unit: 'KG', location: distribution_details, details });
 
     res.json({ id: info.lastInsertRowid });
   } catch (err) {
@@ -730,7 +741,7 @@ app.post('/api/sales', async (req, res) => {
 });
 
 app.post('/api/inventory/adjust', async (req, res) => {
-  const { product_id, current_stock, initial_stock, warehouse } = req.body;
+  const { product_id, current_stock, initial_stock, cajas, warehouse, mode } = req.body;
   try {
     const colMap = {
       'Ransa': 'bodega_1',
@@ -744,13 +755,24 @@ app.post('/api/inventory/adjust', async (req, res) => {
       await query('UPDATE inventory SET initial_stock = ? WHERE product_id = ?', [initial_stock, product_id]);
     }
     if (current_stock !== undefined) {
-      await query(`UPDATE inventory SET ${targetCol} = ? WHERE product_id = ?`, [current_stock, product_id]);
+      // mode='add' sums to existing; otherwise replaces (legacy)
+      if (mode === 'add') {
+        await query(`UPDATE inventory SET ${targetCol} = ${targetCol} + ? WHERE product_id = ?`, [current_stock, product_id]);
+      } else {
+        await query(`UPDATE inventory SET ${targetCol} = ? WHERE product_id = ?`, [current_stock, product_id]);
+      }
+    }
+    if (cajas !== undefined) {
+      await query(`UPDATE inventory SET cajas = cajas + ? WHERE product_id = ?`, [cajas, product_id]);
     }
 
     const { rows: pRowsAdj } = await query('SELECT name FROM products WHERE id = ?', [product_id]);
     const pNameAdj = pRowsAdj[0]?.name || `Producto #${product_id}`;
     const unit = (warehouse === 'Ransa') ? 'KG' : 'Lbs';
-    await logActivity({ role: req.headers['x-role'] || 'desconocido', action: 'AJUSTE STOCK', entity: 'inventory', product_name: pNameAdj, quantity: current_stock ?? initial_stock, unit, location: warehouse || 'Bodega', details: `Nuevo stock: ${current_stock ?? initial_stock} ${unit} en ${warehouse}` });
+    let details = '';
+    if (current_stock !== undefined) details += `Agregado: ${current_stock} ${unit} a ${warehouse}. `;
+    if (cajas !== undefined) details += `Cajas: +${cajas}.`;
+    await logActivity({ role: req.headers['x-role'] || 'desconocido', action: 'AJUSTE STOCK', entity: 'inventory', product_name: pNameAdj, quantity: current_stock ?? cajas ?? 0, unit, location: warehouse || 'Bodega', details });
 
     res.json({ success: true });
   } catch (err) {
@@ -761,7 +783,7 @@ app.post('/api/inventory/adjust', async (req, res) => {
 app.get('/api/reports/inventory-status', async (req, res) => {
   try {
     const { rows } = await query(`
-      SELECT p.code, p.name, i.initial_stock, i.sold_stock, i.bodega_1, i.bodega_2, i.bodega_3, i.bodega_4,
+      SELECT p.code, p.name, i.initial_stock, i.sold_stock, i.bodega_1, i.bodega_2, i.bodega_3, i.bodega_4, i.cajas,
              (i.bodega_1 + i.bodega_2 + i.bodega_3 + i.bodega_4) as final_stock
       FROM inventory i
       LEFT JOIN products p ON i.product_id = p.id
