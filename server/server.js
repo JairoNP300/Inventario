@@ -802,6 +802,50 @@ app.post('/api/inventory/adjust', async (req, res) => {
   }
 });
 
+app.get('/api/inventory/adjustments', async (req, res) => {
+  try {
+    const { rows } = await query(`
+      SELECT sa.*, p.code as product_code, p.name as product_name
+      FROM stock_adjustments sa
+      LEFT JOIN products p ON sa.product_id = p.id
+      ORDER BY sa.id DESC LIMIT 50
+    `);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/inventory/undo-adjustment', async (req, res) => {
+  const { id } = req.body;
+  try {
+    const { rows } = await query('SELECT * FROM stock_adjustments WHERE id = ?', [id]);
+    if (rows.length === 0) return res.status(404).json({ error: 'Ajuste no encontrado' });
+    const adj = rows[0];
+    const weightChange = parseFloat(adj.weight_change) || 0;
+    const cajasChange = parseInt(adj.cajas_change) || 0;
+
+    // Reverse: subtract what was added
+    if (weightChange > 0) {
+      await query(`UPDATE inventory SET ${adj.bodega_col} = ${adj.bodega_col} - ? WHERE product_id = ?`, [weightChange, adj.product_id]);
+    }
+    if (cajasChange > 0) {
+      await query(`UPDATE inventory SET cajas = cajas - ? WHERE product_id = ?`, [cajasChange, adj.product_id]);
+    }
+
+    // Delete the adjustment record
+    await query('DELETE FROM stock_adjustments WHERE id = ?', [id]);
+
+    const { rows: pRows } = await query('SELECT name FROM products WHERE id = ?', [adj.product_id]);
+    const pName = pRows[0]?.name || `Producto #${adj.product_id}`;
+    await logActivity({ role: req.headers['x-role'] || 'desconocido', action: 'REVERTIR AJUSTE', entity: 'inventory', product_name: pName, quantity: weightChange || cajasChange, unit: adj.warehouse === 'Ransa' ? 'KG' : 'Lbs', location: adj.warehouse, details: `Revertido ajuste #${id}: -${weightChange} ${adj.warehouse === 'Ransa' ? 'KG' : 'Lbs'}, -${cajasChange} cajas` });
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get('/api/reports/inventory-status', async (req, res) => {
   try {
     const { rows } = await query(`
