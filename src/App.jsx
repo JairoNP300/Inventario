@@ -743,6 +743,22 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
     setQuickLoading(false);
   };
 
+  const handleUndoAdjustment = (id) => {
+    if (!confirm('¿Revertir este ajuste? Se restará la cantidad que agregaste.')) return;
+    fetch(`${API_BASE}/inventory/undo-adjustment`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id })
+    })
+    .then(r => r.json())
+    .then(d => {
+      if (d.error) { alert('Error: ' + d.error); return; }
+      onUpdate();
+      alert('Ajuste revertido correctamente');
+    })
+    .catch(err => alert('Error de conexión: ' + err.message));
+  };
+
   return (
     <div>
       <h3>Ajustes y Consolidado de Inventario</h3>
