@@ -798,7 +798,7 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
                   </div>
                   <div>
                     <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-main)', lineHeight: 1.2 }}>{p.code}: {p.name.length > 22 ? p.name.slice(0, 22) + '…' : p.name}</div>
-                    <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Ransa: {toNum(inv?.bodega_1).toFixed(1)} kg | Cajas: {toNum(inv?.cajas).toFixed(0)}</div>
+                    <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Ransa: {toNum(inv?.bodega_1).toFixed(1)} kg | Soyapango: {toNum(inv?.bodega_2).toFixed(1)} lbs | Usulután: {toNum(inv?.bodega_3).toFixed(1)} lbs | Lomas: {toNum(inv?.bodega_4).toFixed(1)} lbs | Cajas: {toNum(inv?.cajas).toFixed(0)}</div>
                   </div>
                 </div>
               );
