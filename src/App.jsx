@@ -18,7 +18,6 @@ import {
   Layers,
   RotateCcw,
   Activity,
-  RefreshCcw,
   Store,
   Cpu,
   FileText,
