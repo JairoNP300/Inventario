@@ -4,11 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Package,
   ShoppingCart,
-  PlusCircle,
   Truck,
-  TrendingUp,
-  ClipboardList,
-  LayoutDashboard,
   CheckCircle2,
   AlertTriangle,
   Edit2,
