@@ -1146,28 +1146,34 @@ app.get('/api/production/logs', async (req, res) => {
 
 // POST /api/production/logs — usado por el formulario de producción del frontend
 app.post('/api/production/logs', async (req, res) => {
-  const { product_id, initial_weight, cut_weight, waste, storage_cost, transport_cost, labor_cost, other_costs } = req.body;
+  const { product_id, initial_weight, cut_weight, waste, storage_cost, transport_cost, labor_cost, other_costs, process_mode } = req.body;
   try {
     const initKg = parseFloat(initial_weight) || 0;
     const cutLbs = parseFloat(cut_weight) || 0;
-    const wasteVal = parseFloat(waste) || (initKg * 2.20462 - cutLbs);
+    const wasteVal = parseFloat(waste) || (initKg > 0 ? initKg * 2.20462 - cutLbs : 0);
 
     await query(`
       INSERT INTO production_logs (product_id, initial_weight, cut_weight, waste, storage_cost, transport_cost, labor_cost, other_costs)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `, [product_id, initKg, cutLbs, wasteVal, storage_cost || 0, transport_cost || 0, labor_cost || 0, other_costs || 0]);
 
-    // bodega_1 (Ransa) stores KG → deduct initKg
-    // bodega_2 (Soyapango) stores LBS → add cutLbs
-    await query('UPDATE inventory SET bodega_1 = bodega_1 - ? WHERE product_id = ?', [initKg, product_id]);
-    await query('UPDATE inventory SET bodega_2 = bodega_2 + ? WHERE product_id = ?', [cutLbs, product_id]);
+    if (process_mode !== 'direct' && initKg > 0) {
+      // bodega_1 (Ransa) stores KG → deduct initKg
+      // bodega_2 (Soyapango) stores LBS → add cutLbs
+      await query('UPDATE inventory SET bodega_1 = bodega_1 - ? WHERE product_id = ?', [initKg, product_id]);
+      await query('UPDATE inventory SET bodega_2 = bodega_2 + ? WHERE product_id = ?', [cutLbs, product_id]);
 
-    await query('INSERT INTO movements (product_id, origin_warehouse, dest_warehouse, weight, type) VALUES (?, ?, ?, ?, ?)',
-      [product_id, 'Ransa (KG)', 'Soyapango (Lbs)', cutLbs, 'TRANSFER']);
+      await query('INSERT INTO movements (product_id, origin_warehouse, dest_warehouse, weight, type) VALUES (?, ?, ?, ?, ?)',
+        [product_id, 'Ransa (KG)', 'Soyapango (Lbs)', cutLbs, 'TRANSFER']);
 
-    const { rows: pRowsProd } = await query('SELECT name FROM products WHERE id = ?', [product_id]);
-    const pNameProd = pRowsProd[0]?.name || `Producto #${product_id}`;
-    await logActivity({ role: req.headers['x-role'] || 'desconocido', action: 'PRODUCCIÓN', entity: 'production_logs', product_name: pNameProd, quantity: initKg, unit: 'KG', location: 'Ransa → Soyapango', details: `Entrada: ${initKg} kg | Salida: ${cutLbs} lbs | Merma: ${wasteVal.toFixed(2)} lbs` });
+      const { rows: pRowsProd } = await query('SELECT name FROM products WHERE id = ?', [product_id]);
+      const pNameProd = pRowsProd[0]?.name || `Producto #${product_id}`;
+      await logActivity({ role: req.headers['x-role'] || 'desconocido', action: 'PRODUCCIÓN', entity: 'production_logs', product_name: pNameProd, quantity: initKg, unit: 'KG', location: 'Ransa → Soyapango', details: `Entrada: ${initKg} kg | Salida: ${cutLbs} lbs | Merma: ${wasteVal.toFixed(2)} lbs` });
+    } else {
+      const { rows: pRowsProd } = await query('SELECT name FROM products WHERE id = ?', [product_id]);
+      const pNameProd = pRowsProd[0]?.name || `Producto #${product_id}`;
+      await logActivity({ role: req.headers['x-role'] || 'desconocido', action: 'PRODUCCIÓN DIRECTA', entity: 'production_logs', product_name: pNameProd, quantity: cutLbs, unit: 'Lbs', location: 'Proceso directo', details: `Peso procesado: ${cutLbs} lbs` });
+    }
 
     res.json({ success: true });
   } catch (err) {
