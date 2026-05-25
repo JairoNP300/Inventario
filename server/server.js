@@ -258,6 +258,20 @@ const migrateDatabase = async () => {
   }
 
   console.log('Database migration completed successfully');
+
+  // Add origin_weight and dest_weight to movements if not exists
+  try {
+    if (isProduction) {
+      await query(`ALTER TABLE movements ADD COLUMN origin_weight DECIMAL(10,2) DEFAULT 0`);
+      await query(`ALTER TABLE movements ADD COLUMN dest_weight DECIMAL(10,2) DEFAULT 0`);
+    } else {
+      sqliteDb.prepare('ALTER TABLE movements ADD COLUMN origin_weight DECIMAL(10,2) DEFAULT 0').run();
+      sqliteDb.prepare('ALTER TABLE movements ADD COLUMN dest_weight DECIMAL(10,2) DEFAULT 0').run();
+    }
+    console.log('origin_weight/dest_weight columns added to movements');
+  } catch(e) {
+    console.log('origin_weight/dest_weight columns already exist in movements');
+  }
 };
 
 // --- INITIALIZATION ---
