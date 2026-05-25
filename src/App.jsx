@@ -1979,7 +1979,9 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
         origin: formData.origin,
         destination: formData.transfer_destination || 'Usulután',
         origin_weight: originWeight,
-        dest_weight: destWeight
+        dest_weight: destWeight,
+        weight: parseFloat(formData.weight),
+        unit_type: formData.unit_type
       };
       apiFetch(`${API_BASE}/inventory/transfer`, {
         method: 'POST',
