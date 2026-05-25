@@ -1958,6 +1958,43 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
     e.preventDefault();
     const isIncome = activeSubTab === 'income' || activeSubTab === 'unified';
     
+    // For traslado, submit directly to transfer API
+    if (formData.agro_id === 'TRASLADO') {
+      if (!formData.product_id || !formData.weight) {
+        return alert('Complete los datos: Producto y Cantidad');
+      }
+      let originWeight = parseFloat(formData.weight);
+      let destWeight = parseFloat(formData.weight);
+      if (formData.origin === 'Ransa') {
+        if (formData.unit_type === 'Lbs') originWeight = originWeight / 2.20462;
+        if (formData.unit_type === 'Kg') destWeight = destWeight * 2.20462;
+      } else {
+        if (formData.unit_type === 'Kg') {
+          originWeight = originWeight * 2.20462;
+          destWeight = destWeight * 2.20462;
+        }
+      }
+      const payload = {
+        product_id: formData.product_id,
+        origin: formData.origin,
+        destination: formData.transfer_destination || 'Usulután',
+        origin_weight: originWeight,
+        dest_weight: destWeight
+      };
+      apiFetch(`${API_BASE}/inventory/transfer`, {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      })
+      .then(r => { if (!r.ok) throw new Error('Error al realizar traslado'); return r.json(); })
+      .then(data => {
+        setFormData(initialFormState);
+        onUpdate();
+        alert('Traslado realizado exitosamente.');
+      })
+      .catch(err => { console.error('Error saving transfer:', err); alert('Error de conexión: ' + err.message); });
+      return;
+    }
+    
     // For dispatch, add to cart
     if (!isIncome && activeSubTab === 'dispatch') {
       addToDispatchCart();
