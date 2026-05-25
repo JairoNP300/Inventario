@@ -836,8 +836,13 @@ app.post('/api/inventory/adjust', async (req, res) => {
       }
     }
     if (cajas !== undefined) {
-      await query(`UPDATE inventory SET cajas = cajas + ? WHERE product_id = ?`, [cajas, product_id]);
-      cajasChange = cajas;
+      if (mode === 'set') {
+        await query(`UPDATE inventory SET cajas = ? WHERE product_id = ?`, [cajas, product_id]);
+        cajasChange = cajas;
+      } else {
+        await query(`UPDATE inventory SET cajas = cajas + ? WHERE product_id = ?`, [cajas, product_id]);
+        cajasChange = cajas;
+      }
     }
 
     // Record in stock_adjustments
