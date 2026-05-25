@@ -2362,11 +2362,12 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
         <button type="submit" className="btn-primary" disabled={activeSubTab === 'mass' && (parseFloat(Object.values(formData.distributions || {}).reduce((acc, v) => acc + (parseFloat(v) || 0), 0)) > (parseFloat(formData.total_to_distribute) || 0))}>
           {activeSubTab === 'mass' ? 'Confirmar Distribución Masiva' :
             activeSubTab === 'unified' ? 'Recepción -> Ir a Procesos' :
-              activeSubTab === 'dispatch' ? 'Agregar al Carrito' : 'Ejecutar Paso'}
+              activeSubTab === 'dispatch' ? (formData.agro_id === 'TRASLADO' ? 'Realizar Traslado' : 'Agregar al Carrito') : 'Ejecutar Paso'}
         </button>
       </form>
 
-      {dispatchCart.length > 0 && (
+      {/* Carrito: solo para ventas (no traslado) */}
+      {dispatchCart.length > 0 && formData.agro_id !== 'TRASLADO' && (
         <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'rgba(16, 185, 129, 0.05)', borderRadius: '8px', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
           <h4 style={{ margin: '0 0 12px 0', fontSize: '0.9rem', color: '#10b981', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <ShoppingCart size={16} /> Productos en el Carrito ({dispatchCart.length})
