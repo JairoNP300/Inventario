@@ -694,8 +694,8 @@ app.get('/api/reports/dispatches', async (req, res) => {
 });
 
 app.post('/api/dispatches', async (req, res) => {
-  const { product_id, agro_id, weight, unit_type, value, origin_warehouse, discount_percent } = req.body;
-  console.log('DISPATCH RECEIVED:', JSON.stringify({ product_id, agro_id, weight, unit_type, value, origin_warehouse, discount_percent }));
+  const { product_id, agro_id, weight, unit_type, value, origin_warehouse, discount_percent, cajas } = req.body;
+  console.log('DISPATCH RECEIVED:', JSON.stringify({ product_id, agro_id, weight, unit_type, value, origin_warehouse, discount_percent, cajas }));
   try {
     const info = await query(`
       INSERT INTO dispatches (product_id, agro_id, weight, unit_type, value, discount_percent)
