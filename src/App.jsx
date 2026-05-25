@@ -2078,6 +2078,25 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleEditMovement = (mov) => {
+    setEditingId(mov.id);
+    setFormData({
+      product_id: mov.product_id,
+      weight: mov.weight || '',
+      unit_type: 'Lbs',
+      origin: mov.origin_warehouse || 'Ransa',
+      transfer_destination: mov.dest_warehouse || 'Usulután',
+      agro_id: 'TRASLADO',
+      value: '',
+      discount_percent: 0,
+      tag_weight: '', scale_weight: '', units_per_box: '', cajas: '',
+      destination: '', client_name: '', client_nit: '', client_nrc: '',
+      client_address: '', client_deliverer: '', payment_condition: 'CONTADO',
+      observations: '', receiver_name: ''
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
 
   return (
     <div className="report-content">
