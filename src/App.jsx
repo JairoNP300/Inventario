@@ -1941,7 +1941,8 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
       price: price || 0,
       subtotal,
       discount_percent: discount,
-      total
+      total,
+      transfer_destination: formData.transfer_destination
     };
     setDispatchCart([...dispatchCart, item]);
     setFormData({ ...formData, product_id: '', weight: '', discount_percent: 0, value: '' });
