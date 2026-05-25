@@ -935,7 +935,9 @@ app.post('/api/inventory/transfer', async (req, res) => {
     const colMap = {
       'Ransa': 'bodega_1',
       'Central de abasto - Soyapango (Cuarto Frío)': 'bodega_2',
+      'Soyapango': 'bodega_2',
       'Central de abasto - Usulután (Cuarto Frío)': 'bodega_3',
+      'Usulután': 'bodega_3',
       'Lomas de San Francisco': 'bodega_4'
     };
     const originCol = colMap[origin];

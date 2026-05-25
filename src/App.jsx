@@ -2014,7 +2014,7 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
         const payload = {
           product_id: item.product_id,
           origin: item.origin,
-          destination: item.origin === 'Ransa' ? transferDestination : item.transfer_destination || formData.transfer_destination,
+          destination: item.transfer_destination || formData.transfer_destination || 'Usulután',
           weight: transferWeight
         };
         return apiFetch(`${API_BASE}/inventory/transfer`, {
