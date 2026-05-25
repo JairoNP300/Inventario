@@ -988,6 +988,88 @@ app.post('/api/inventory/transfer', async (req, res) => {
   }
 });
 
+// --- Movements (transfers) CRUD ---
+app.get('/api/movements', async (req, res) => {
+  try {
+    const { rows } = await query(`
+      SELECT m.*, p.name as product_name, p.code as product_code
+      FROM movements m
+      LEFT JOIN products p ON m.product_id = p.id
+      ORDER BY m.date DESC, m.id DESC
+    `);
+    res.json(rows);
+  } catch (err) {
+    console.error('Error fetching movements:', err.message);
+    res.json([]);
+  }
+});
+
+app.delete('/api/movements/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { rows } = await query('SELECT * FROM movements WHERE id = ?', [id]);
+    if (rows.length > 0) {
+      const mov = rows[0];
+      const colMap = {
+        'Ransa': 'bodega_1',
+        'Central de abasto - Soyapango (Cuarto Frío)': 'bodega_2',
+        'Soyapango': 'bodega_2',
+        'Central de abasto - Usulután (Cuarto Frío)': 'bodega_3',
+        'Usulután': 'bodega_3',
+        'Lomas de San Francisco': 'bodega_4'
+      };
+      const originCol = colMap[mov.origin_warehouse];
+      const destCol = colMap[mov.dest_warehouse];
+      if (originCol && destCol) {
+        await query(`UPDATE inventory SET ${originCol} = ${originCol} + ? WHERE product_id = ?`, [mov.origin_weight || mov.weight, mov.product_id]);
+        await query(`UPDATE inventory SET ${destCol} = ${destCol} - ? WHERE product_id = ?`, [mov.dest_weight || mov.weight, mov.product_id]);
+      }
+    }
+    await query('DELETE FROM movements WHERE id = ?', [id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/movements/:id', async (req, res) => {
+  const { id } = req.params;
+  const { weight, origin_weight, dest_weight, unit_type } = req.body;
+  try {
+    const { rows } = await query('SELECT * FROM movements WHERE id = ?', [id]);
+    if (rows.length > 0) {
+      const mov = rows[0];
+      const colMap = {
+        'Ransa': 'bodega_1',
+        'Central de abasto - Soyapango (Cuarto Frío)': 'bodega_2',
+        'Soyapango': 'bodega_2',
+        'Central de abasto - Usulután (Cuarto Frío)': 'bodega_3',
+        'Usulután': 'bodega_3',
+        'Lomas de San Francisco': 'bodega_4'
+      };
+      const originCol = colMap[mov.origin_warehouse];
+      const destCol = colMap[mov.dest_warehouse];
+      const oldOriginW = mov.origin_weight || mov.weight;
+      const oldDestW = mov.dest_weight || mov.weight;
+      const newOriginW = origin_weight ?? weight ?? oldOriginW;
+      const newDestW = dest_weight ?? weight ?? oldDestW;
+
+      if (originCol && destCol) {
+        // Reverse old: add back origin, remove from dest
+        await query(`UPDATE inventory SET ${originCol} = ${originCol} + ? WHERE product_id = ?`, [oldOriginW, mov.product_id]);
+        await query(`UPDATE inventory SET ${destCol} = ${destCol} - ? WHERE product_id = ?`, [oldDestW, mov.product_id]);
+        // Apply new: remove from origin, add to dest
+        await query(`UPDATE inventory SET ${originCol} = ${originCol} - ? WHERE product_id = ?`, [newOriginW, mov.product_id]);
+        await query(`UPDATE inventory SET ${destCol} = ${destCol} + ? WHERE product_id = ?`, [newDestW, mov.product_id]);
+      }
+      await query('UPDATE movements SET weight = ?, origin_weight = ?, dest_weight = ? WHERE id = ?', [newOriginW, newOriginW, newDestW, id]);
+    }
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.post('/api/production/process', async (req, res) => {
   const { product_id, initial_kg, cut_weight, waste, storage_cost, transport_cost, labor_cost, other_costs } = req.body;
   try {
