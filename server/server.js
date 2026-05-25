@@ -1485,38 +1485,24 @@ app.get('*', (req, res) => {
 // Initialize database and run migration
 initDb().then(() => {
   migrateDatabase().then(async () => {
-    // Only seed on completely empty inventory (first-ever startup)
+    // Seed cajas on first startup (inventory empty)
     try {
-      const { rows: countRows } = await query('SELECT COUNT(*) as cnt FROM inventory');
-      const isEmpty = countRows[0].cnt === 0;
-
-      if (isEmpty) {
-        console.log('[SEED] Inventory is empty — seeding initial data...');
-        const { rows: products } = await query('SELECT id, code FROM products');
-        for (const product of products) {
-          const physicalData = physicalInventoryData[product.code];
-          if (physicalData) {
-            await query(`
-              UPDATE inventory SET 
-                bodega_1 = ?, bodega_2 = 0, bodega_3 = ?, bodega_4 = 0,
-                current_stock = ? + ?
-              WHERE product_id = ?
-            `, [physicalData.bodega_1, physicalData.bodega_3, physicalData.bodega_1, physicalData.bodega_3, product.id]);
+      const { rows: countRows } = await query('SELECT COUNT(*) as cnt FROM inventory WHERE salidas_cajas > 0');
+      if (countRows[0].cnt === 0) {
+        const { rows: pCount } = await query('SELECT COUNT(*) as cnt FROM products');
+        if (pCount[0].cnt > 0) {
+          const cajasSeed = { "1618":326,"1619":200,"1620":114,"1621":45,"1622":43,"1623":45,"1624":105,"1625":55,"1626":46,"1627":53,"1628":186 };
+          const salidasSeed = { "1618":103,"1619":41,"1620":105,"1621":32,"1622":20,"1623":34,"1624":1,"1625":55,"1626":2,"1627":21,"1628":33 };
+          for (const [code, cajas] of Object.entries(cajasSeed)) {
+            const { rows: pRows } = await query('SELECT id FROM products WHERE code = ?', [code]);
+            if (pRows.length > 0) {
+              await query('UPDATE inventory SET entradas_cajas = ?, salidas_cajas = ? WHERE product_id = ?', [cajas, salidasSeed[code] || 0, pRows[0].id]);
+            }
           }
+          console.log('[SEED] Cajas seeded successfully');
         }
-
-        // Seed cajas
-        const cajasSeed = { "1618":326,"1619":200,"1620":114,"1621":45,"1622":43,"1623":45,"1624":105,"1625":55,"1626":46,"1627":53,"1628":186 };
-        const salidasSeed = { "1618":103,"1619":41,"1620":105,"1621":32,"1622":20,"1623":34,"1624":1,"1625":55,"1626":2,"1627":21,"1628":33 };
-        for (const [code, cajas] of Object.entries(cajasSeed)) {
-          const { rows: pRows } = await query('SELECT id FROM products WHERE code = ?', [code]);
-          if (pRows.length > 0) {
-            await query('UPDATE inventory SET entradas_cajas = ?, salidas_cajas = ? WHERE product_id = ?', [cajas, salidasSeed[code] || 0, pRows[0].id]);
-          }
-        }
-        console.log('[SEED] Initial data seeded successfully');
       } else {
-        console.log('[SEED] Inventory has data — no seeding needed');
+        console.log('[SEED] Cajas already have data — no seeding needed');
       }
     } catch (err) {
       console.error('[SEED] Error:', err.message);
