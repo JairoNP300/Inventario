@@ -2091,7 +2091,7 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
     setFormData({
       product_id: mov.product_id,
       weight: mov.weight || '',
-      unit_type: 'Lbs',
+      unit_type: 'Cajas',
       origin: mov.origin_warehouse || 'Ransa',
       transfer_destination: mov.dest_warehouse || 'Usulután',
       agro_id: 'TRASLADO',
@@ -2170,7 +2170,7 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
               if (val === 'VENTA_DIRECTA') {
                 setFormData({ ...formData, agro_id: val, client_name: '', client_nit: '', client_nrc: '', client_address: '' });
               } else if (val === 'TRASLADO') {
-                setFormData({ ...formData, agro_id: val });
+                setFormData({ ...formData, agro_id: val, unit_type: 'Cajas' });
               } else {
                 setFormData({ ...formData, agro_id: val, client_name: '' });
               }
