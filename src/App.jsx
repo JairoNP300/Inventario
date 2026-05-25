@@ -2031,47 +2031,6 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
   const confirmAndSave = () => {
     if (dispatchCart.length === 0) { alert('No hay productos en el carrito'); return; }
 
-    // Check if any item is a traslado
-    const isTraslado = dispatchCart.some(i => i.agro_id === 'TRASLADO');
-
-    if (isTraslado) {
-      Promise.all(dispatchCart.map(item => {
-        // Convert weight to origin's native unit
-        let originWeight = item.qty;
-        let destWeight = item.qty;
-        if (item.origin === 'Ransa') {
-          if (item.unit === 'Lbs') originWeight = originWeight / 2.20462;
-          if (item.unit === 'Kg') destWeight = destWeight * 2.20462;
-        } else {
-          if (item.unit === 'Kg') {
-            originWeight = originWeight * 2.20462;
-            destWeight = destWeight * 2.20462;
-          }
-        }
-        const payload = {
-          product_id: item.product_id,
-          origin: item.origin,
-          destination: item.transfer_destination || formData.transfer_destination || 'Usulután',
-          origin_weight: originWeight,
-          dest_weight: destWeight
-        };
-        return apiFetch(`${API_BASE}/inventory/transfer`, {
-          method: 'POST',
-          body: JSON.stringify(payload)
-        }).then(r => { if (!r.ok) throw new Error('Error al realizar traslado'); return r.json(); });
-      }))
-      .then(results => {
-        setFormData(initialFormState);
-        setEditingId(null);
-        setShowCartPreview(false);
-        setDispatchCart([]);
-        onUpdate();
-        alert(`Traslado realizado exitosamente (${results.length} producto(s)).`);
-      })
-      .catch(err => { console.error('Error saving transfer:', err); alert('Error de conexión: ' + err.message); });
-      return;
-    }
-
     Promise.all(dispatchCart.map(item => {
       const payload = {
         product_id: item.product_id,
