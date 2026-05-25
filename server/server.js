@@ -1056,30 +1056,38 @@ app.put('/api/movements/:id', async (req, res) => {
     const { rows } = await query('SELECT * FROM movements WHERE id = ?', [id]);
     if (rows.length > 0) {
       const mov = rows[0];
-      const colMap = {
-        'Ransa': 'bodega_1',
-        'Central de abasto - Soyapango (Cuarto Frío)': 'bodega_2',
-        'Soyapango': 'bodega_2',
-        'Central de abasto - Usulután (Cuarto Frío)': 'bodega_3',
-        'Usulután': 'bodega_3',
-        'Lomas de San Francisco': 'bodega_4'
-      };
-      const originCol = colMap[mov.origin_warehouse];
-      const destCol = colMap[mov.dest_warehouse];
-      const oldOriginW = mov.origin_weight || mov.weight;
-      const oldDestW = mov.dest_weight || mov.weight;
-      const newOriginW = origin_weight ?? weight ?? oldOriginW;
-      const newDestW = dest_weight ?? weight ?? oldDestW;
+      if (mov.unit_type === 'Cajas') {
+        const newBoxCount = parseInt(weight) || 0;
+        const oldBoxCount = parseInt(mov.weight) || 0;
+        const diff = newBoxCount - oldBoxCount;
+        await query('UPDATE inventory SET salidas_cajas = salidas_cajas + ? WHERE product_id = ?', [diff, mov.product_id]);
+        await query('UPDATE movements SET weight = ? WHERE id = ?', [newBoxCount, id]);
+      } else {
+        const colMap = {
+          'Ransa': 'bodega_1',
+          'Central de abasto - Soyapango (Cuarto Frío)': 'bodega_2',
+          'Soyapango': 'bodega_2',
+          'Central de abasto - Usulután (Cuarto Frío)': 'bodega_3',
+          'Usulután': 'bodega_3',
+          'Lomas de San Francisco': 'bodega_4'
+        };
+        const originCol = colMap[mov.origin_warehouse];
+        const destCol = colMap[mov.dest_warehouse];
+        const oldOriginW = mov.origin_weight || mov.weight;
+        const oldDestW = mov.dest_weight || mov.weight;
+        const newOriginW = origin_weight ?? weight ?? oldOriginW;
+        const newDestW = dest_weight ?? weight ?? oldDestW;
 
-      if (originCol && destCol) {
-        // Reverse old: add back origin, remove from dest
-        await query(`UPDATE inventory SET ${originCol} = ${originCol} + ? WHERE product_id = ?`, [oldOriginW, mov.product_id]);
-        await query(`UPDATE inventory SET ${destCol} = ${destCol} - ? WHERE product_id = ?`, [oldDestW, mov.product_id]);
-        // Apply new: remove from origin, add to dest
-        await query(`UPDATE inventory SET ${originCol} = ${originCol} - ? WHERE product_id = ?`, [newOriginW, mov.product_id]);
-        await query(`UPDATE inventory SET ${destCol} = ${destCol} + ? WHERE product_id = ?`, [newDestW, mov.product_id]);
+        if (originCol && destCol) {
+          // Reverse old: add back origin, remove from dest
+          await query(`UPDATE inventory SET ${originCol} = ${originCol} + ? WHERE product_id = ?`, [oldOriginW, mov.product_id]);
+          await query(`UPDATE inventory SET ${destCol} = ${destCol} - ? WHERE product_id = ?`, [oldDestW, mov.product_id]);
+          // Apply new: remove from origin, add to dest
+          await query(`UPDATE inventory SET ${originCol} = ${originCol} - ? WHERE product_id = ?`, [newOriginW, mov.product_id]);
+          await query(`UPDATE inventory SET ${destCol} = ${destCol} + ? WHERE product_id = ?`, [newDestW, mov.product_id]);
+        }
+        await query('UPDATE movements SET weight = ?, origin_weight = ?, dest_weight = ? WHERE id = ?', [newOriginW, newOriginW, newDestW, id]);
       }
-      await query('UPDATE movements SET weight = ?, origin_weight = ?, dest_weight = ? WHERE id = ?', [newOriginW, newOriginW, newDestW, id]);
     }
     res.json({ success: true });
   } catch (err) {
