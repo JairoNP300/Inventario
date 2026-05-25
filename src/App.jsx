@@ -1983,15 +1983,16 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
         weight: parseFloat(formData.weight),
         unit_type: formData.unit_type
       };
-      apiFetch(`${API_BASE}/inventory/transfer`, {
-        method: 'POST',
+      apiFetch(`${editingId ? `${API_BASE}/movements/${editingId}` : `${API_BASE}/inventory/transfer`}`, {
+        method: editingId ? 'PUT' : 'POST',
         body: JSON.stringify(payload)
       })
       .then(r => { if (!r.ok) throw new Error('Error al realizar traslado'); return r.json(); })
       .then(data => {
         setFormData(initialFormState);
+        setEditingId(null);
         onUpdate();
-        alert('Traslado realizado exitosamente.');
+        alert(editingId ? 'Traslado actualizado correctamente.' : 'Traslado realizado exitosamente.');
       })
       .catch(err => { console.error('Error saving transfer:', err); alert('Error de conexión: ' + err.message); });
       return;
