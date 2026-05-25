@@ -1889,7 +1889,7 @@ const initialFormState = {
   receiver_name: '',
   transfer_destination: 'Usulután'
 };
-const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUpdate, forceMode, incomeLogs = [], dispatchLogs = [] }) => {
+const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUpdate, forceMode, incomeLogs = [], dispatchLogs = [], movements = [] }) => {
   const [activeSubTab, setActiveSubTab] = useState(forceMode === 'unified' ? 'unified' : (forceMode === 'distribution' ? 'dispatch' : 'income'));
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState(initialFormState);
@@ -4552,6 +4552,10 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
           setFoodCostingLogs(Array.isArray(d) ? d : []);
         })
         .catch(() => setFoodCostingLogs([]));
+      fetch(`${API_BASE}/movements`)
+        .then(r => r.json())
+        .then(d => setMovements(Array.isArray(d) ? d : []))
+        .catch(() => setMovements([]));
     };
     fetchData();
     const inv = setInterval(fetchData, 8000);
@@ -4673,10 +4677,10 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
             transition={{ duration: 0.2 }}
           >
             <TabErrorBoundary resetKey={activeTab} onRetry={triggerRefresh}>
-              {activeTab === 'income' && <LogisticsHub products={products} agros={agros} productWeightData={PRODUCT_WEIGHT_DATA} refreshTrigger={refresh} onUpdate={triggerRefresh} forceMode="unified" incomeLogs={incomeLogs} dispatchLogs={dispatchLogs} />}
+              {activeTab === 'income' && <LogisticsHub products={products} agros={agros} productWeightData={PRODUCT_WEIGHT_DATA} refreshTrigger={refresh} onUpdate={triggerRefresh} forceMode="unified" incomeLogs={incomeLogs} dispatchLogs={dispatchLogs} movements={movements} />}
               {activeTab === 'production' && <ProductionReport products={products} onUpdate={triggerRefresh} productionLogs={productionLogs} />}
-              {activeTab === 'distribution' && <LogisticsHub products={products} agros={agros} productWeightData={PRODUCT_WEIGHT_DATA} refreshTrigger={refresh} onUpdate={triggerRefresh} forceMode="distribution" incomeLogs={incomeLogs} dispatchLogs={dispatchLogs} />}
-              {activeTab === 'invoice' && <LogisticsHub products={products} agros={agros} productWeightData={PRODUCT_WEIGHT_DATA} refreshTrigger={refresh} onUpdate={triggerRefresh} forceMode="distribution" incomeLogs={incomeLogs} dispatchLogs={dispatchLogs} />}
+              {activeTab === 'distribution' && <LogisticsHub products={products} agros={agros} productWeightData={PRODUCT_WEIGHT_DATA} refreshTrigger={refresh} onUpdate={triggerRefresh} forceMode="distribution" incomeLogs={incomeLogs} dispatchLogs={dispatchLogs} movements={movements} />}
+              {activeTab === 'invoice' && <LogisticsHub products={products} agros={agros} productWeightData={PRODUCT_WEIGHT_DATA} refreshTrigger={refresh} onUpdate={triggerRefresh} forceMode="distribution" incomeLogs={incomeLogs} dispatchLogs={dispatchLogs} movements={movements} />}
               {activeTab === 'status' && <StatusReport products={products} agros={agros} productWeightData={PRODUCT_WEIGHT_DATA} refreshTrigger={refresh} onUpdate={triggerRefresh} />}
               {activeTab === 'reports' && <ExportReport products={products} agros={agros} productWeightData={PRODUCT_WEIGHT_DATA} refreshTrigger={refresh} />}
               {activeTab === 'comida' && <FoodCostingSystem products={products} onUpdate={triggerRefresh} logs={foodCostingLogs} />}
