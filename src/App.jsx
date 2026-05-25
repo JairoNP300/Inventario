@@ -8,7 +8,7 @@ import {
   CheckCircle2,
   AlertTriangle,
   Edit2,
-  FileSpreadsheet,
+  ClipboardList,
   Download,
   Trash2,
   Layers,
@@ -399,7 +399,7 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
             .then(r => r.json())
             .then(data => {
               if (data.error) { alert('Error: ' + data.error); return; }
-              setFormData({ product_id: '', initial_weight: '', cut_weight: '', waste: '', storage_cost: '', transport_cost: '', labor_cost: '', other_costs: '' });
+              setFormData({ product_id: '', initial_weight: '', cut_weight: '', waste: '', storage_cost: '', transport_cost: '', labor_cost: '', other_costs: '', process_mode: 'ransa' });
               setEditingId(null);
               onUpdate();
               if (!editingId) window.dispatchEvent(new CustomEvent('changeTab', { detail: 'distribution' }));
