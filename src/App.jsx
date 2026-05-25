@@ -751,47 +751,50 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
     wb.creator = 'Sistema de Logística y Control de Inventario';
     wb.created = new Date();
     const ws = wb.addWorksheet('Balance Bodegas', {
-      pageSetup: { orientation: 'landscape', fitToPage: true, margins: { left: 0.4, right: 0.4, top: 0.5, bottom: 0.5, header: 0.2, footer: 0.2 } }
+      pageSetup: { orientation: 'landscape', fitToPage: true, margins: { left: 0.3, right: 0.3, top: 0.4, bottom: 0.4, header: 0.2, footer: 0.2 } }
     });
 
+    // Dark professional title bar
     ws.mergeCells('A1:G1');
     const titleCell = ws.getCell('A1');
     titleCell.value = 'BALANCE CONSOLIDADO POR BODEGA';
-    titleCell.font = { bold: true, size: 14, color: { argb: 'FF1E3A5F' }, name: 'Calibri' };
+    titleCell.font = { bold: true, size: 16, color: { argb: 'FFFFFFFF' }, name: 'Calibri' };
     titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
-    ws.getRow(1).height = 30;
+    titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F172A' } };
+    ws.getRow(1).height = 38;
 
     ws.mergeCells('A2:G2');
     const subCell = ws.getCell('A2');
-    subCell.value = `Generado: ${new Date().toLocaleString('es-SV', { timeZone: 'America/El_Salvador', dateStyle: 'long', timeStyle: 'short' })}`;
-    subCell.font = { size: 9, color: { argb: 'FF666666' }, italic: true, name: 'Calibri' };
+    subCell.value = `Generado: ${new Date().toLocaleString('es-SV', { timeZone: 'America/El_Salvador', dateStyle: 'long', timeStyle: 'short' })} | Unidad: ${viewUnit}`;
+    subCell.font = { size: 9, color: { argb: 'FF94A3B8' }, italic: true, name: 'Calibri' };
     subCell.alignment = { horizontal: 'center', vertical: 'middle' };
-    ws.getRow(2).height = 20;
+    subCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } };
+    ws.getRow(2).height = 22;
 
     const factor = viewUnit === 'Kg' ? 1 : 2.20462;
-    const headerFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A5F' } };
-    const altFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF5F7FA' } };
+    const headerFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } };
+    const altFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
     const whiteFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } };
 
     const headerStyle = {
-      font: { bold: true, color: { argb: 'FFFFFFFF' }, size: 10, name: 'Calibri' },
+      font: { bold: true, color: { argb: 'FFFFFFFF' }, size: 11, name: 'Calibri' },
       fill: headerFill,
       alignment: { horizontal: 'center', vertical: 'middle', wrapText: true },
-      border: { top: { style: 'thin', color: { argb: 'FFCCCCCC' } }, left: { style: 'thin', color: { argb: 'FFCCCCCC' } }, bottom: { style: 'medium', color: { argb: 'FF1E3A5F' } }, right: { style: 'thin', color: { argb: 'FFCCCCCC' } } }
+      border: { top: { style: 'thin', color: { argb: 'FF334155' } }, left: { style: 'thin', color: { argb: 'FF334155' } }, bottom: { style: 'medium', color: { argb: 'FF38BDF8' } }, right: { style: 'thin', color: { argb: 'FF334155' } } }
     };
     const cellStyle = {
-      font: { size: 10, name: 'Calibri', color: { argb: 'FF333333' } },
+      font: { size: 10, name: 'Calibri', color: { argb: 'FF1E293B' } },
       alignment: { horizontal: 'center', vertical: 'middle' },
-      border: { top: { style: 'thin', color: { argb: 'FFE0E0E0' } }, left: { style: 'thin', color: { argb: 'FFE0E0E0' } }, bottom: { style: 'thin', color: { argb: 'FFE0E0E0' } }, right: { style: 'thin', color: { argb: 'FFE0E0E0' } } }
+      border: { top: { style: 'thin', color: { argb: 'FFE2E8F0' } }, left: { style: 'thin', color: { argb: 'FFE2E8F0' } }, bottom: { style: 'thin', color: { argb: 'FFE2E8F0' } }, right: { style: 'thin', color: { argb: 'FFE2E8F0' } } }
     };
     const numFmt = '#,##0.0';
 
     const headers = ['Producto', `Entradas (${viewUnit})`, `Ransa (${viewUnit})`, `Soyapango (${viewUnit})`, `Usulután (${viewUnit})`, `Lomas (${viewUnit})`, `Stock Actual (${viewUnit})`];
-    ws.getColumn(1).width = 42;
-    [2,3,4,5,6,7].forEach(c => { ws.getColumn(c).width = 18; });
+    ws.getColumn(1).width = 44;
+    [2,3,4,5,6,7].forEach(c => { ws.getColumn(c).width = 20; });
 
     const headerRow = ws.addRow(headers);
-    headerRow.height = 22;
+    headerRow.height = 26;
     headerRow.eachCell((cell) => { Object.assign(cell, headerStyle); });
     ws.addRow([]);
 
@@ -804,30 +807,23 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
       const b4 = viewUnit === 'Kg' ? toNum(i.bodega_4) / factor : toNum(i.bodega_4);
       const total = b1 + b2 + b3 + b4;
       const row = ws.addRow([i.name || `Producto ${i.code}`, viewUnit === 'Kg' ? toNum(i.initial_stock) : toNum(i.initial_stock) * factor, b1, b2, b3, b4, total]);
-      row.height = 20;
+      row.height = 22;
       const rowFill = idx % 2 === 0 ? whiteFill : altFill;
       row.eachCell((cell, col) => {
-        Object.assign(cell, {
-          ...cellStyle,
-          fill: rowFill,
-          alignment: { horizontal: col === 1 ? 'left' : 'center', vertical: 'middle' },
-          numFmt: col === 1 ? '@' : numFmt
-        });
-        if (col === 7) {
-          cell.font = { bold: true, size: 10, name: 'Calibri', color: { argb: total < 20 ? 'FFEF4444' : 'FF1E3A5F' } };
-        }
+        const extra = { ...cellStyle, fill: rowFill, alignment: { horizontal: col === 1 ? 'left' : 'center', vertical: 'middle' }, numFmt: col === 1 ? '@' : numFmt };
+        if (col === 7) extra.font = { bold: true, size: 11, name: 'Calibri', color: { argb: total < 20 ? 'FFEF4444' : 'FF0F172A' } };
+        Object.assign(cell, extra);
       });
     });
 
     // Totals row
-    const totRow = ws.addRow([]);
     const totalLabel = ws.addRow(['TOTALES']);
     ws.mergeCells(`A${totalLabel.number}:A${totalLabel.number}`);
-    totalLabel.getCell(1).font = { bold: true, size: 10, name: 'Calibri', color: { argb: 'FFFFFFFF' } };
-    totalLabel.getCell(1).fill = headerFill;
+    totalLabel.getCell(1).font = { bold: true, size: 11, name: 'Calibri', color: { argb: 'FFFFFFFF' } };
+    totalLabel.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F172A' } };
     totalLabel.getCell(1).alignment = { horizontal: 'left', vertical: 'middle' };
-    totalLabel.getCell(1).border = { top: { style: 'medium', color: { argb: 'FF1E3A5F' } }, bottom: { style: 'double', color: { argb: 'FF1E3A5F' } }, left: { style: 'thin', color: { argb: 'FFCCCCCC' } }, right: { style: 'thin', color: { argb: 'FFCCCCCC' } } };
-    totalLabel.height = 22;
+    totalLabel.getCell(1).border = { top: { style: 'medium', color: { argb: 'FF38BDF8' } }, bottom: { style: 'double', color: { argb: 'FF38BDF8' } }, left: { style: 'thin', color: { argb: 'FF334155' } }, right: { style: 'thin', color: { argb: 'FF334155' } } };
+    totalLabel.height = 26;
 
     [2,3,4,5,6,7].forEach(col => {
       const cell = totalLabel.getCell(col);
@@ -840,11 +836,11 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
         return acc + vals[col - 1];
       }, 0);
       cell.value = sum;
-      cell.font = { bold: true, size: 10, name: 'Calibri', color: { argb: 'FFFFFFFF' } };
-      cell.fill = headerFill;
+      cell.font = { bold: true, size: 11, name: 'Calibri', color: { argb: 'FFFFFFFF' } };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F172A' } };
       cell.alignment = { horizontal: 'center', vertical: 'middle' };
       cell.numFmt = numFmt;
-      cell.border = { top: { style: 'medium', color: { argb: 'FF1E3A5F' } }, bottom: { style: 'double', color: { argb: 'FF1E3A5F' } }, left: { style: 'thin', color: { argb: 'FFCCCCCC' } }, right: { style: 'thin', color: { argb: 'FFCCCCCC' } } };
+      cell.border = { top: { style: 'medium', color: { argb: 'FF38BDF8' } }, bottom: { style: 'double', color: { argb: 'FF38BDF8' } }, left: { style: 'thin', color: { argb: 'FF334155' } }, right: { style: 'thin', color: { argb: 'FF334155' } } };
     });
 
     const buf = await wb.xlsx.writeBuffer();
