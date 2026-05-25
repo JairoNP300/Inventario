@@ -23,7 +23,6 @@ import {
   Cpu,
   FileText,
   BarChart3,
-  DownloadCloud,
   ShieldCheck,
   Printer,
   Save,
