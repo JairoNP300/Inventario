@@ -1087,7 +1087,6 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
                     <th className="col-qty">Soyapango ({viewUnit})</th>
                     <th className="col-qty">Usulután ({viewUnit})</th>
                     <th className="col-qty">Lomas ({viewUnit})</th>
-                    <th className="col-qty">Cajas</th>
                     <th className="col-qty">Stock Actual ({viewUnit})</th>
                   </tr>
               </thead>
@@ -1109,13 +1108,12 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
                       <td className="col-qty" style={{ color: 'var(--success)' }}>{b2.toFixed(1)}</td>
                       <td className="col-qty" style={{ color: 'var(--success)' }}>{b3.toFixed(1)}</td>
                       <td className="col-qty" style={{ color: 'var(--secondary)' }}>{b4.toFixed(1)}</td>
-                      <td className="col-qty" style={{ color: '#f59e0b', fontWeight: 700 }}>{toNum(i.cajas).toFixed(0)}</td>
                       <td className="col-qty" style={{ background: 'rgba(14,165,233,0.05)', fontWeight: 800 }}>
                         <span style={{ color: total < 20 ? 'var(--danger)' : 'var(--accent)' }}>{total.toFixed(1)} <small>{viewUnit.toLowerCase()}</small></span>
                       </td>
                     </tr>
                   );
-                }) : <tr><td colSpan={8} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '20px' }}>Sin datos de inventario</td></tr>}
+                }) : <tr><td colSpan={7} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '20px' }}>Sin datos de inventario</td></tr>}
               </tbody>
             </table>
           </div>
