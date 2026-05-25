@@ -1839,50 +1839,6 @@ const FoodReport = ({ data, products = [], onBack }) => {
   );
 };
 
-// --- ExportReport ---
-const ExportReport = ({ products, agros, productWeightData, refreshTrigger }) => {
-  const [loading, setLoading] = useState(false);
-  const handleExport = async () => {
-    setLoading(true);
-    try {
-      const resRansa = await fetch(`${API_BASE}/reports/ransa`);
-      const resDispatch = await fetch(`${API_BASE}/reports/dispatches`);
-      const resSales = await fetch(`${API_BASE}/sales`);
-      const resInv = await fetch(`${API_BASE}/reports/inventory-status`);
-
-      const ransa = await resRansa.json();
-      const dispatches = await resDispatch.json();
-      const sales = await resSales.json();
-      const inventory = await resInv.json();
-
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(ransa), "Entradas Ransa");
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dispatches), "Despachos");
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(sales), "Ventas");
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(inventory), "Inventario");
-      XLSX.writeFile(wb, `Reporte_Logistica_${new Date().toISOString().split('T')[0]}.xlsx`);
-    } catch (error) {
-      console.error(error);
-      alert("Error al exportar");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div style={{ textAlign: 'center', padding: '2rem' }}>
-      <div className="form-card" style={{ maxWidth: '600px', margin: '0 auto' }}>
-        <DownloadCloud size={48} style={{ color: 'var(--accent)', marginBottom: '1.5rem' }} />
-        <h3 style={{ border: 'none', justifyContent: 'center' }}>Consolidado de Datos</h3>
-        <p style={{ color: 'var(--text-muted)', marginBottom: '2.5rem' }}>Genera un reporte integral en Microsoft Excel con todos los movimientos históricos.</p>
-        <button onClick={handleExport} disabled={loading} className="btn-primary" style={{ background: 'var(--accent)', color: '#020617' }}>
-          {loading ? 'Generando Archivo...' : 'Descargar Reporte Completo (.xlsx)'}
-        </button>
-      </div>
-    </div>
-  );
-};
-
   // --- LogisticsHub (Unificado) ---
 const initialFormState = {
   product_id: '', origin: 'Ransa', destination: 'Lomas de San Francisco',
@@ -4647,7 +4603,6 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
     { id: 'production',   label: 'Procesos',   icon: <Cpu size={18} /> },
     { id: 'distribution', label: 'Despacho / Factura',   icon: <Truck size={18} /> },
     { id: 'status',       label: 'Stock',      icon: <BarChart3 size={18} /> },
-    { id: 'reports',      label: 'Export',     icon: <DownloadCloud size={18} /> },
     { id: 'comida',       label: 'Comida',     icon: <Utensils size={18} /> },
     { id: 'monitor',      label: 'Monitor',    icon: <Activity size={18} /> },
     { id: 'config',       label: 'Admin',      icon: <ShieldCheck size={18} /> },
@@ -4731,7 +4686,6 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
               {activeTab === 'distribution' && <LogisticsHub products={products} agros={agros} productWeightData={PRODUCT_WEIGHT_DATA} refreshTrigger={refresh} onUpdate={triggerRefresh} forceMode="distribution" incomeLogs={incomeLogs} dispatchLogs={dispatchLogs} movements={movements} />}
               {activeTab === 'invoice' && <LogisticsHub products={products} agros={agros} productWeightData={PRODUCT_WEIGHT_DATA} refreshTrigger={refresh} onUpdate={triggerRefresh} forceMode="distribution" incomeLogs={incomeLogs} dispatchLogs={dispatchLogs} movements={movements} />}
               {activeTab === 'status' && <StatusReport products={products} agros={agros} productWeightData={PRODUCT_WEIGHT_DATA} refreshTrigger={refresh} onUpdate={triggerRefresh} />}
-              {activeTab === 'reports' && <ExportReport products={products} agros={agros} productWeightData={PRODUCT_WEIGHT_DATA} refreshTrigger={refresh} />}
               {activeTab === 'comida' && <FoodCostingSystem products={products} onUpdate={triggerRefresh} logs={foodCostingLogs} />}
               {activeTab === 'monitor' && <AdminMonitor />}
               {activeTab === 'config' && <ConfigPanel products={products} onUpdate={triggerRefresh} />}
