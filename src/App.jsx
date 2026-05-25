@@ -866,12 +866,13 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
               <thead>
                   <tr>
                     <th className="col-carne">Producto</th>
+                    <th className="col-qty">Entradas ({viewUnit})</th>
                     <th className="col-qty">Ransa ({viewUnit})</th>
                     <th className="col-qty">Soyapango ({viewUnit})</th>
                     <th className="col-qty">Usulután ({viewUnit})</th>
                     <th className="col-qty">Lomas ({viewUnit})</th>
                     <th className="col-qty">Cajas</th>
-                    <th className="col-qty">Total ({viewUnit})</th>
+                    <th className="col-qty">Stock Actual ({viewUnit})</th>
                   </tr>
               </thead>
               <tbody>
