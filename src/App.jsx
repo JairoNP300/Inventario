@@ -747,35 +747,104 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
 
   const exportBalanceExcel = async () => {
     const wb = new ExcelJS.Workbook();
-    wb.creator = 'Sistema Logística';
+    wb.creator = 'Sistema de Logística y Control de Inventario';
     wb.created = new Date();
     const ws = wb.addWorksheet('Balance Bodegas', {
-      pageSetup: { orientation: 'landscape', fitToPage: true, margins: { left: 0.5, right: 0.5, top: 0.5, bottom: 0.5, header: 0.3, footer: 0.3 } }
+      pageSetup: { orientation: 'landscape', fitToPage: true, margins: { left: 0.4, right: 0.4, top: 0.5, bottom: 0.5, header: 0.2, footer: 0.2 } }
     });
 
+    ws.mergeCells('A1:H1');
+    const titleCell = ws.getCell('A1');
+    titleCell.value = 'BALANCE CONSOLIDADO POR BODEGA';
+    titleCell.font = { bold: true, size: 14, color: { argb: 'FF1E3A5F' }, name: 'Calibri' };
+    titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    ws.getRow(1).height = 30;
+
+    ws.mergeCells('A2:H2');
+    const subCell = ws.getCell('A2');
+    subCell.value = `Generado: ${new Date().toLocaleString('es-SV', { timeZone: 'America/El_Salvador', dateStyle: 'long', timeStyle: 'short' })}`;
+    subCell.font = { size: 9, color: { argb: 'FF666666' }, italic: true, name: 'Calibri' };
+    subCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    ws.getRow(2).height = 20;
+
     const factor = viewUnit === 'Kg' ? 1 : 2.20462;
-    const headerStyle = { font: { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 }, fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E40AF' } }, alignment: { horizontal: 'center', vertical: 'middle', wrapText: true }, border: { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } } };
-    const cellStyle = { alignment: { horizontal: 'center', vertical: 'middle' }, border: { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } } };
-    const totalStyle = { ...cellStyle, font: { bold: true, color: { argb: 'FF1E40AF' } } };
+    const headerFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A5F' } };
+    const altFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF5F7FA' } };
+    const whiteFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } };
+
+    const headerStyle = {
+      font: { bold: true, color: { argb: 'FFFFFFFF' }, size: 10, name: 'Calibri' },
+      fill: headerFill,
+      alignment: { horizontal: 'center', vertical: 'middle', wrapText: true },
+      border: { top: { style: 'thin', color: { argb: 'FFCCCCCC' } }, left: { style: 'thin', color: { argb: 'FFCCCCCC' } }, bottom: { style: 'medium', color: { argb: 'FF1E3A5F' } }, right: { style: 'thin', color: { argb: 'FFCCCCCC' } } }
+    };
+    const cellStyle = {
+      font: { size: 10, name: 'Calibri', color: { argb: 'FF333333' } },
+      alignment: { horizontal: 'center', vertical: 'middle' },
+      border: { top: { style: 'thin', color: { argb: 'FFE0E0E0' } }, left: { style: 'thin', color: { argb: 'FFE0E0E0' } }, bottom: { style: 'thin', color: { argb: 'FFE0E0E0' } }, right: { style: 'thin', color: { argb: 'FFE0E0E0' } } }
+    };
+    const numFmt = '#,##0.0';
+    const intFmt = '#,##0';
 
     const headers = ['Producto', `Entradas (${viewUnit})`, `Ransa (${viewUnit})`, `Soyapango (${viewUnit})`, `Usulután (${viewUnit})`, `Lomas (${viewUnit})`, 'Cajas', `Stock Actual (${viewUnit})`];
-    ws.getColumn(1).width = 40;
-    [2,3,4,5,6,7,8].forEach(c => { ws.getColumn(c).width = 16; });
+    ws.getColumn(1).width = 42;
+    [2,3,4,5,6,7,8].forEach(c => { ws.getColumn(c).width = 18; });
 
     const headerRow = ws.addRow(headers);
+    headerRow.height = 22;
     headerRow.eachCell((cell) => { Object.assign(cell, headerStyle); });
-    ws.views = [{ state: 'frozen', ySplit: 1 }];
+    ws.addRow([]);
 
-    inventoryRows.forEach(i => {
+    ws.views = [{ state: 'frozen', ySplit: 3 }];
+
+    inventoryRows.forEach((i, idx) => {
       const b1 = viewUnit === 'Kg' ? toNum(i.bodega_1) : toNum(i.bodega_1) * factor;
       const b2 = viewUnit === 'Kg' ? toNum(i.bodega_2) / factor : toNum(i.bodega_2);
       const b3 = viewUnit === 'Kg' ? toNum(i.bodega_3) / factor : toNum(i.bodega_3);
       const b4 = viewUnit === 'Kg' ? toNum(i.bodega_4) / factor : toNum(i.bodega_4);
-      const row = ws.addRow([i.name || `Producto ${i.code}`, viewUnit === 'Kg' ? toNum(i.initial_stock) : toNum(i.initial_stock) * factor, b1, b2, b3, b4, toNum(i.cajas), b1 + b2 + b3 + b4]);
+      const total = b1 + b2 + b3 + b4;
+      const row = ws.addRow([i.name || `Producto ${i.code}`, viewUnit === 'Kg' ? toNum(i.initial_stock) : toNum(i.initial_stock) * factor, b1, b2, b3, b4, toNum(i.cajas), total]);
+      row.height = 20;
+      const rowFill = idx % 2 === 0 ? whiteFill : altFill;
       row.eachCell((cell, col) => {
-        Object.assign(cell, col === 1 ? { ...cellStyle, alignment: { horizontal: 'left', vertical: 'middle' } } : { ...cellStyle, numFmt: '#,##0.0' });
-        if (col === 8) Object.assign(cell, totalStyle);
+        Object.assign(cell, {
+          ...cellStyle,
+          fill: rowFill,
+          alignment: { horizontal: col === 1 ? 'left' : 'center', vertical: 'middle' },
+          numFmt: col === 1 ? '@' : (col === 7 ? intFmt : numFmt)
+        });
+        if (col === 8) {
+          cell.font = { bold: true, size: 10, name: 'Calibri', color: { argb: total < 20 ? 'FFEF4444' : 'FF1E3A5F' } };
+        }
       });
+    });
+
+    // Totals row
+    const totRow = ws.addRow([]);
+    const totalLabel = ws.addRow(['TOTALES']);
+    ws.mergeCells(`A${totalLabel.number}:A${totalLabel.number}`);
+    totalLabel.getCell(1).font = { bold: true, size: 10, name: 'Calibri', color: { argb: 'FFFFFFFF' } };
+    totalLabel.getCell(1).fill = headerFill;
+    totalLabel.getCell(1).alignment = { horizontal: 'left', vertical: 'middle' };
+    totalLabel.getCell(1).border = { top: { style: 'medium', color: { argb: 'FF1E3A5F' } }, bottom: { style: 'double', color: { argb: 'FF1E3A5F' } }, left: { style: 'thin', color: { argb: 'FFCCCCCC' } }, right: { style: 'thin', color: { argb: 'FFCCCCCC' } } };
+    totalLabel.height = 22;
+
+    [2,3,4,5,6,7,8].forEach(col => {
+      const cell = totalLabel.getCell(col);
+      const sum = inventoryRows.reduce((acc, i) => {
+        const b1 = viewUnit === 'Kg' ? toNum(i.bodega_1) : toNum(i.bodega_1) * factor;
+        const b2 = viewUnit === 'Kg' ? toNum(i.bodega_2) / factor : toNum(i.bodega_2);
+        const b3 = viewUnit === 'Kg' ? toNum(i.bodega_3) / factor : toNum(i.bodega_3);
+        const b4 = viewUnit === 'Kg' ? toNum(i.bodega_4) / factor : toNum(i.bodega_4);
+        const vals = [0, viewUnit === 'Kg' ? toNum(i.initial_stock) : toNum(i.initial_stock) * factor, b1, b2, b3, b4, toNum(i.cajas), b1 + b2 + b3 + b4];
+        return acc + vals[col - 1];
+      }, 0);
+      cell.value = sum;
+      cell.font = { bold: true, size: 10, name: 'Calibri', color: { argb: 'FFFFFFFF' } };
+      cell.fill = headerFill;
+      cell.alignment = { horizontal: 'center', vertical: 'middle' };
+      cell.numFmt = col === 7 ? intFmt : numFmt;
+      cell.border = { top: { style: 'medium', color: { argb: 'FF1E3A5F' } }, bottom: { style: 'double', color: { argb: 'FF1E3A5F' } }, left: { style: 'thin', color: { argb: 'FFCCCCCC' } }, right: { style: 'thin', color: { argb: 'FFCCCCCC' } } };
     });
 
     const buf = await wb.xlsx.writeBuffer();
@@ -787,37 +856,95 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
 
   const exportCajasExcel = async () => {
     const wb = new ExcelJS.Workbook();
-    wb.creator = 'Sistema Logística';
+    wb.creator = 'Sistema de Logística y Control de Inventario';
     wb.created = new Date();
     const ws = wb.addWorksheet('Control Cajas', {
-      pageSetup: { orientation: 'landscape', fitToPage: true, margins: { left: 0.5, right: 0.5, top: 0.5, bottom: 0.5, header: 0.3, footer: 0.3 } }
+      pageSetup: { orientation: 'landscape', fitToPage: true, margins: { left: 0.4, right: 0.4, top: 0.5, bottom: 0.5, header: 0.2, footer: 0.2 } }
     });
 
-    const headerStyle = { font: { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 }, fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF59E0B' } }, alignment: { horizontal: 'center', vertical: 'middle', wrapText: true }, border: { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } } };
-    const cellStyle = { alignment: { horizontal: 'center', vertical: 'middle' }, border: { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } } };
-    const stockStyle = { ...cellStyle, font: { bold: true, color: { argb: 'FFF59E0B' }, size: 12 } };
-    const entradasStyle = { ...cellStyle, font: { bold: true, color: { argb: 'FF06B6D4' } } };
-    const salidasStyle = { ...cellStyle, font: { bold: true, color: { argb: 'FFEF4444' } } };
+    ws.mergeCells('A1:D1');
+    const titleCell = ws.getCell('A1');
+    titleCell.value = 'CONTROL DE CAJAS - ENTRADAS, SALIDAS Y STOCK ACTUAL';
+    titleCell.font = { bold: true, size: 14, color: { argb: 'FFB45309' }, name: 'Calibri' };
+    titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    ws.getRow(1).height = 30;
+
+    ws.mergeCells('A2:D2');
+    const subCell = ws.getCell('A2');
+    subCell.value = `Generado: ${new Date().toLocaleString('es-SV', { timeZone: 'America/El_Salvador', dateStyle: 'long', timeStyle: 'short' })}`;
+    subCell.font = { size: 9, color: { argb: 'FF666666' }, italic: true, name: 'Calibri' };
+    subCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    ws.getRow(2).height = 20;
+
+    const headerFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFB45309' } };
+    const altFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF8E1' } };
+    const whiteFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } };
+
+    const headerStyle = {
+      font: { bold: true, color: { argb: 'FFFFFFFF' }, size: 10, name: 'Calibri' },
+      fill: headerFill,
+      alignment: { horizontal: 'center', vertical: 'middle', wrapText: true },
+      border: { top: { style: 'thin', color: { argb: 'FFCCCCCC' } }, left: { style: 'thin', color: { argb: 'FFCCCCCC' } }, bottom: { style: 'medium', color: { argb: 'FFB45309' } }, right: { style: 'thin', color: { argb: 'FFCCCCCC' } } }
+    };
+    const cellStyle = {
+      font: { size: 10, name: 'Calibri', color: { argb: 'FF333333' } },
+      alignment: { horizontal: 'center', vertical: 'middle' },
+      border: { top: { style: 'thin', color: { argb: 'FFE0E0E0' } }, left: { style: 'thin', color: { argb: 'FFE0E0E0' } }, bottom: { style: 'thin', color: { argb: 'FFE0E0E0' } }, right: { style: 'thin', color: { argb: 'FFE0E0E0' } } }
+    };
+
+    ws.getColumn(1).width = 42;
+    [2,3,4].forEach(c => { ws.getColumn(c).width = 22; });
 
     const headers = ['Producto', 'Entradas (Cajas)', 'Salidas (Cajas)', 'Stock Actual (Cajas)'];
-    ws.getColumn(1).width = 40;
-    [2,3,4].forEach(c => { ws.getColumn(c).width = 20; });
-
     const headerRow = ws.addRow(headers);
+    headerRow.height = 22;
     headerRow.eachCell((cell) => { Object.assign(cell, headerStyle); });
-    ws.views = [{ state: 'frozen', ySplit: 1 }];
+    ws.addRow([]);
+    ws.views = [{ state: 'frozen', ySplit: 3 }];
 
-    inventoryRows.forEach(i => {
+    inventoryRows.forEach((i, idx) => {
       const entradas = toNum(i.entradas_cajas);
       const salidas = toNum(i.salidas_cajas);
       const stock = entradas - salidas;
       const row = ws.addRow([i.name || `Producto ${i.code}`, entradas, salidas, stock]);
+      row.height = 20;
+      const rowFill = idx % 2 === 0 ? whiteFill : altFill;
       row.eachCell((cell, col) => {
-        if (col === 1) Object.assign(cell, { ...cellStyle, alignment: { horizontal: 'left', vertical: 'middle' }, numFmt: '0' });
-        else if (col === 2) Object.assign(cell, { ...entradasStyle, numFmt: '#,##0' });
-        else if (col === 3) Object.assign(cell, { ...salidasStyle, numFmt: '#,##0' });
-        else if (col === 4) Object.assign(cell, { ...stockStyle, numFmt: '#,##0' });
+        const baseStyle = {
+          ...cellStyle,
+          fill: rowFill,
+          alignment: { horizontal: col === 1 ? 'left' : 'center', vertical: 'middle' },
+          numFmt: col === 1 ? '@' : '#,##0'
+        };
+        if (col === 2) Object.assign(baseStyle, { font: { bold: true, size: 10, name: 'Calibri', color: { argb: 'FF0284C7' } } });
+        if (col === 3) Object.assign(baseStyle, { font: { bold: true, size: 10, name: 'Calibri', color: { argb: 'FFDC2626' } } });
+        if (col === 4) Object.assign(baseStyle, { font: { bold: true, size: 11, name: 'Calibri', color: { argb: stock <= 0 ? 'FFDC2626' : 'FFB45309' } } });
+        Object.assign(cell, baseStyle);
       });
+    });
+
+    // Totals row
+    const totalLabel = ws.addRow(['TOTALES']);
+    ws.mergeCells(`A${totalLabel.number}:A${totalLabel.number}`);
+    totalLabel.getCell(1).font = { bold: true, size: 10, name: 'Calibri', color: { argb: 'FFFFFFFF' } };
+    totalLabel.getCell(1).fill = headerFill;
+    totalLabel.getCell(1).alignment = { horizontal: 'left', vertical: 'middle' };
+    totalLabel.getCell(1).border = { top: { style: 'medium', color: { argb: 'FFB45309' } }, bottom: { style: 'double', color: { argb: 'FFB45309' } }, left: { style: 'thin', color: { argb: 'FFCCCCCC' } }, right: { style: 'thin', color: { argb: 'FFCCCCCC' } } };
+    totalLabel.height = 22;
+
+    [2,3,4].forEach(col => {
+      const cell = totalLabel.getCell(col);
+      const sum = inventoryRows.reduce((acc, i) => {
+        const ent = toNum(i.entradas_cajas);
+        const sal = toNum(i.salidas_cajas);
+        return acc + ([0, ent, sal, ent - sal][col - 1]);
+      }, 0);
+      cell.value = sum;
+      cell.font = { bold: true, size: 10, name: 'Calibri', color: { argb: 'FFFFFFFF' } };
+      cell.fill = headerFill;
+      cell.alignment = { horizontal: 'center', vertical: 'middle' };
+      cell.numFmt = '#,##0';
+      cell.border = { top: { style: 'medium', color: { argb: 'FFB45309' } }, bottom: { style: 'double', color: { argb: 'FFB45309' } }, left: { style: 'thin', color: { argb: 'FFCCCCCC' } }, right: { style: 'thin', color: { argb: 'FFCCCCCC' } } };
     });
 
     const buf = await wb.xlsx.writeBuffer();
