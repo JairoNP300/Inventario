@@ -577,7 +577,7 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
 // Componente para selector de unidad
 const UnitSelector = ({ value, onChange }) => (
   <div style={{ display: 'flex', gap: '8px', background: 'rgba(15, 23, 42, 0.4)', padding: '6px', borderRadius: '12px', border: '1px solid var(--border)' }}>
-    {['Lbs', 'Kg'].map(unit => (
+    {['Lbs', 'Kg', 'Cajas'].map(unit => (
       <button
         key={unit}
         onClick={() => onChange(unit)}
