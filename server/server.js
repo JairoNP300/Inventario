@@ -763,13 +763,13 @@ app.post('/api/dispatches', async (req, res) => {
 
       const updateResult = await query(`UPDATE inventory SET ${bodegaCol} = ${bodegaCol} - ?, sold_stock = sold_stock + ? WHERE product_id = ?`, [weightInUnits, weightInUnits, product_id]);
       console.log('DISPATCH update result:', JSON.stringify(updateResult));
-    }
 
-    // Track cajas dispatched (separate field from weight)
-    const boxCount = parseInt(cajas) || 0;
-    if (boxCount > 0) {
-      await query('UPDATE inventory SET salidas_cajas = salidas_cajas + ? WHERE product_id = ?', [boxCount, product_id]);
-      console.log('DISPATCH cajas tracked:', boxCount);
+      // Track cajas dispatched (separate field from weight) — only when NOT already counted via unit_type === 'Cajas'
+      const boxCount = parseInt(cajas) || 0;
+      if (boxCount > 0) {
+        await query('UPDATE inventory SET salidas_cajas = salidas_cajas + ? WHERE product_id = ?', [boxCount, product_id]);
+        console.log('DISPATCH cajas tracked:', boxCount);
+      }
     }
 
     // Verify the update worked: read back the new value
