@@ -1907,6 +1907,7 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
         let price = 0;
         if (formData.unit_type === 'Lbs') price = product.price_per_lb;
         else if (formData.unit_type === 'Kg') price = product.price_per_kg;
+        else if (formData.unit_type === 'Cajas') price = product.price_per_box || 0;
 
         const subtotal = parseFloat(formData.weight) * (price || 0);
         const discount = parseFloat(formData.discount_percent) || 0;
