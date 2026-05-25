@@ -331,7 +331,7 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [formData, setFormData] = useState({
     product_id: '', initial_kg: '', initial_weight: '', cut_weight: '', waste: '',
-    storage_cost: '', transport_cost: '', labor_cost: '', other_costs: '', process_mode: 'ransa'
+    storage_cost: '', transport_cost: '', labor_cost: '', other_costs: '', process_mode: 'ransa', dest_warehouse: 'Soyapango'
   });
 
   const productsList = Array.isArray(products) ? products : [];
@@ -399,7 +399,7 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
             .then(r => r.json())
             .then(data => {
               if (data.error) { alert('Error: ' + data.error); return; }
-              setFormData({ product_id: '', initial_weight: '', cut_weight: '', waste: '', storage_cost: '', transport_cost: '', labor_cost: '', other_costs: '', process_mode: 'ransa' });
+              setFormData({ product_id: '', initial_weight: '', cut_weight: '', waste: '', storage_cost: '', transport_cost: '', labor_cost: '', other_costs: '', process_mode: 'ransa', dest_warehouse: 'Soyapango' });
               setEditingId(null);
               onUpdate();
               if (!editingId) window.dispatchEvent(new CustomEvent('changeTab', { detail: 'distribution' }));
@@ -426,7 +426,7 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
                   style={{ flex: 1, padding: '10px', borderRadius: '10px', border: formData.process_mode === 'ransa' ? '2px solid var(--accent)' : '1px solid var(--border)', cursor: 'pointer', fontWeight: 700, fontSize: '0.8rem', background: formData.process_mode === 'ransa' ? 'rgba(56,189,248,0.12)' : 'rgba(255,255,255,0.03)', color: formData.process_mode === 'ransa' ? 'var(--accent)' : 'var(--text-muted)' }}>
                   <Truck size={16} style={{ verticalAlign: 'middle', marginRight: '6px' }} /> Desde Ransa
                 </button>
-                <button type="button" onClick={() => setFormData({ ...formData, process_mode: 'direct', initial_weight: '0', cut_weight: '', waste: '' })}
+                <button type="button" onClick={() => setFormData({ ...formData, process_mode: 'direct', initial_weight: '0', cut_weight: '', waste: '0' })}
                   style={{ flex: 1, padding: '10px', borderRadius: '10px', border: formData.process_mode === 'direct' ? '2px solid #f59e0b' : '1px solid var(--border)', cursor: 'pointer', fontWeight: 700, fontSize: '0.8rem', background: formData.process_mode === 'direct' ? 'rgba(245,158,11,0.12)' : 'rgba(255,255,255,0.03)', color: formData.process_mode === 'direct' ? '#f59e0b' : 'var(--text-muted)' }}>
                   <ClipboardList size={16} style={{ verticalAlign: 'middle', marginRight: '6px' }} /> Peso Procesado Directo
                 </button>
@@ -459,16 +459,30 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
             <div className="form-group">
               <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span>{formData.process_mode === 'direct' ? 'Peso Procesado (Lbs)' : 'Salida Limpia (Lbs)'}</span>
-                <span style={{ color: 'var(--danger)', fontSize: '0.9rem', fontWeight: 900, textShadow: '0 0 10px rgba(239, 68, 68, 0.3)' }}>
-                  MERMA: {formData.waste || '0.00'} LBS
-                </span>
+                {formData.process_mode !== 'direct' && (
+                  <span style={{ color: 'var(--danger)', fontSize: '0.9rem', fontWeight: 900, textShadow: '0 0 10px rgba(239, 68, 68, 0.3)' }}>
+                    MERMA: {formData.waste || '0.00'} LBS
+                  </span>
+                )}
               </label>
               <input type="number" step="0.01" value={formData.cut_weight} onChange={e => {
                 const c = e.target.value;
-                setFormData(prev => ({ ...prev, cut_weight: c, waste: (parseFloat(prev.initial_weight || 0) - parseFloat(c || 0)).toFixed(2) }));
+                setFormData(prev => ({ ...prev, cut_weight: c, waste: prev.process_mode === 'direct' ? '0' : (parseFloat(prev.initial_weight || 0) - parseFloat(c || 0)).toFixed(2) }));
               }} placeholder="0.00" required />
             </div>
           </div>
+
+          {/* Destino del peso procesado (solo modo directo) */}
+          {formData.process_mode === 'direct' && (
+            <div className="form-group">
+              <label>Almacenar en Bodega</label>
+              <select value={formData.dest_warehouse || 'Soyapango'} onChange={e => setFormData({ ...formData, dest_warehouse: e.target.value })} required>
+                <option value="Soyapango">Soyapango (Lbs)</option>
+                <option value="Usulután">Usulután (Lbs)</option>
+                <option value="Lomas de San Francisco">Lomas de San Francisco (Lbs)</option>
+              </select>
+            </div>
+          )}
 
           <div style={{ marginTop: '1.5rem', background: 'rgba(255, 255, 255, 0.02)', padding: '2rem', borderRadius: '24px', border: '1px solid var(--glass-border)' }}>
             <h4 style={{ fontSize: '0.75rem', color: 'var(--aurora-1)', marginBottom: '1.5rem', textTransform: 'uppercase', letterSpacing: '1px', border: 'none' }}>Estimación de Costos Operativos</h4>
