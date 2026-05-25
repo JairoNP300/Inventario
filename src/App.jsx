@@ -1996,7 +1996,42 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
 
   const confirmAndSave = () => {
     if (dispatchCart.length === 0) { alert('No hay productos en el carrito'); return; }
-    
+
+    // Check if any item is a traslado
+    const isTraslado = dispatchCart.some(i => i.agro_id === 'TRASLADO');
+
+    if (isTraslado) {
+      Promise.all(dispatchCart.map(item => {
+        // Convert weight to origin's native unit
+        let transferWeight = item.qty;
+        if (item.origin === 'Ransa' && item.unit === 'Lbs') {
+          transferWeight = transferWeight / 2.20462;
+        } else if (item.origin !== 'Ransa' && item.unit === 'Kg') {
+          transferWeight = transferWeight * 2.20462;
+        }
+        const payload = {
+          product_id: item.product_id,
+          origin: item.origin,
+          destination: item.origin === 'Ransa' ? transferDestination : item.transfer_destination || formData.transfer_destination,
+          weight: transferWeight
+        };
+        return apiFetch(`${API_BASE}/inventory/transfer`, {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        }).then(r => { if (!r.ok) throw new Error('Error al realizar traslado'); return r.json(); });
+      }))
+      .then(results => {
+        setFormData(initialFormState);
+        setEditingId(null);
+        setShowCartPreview(false);
+        setDispatchCart([]);
+        onUpdate();
+        alert(`Traslado realizado exitosamente (${results.length} producto(s)).`);
+      })
+      .catch(err => { console.error('Error saving transfer:', err); alert('Error de conexión: ' + err.message); });
+      return;
+    }
+
     Promise.all(dispatchCart.map(item => {
       const payload = {
         product_id: item.product_id,
@@ -2014,7 +2049,7 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
       }).then(r => { if (!r.ok) throw new Error('Error saving dispatch'); return r.json(); });
     }))
     .then(results => {
-      setFormData({ product_id: '', origin: 'Ransa', destination: 'Lomas de San Francisco', weight: '', tag_weight: '', scale_weight: '', units_per_box: '', unit_type: 'Lbs', agro_id: '', value: '', discount_percent: 0, client_name: '', client_nit: '', client_nrc: '', client_address: '', client_deliverer: '', payment_condition: 'CONTADO', observations: '', receiver_name: '' });
+      setFormData(initialFormState);
       setEditingId(null);
       setShowCartPreview(false);
       setDispatchCart([]);
@@ -2106,14 +2141,31 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
                 const val = e.target.value;
                 if (val === 'VENTA_DIRECTA') {
                   setFormData({ ...formData, agro_id: val, client_name: '', client_nit: '', client_nrc: '', client_address: '' });
+                } else if (val === 'TRASLADO') {
+                  setFormData({ ...formData, agro_id: val });
                 } else {
                   setFormData({ ...formData, agro_id: val, client_name: '' });
                 }
               }} required>
                 <option value="">Seleccione Destino...</option>
                 <option value="VENTA_DIRECTA">Venta directa</option>
+                <option value="TRASLADO">Traslado (cambio de bodega)</option>
                 {agros.filter(a => a.name !== 'Ransa').map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
               </select>
+              {formData.agro_id === 'TRASLADO' && (
+                <div style={{ marginTop: '10px', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--accent)', fontWeight: 700 }}>Desde {formData.origin} →</span>
+                  <select
+                    value={formData.transfer_destination}
+                    onChange={e => setFormData({ ...formData, transfer_destination: e.target.value })}
+                    style={{ flex: 1, padding: '8px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', color: 'white', borderRadius: '8px' }}
+                  >
+                    <option value="Usulután">Usulután</option>
+                    <option value="Soyapango">Soyapango</option>
+                    <option value="Lomas de San Francisco">Lomas de San Francisco</option>
+                  </select>
+                </div>
+              )}
             </div>
             <div className="form-group">
               <label>Bodega de Origen</label>
