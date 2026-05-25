@@ -2005,17 +2005,23 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
     if (isTraslado) {
       Promise.all(dispatchCart.map(item => {
         // Convert weight to origin's native unit
-        let transferWeight = item.qty;
-        if (item.origin === 'Ransa' && item.unit === 'Lbs') {
-          transferWeight = transferWeight / 2.20462;
-        } else if (item.origin !== 'Ransa' && item.unit === 'Kg') {
-          transferWeight = transferWeight * 2.20462;
+        let originWeight = item.qty;
+        let destWeight = item.qty;
+        if (item.origin === 'Ransa') {
+          if (item.unit === 'Lbs') originWeight = originWeight / 2.20462;
+          if (item.unit === 'Kg') destWeight = destWeight * 2.20462;
+        } else {
+          if (item.unit === 'Kg') {
+            originWeight = originWeight * 2.20462;
+            destWeight = destWeight * 2.20462;
+          }
         }
         const payload = {
           product_id: item.product_id,
           origin: item.origin,
           destination: item.transfer_destination || formData.transfer_destination || 'Usulután',
-          weight: transferWeight
+          origin_weight: originWeight,
+          dest_weight: destWeight
         };
         return apiFetch(`${API_BASE}/inventory/transfer`, {
           method: 'POST',
