@@ -1411,6 +1411,23 @@ initDb().then(() => {
       } catch (err) {
         console.log('[SEED] entradas_cajas already seeded or error:', err.message);
       }
+
+      // Seed real Usulután stock (bodega_3) from physical inventory data if still using default seed (100)
+      try {
+        const { rows: stillDefault } = await query('SELECT COUNT(*) as cnt FROM inventory i JOIN products p ON i.product_id = p.id WHERE p.code = ? AND i.bodega_3 = 100', ["1618"]);
+        if (stillDefault[0].cnt > 0) {
+          for (const [code, data] of Object.entries(physicalInventoryData)) {
+            const { rows: pRows } = await query('SELECT id FROM products WHERE code = ?', [code]);
+            if (pRows.length > 0) {
+              await query('UPDATE inventory SET bodega_3 = ?, bodega_1 = ? WHERE product_id = ?', [data.bodega_3, data.bodega_1, pRows[0].id]);
+              console.log(`[SEED] ${code}: bodega_1=${data.bodega_1}, bodega_3=${data.bodega_3}`);
+            }
+          }
+          console.log('[SEED] Real Usulután stock seeded successfully');
+        }
+      } catch (err) {
+        console.log('[SEED] Usulután stock already seeded or error:', err.message);
+      }
       
       if (syncedCount > 0) {
         console.log(`[AUTO-SYNC] ✅ ${syncedCount} productos inicializados con stock base`);
