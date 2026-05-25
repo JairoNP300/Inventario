@@ -687,7 +687,7 @@ app.post('/api/reports/ransa', async (req, res) => {
     if (target.col !== 'bodega_1') {
       await query(`UPDATE inventory SET bodega_1 = bodega_1 - ? WHERE product_id = ?`, [scaleKg, product_id]);
     }
-    await query(`UPDATE inventory SET ${target.col} = ${target.col} + ?, initial_stock = initial_stock + ?, cajas = cajas + ?, entradas_cajas = entradas_cajas + ? WHERE product_id = ?`, [target.value, target.value, boxCount, boxCount, product_id]);
+    await query(`UPDATE inventory SET ${target.col} = ${target.col} + ?, initial_stock = initial_stock + ?, entradas_cajas = entradas_cajas + ? WHERE product_id = ?`, [target.value, target.value, boxCount, product_id]);
 
     await query('INSERT INTO movements (product_id, origin_warehouse, dest_warehouse, weight, type) VALUES (?, ?, ?, ?, ?)', [product_id, 'Ransa (Origen)', distribution_details, scaleKg, 'INCOME']);
 
@@ -903,7 +903,7 @@ app.post('/api/inventory/undo-adjustment', async (req, res) => {
       await query(`UPDATE inventory SET ${adj.bodega_col} = ${adj.bodega_col} - ? WHERE product_id = ?`, [weightChange, adj.product_id]);
     }
     if (cajasChange > 0) {
-      await query(`UPDATE inventory SET cajas = cajas - ? WHERE product_id = ?`, [cajasChange, adj.product_id]);
+      await query(`UPDATE inventory SET entradas_cajas = GREATEST(entradas_cajas - ?, 0) WHERE product_id = ?`, [cajasChange, adj.product_id]);
     }
 
     // Delete the adjustment record
