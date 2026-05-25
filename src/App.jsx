@@ -417,23 +417,53 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
             <ProductIntelligenceCard product={products.find(p => String(p.id) === String(formData.product_id))} />
           </div>
 
-          <div className="form-row two-col">
+          {/* Modo de proceso */}
+          {!editingId && (
             <div className="form-group">
-              <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>Entrada desde Ransa (Kg)</span>
-              </label>
-              <input type="number" step="0.01" value={formData.initial_weight} onChange={e => {
-                const w = e.target.value;
-                setFormData(prev => ({ ...prev, initial_weight: w, waste: (parseFloat(w || 0) - parseFloat(prev.cut_weight || 0)).toFixed(2) }));
-              }} placeholder="0.00" required />
+              <label>Origen del Producto</label>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button type="button" onClick={() => setFormData({ ...formData, process_mode: 'ransa', initial_weight: '', cut_weight: '', waste: '' })}
+                  style={{ flex: 1, padding: '10px', borderRadius: '10px', border: formData.process_mode === 'ransa' ? '2px solid var(--accent)' : '1px solid var(--border)', cursor: 'pointer', fontWeight: 700, fontSize: '0.8rem', background: formData.process_mode === 'ransa' ? 'rgba(56,189,248,0.12)' : 'rgba(255,255,255,0.03)', color: formData.process_mode === 'ransa' ? 'var(--accent)' : 'var(--text-muted)' }}>
+                  <Truck size={16} style={{ verticalAlign: 'middle', marginRight: '6px' }} /> Desde Ransa
+                </button>
+                <button type="button" onClick={() => setFormData({ ...formData, process_mode: 'direct', initial_weight: '0', cut_weight: '', waste: '' })}
+                  style={{ flex: 1, padding: '10px', borderRadius: '10px', border: formData.process_mode === 'direct' ? '2px solid #f59e0b' : '1px solid var(--border)', cursor: 'pointer', fontWeight: 700, fontSize: '0.8rem', background: formData.process_mode === 'direct' ? 'rgba(245,158,11,0.12)' : 'rgba(255,255,255,0.03)', color: formData.process_mode === 'direct' ? '#f59e0b' : 'var(--text-muted)' }}>
+                  <ClipboardList size={16} style={{ verticalAlign: 'middle', marginRight: '6px' }} /> Peso Procesado Directo
+                </button>
+              </div>
             </div>
+          )}
+
+          {/* Ransa stock info */}
+          {formData.process_mode === 'ransa' && formData.product_id && (() => {
+            const prod = products.find(p => String(p.id) === String(formData.product_id));
+            const ransaKg = parseFloat(prod?.stock_kg || prod?.bodega_1 || 0);
+            return (
+              <div style={{ padding: '8px 12px', borderRadius: '8px', background: ransaKg > 0 ? 'rgba(56,189,248,0.06)' : 'rgba(239,68,68,0.06)', border: `1px solid ${ransaKg > 0 ? 'rgba(56,189,248,0.2)' : 'rgba(239,68,68,0.2)'}`, marginBottom: '0.8rem', fontSize: '0.8rem' }}>
+                Stock actual en Ransa: <strong style={{ color: ransaKg > 0 ? 'var(--accent)' : 'var(--danger)' }}>{ransaKg.toFixed(1)} kg</strong>
+                {ransaKg <= 0 && <span style={{ color: 'var(--danger)', marginLeft: '8px' }}>— No hay existencias. Cambie a "Peso Procesado Directo" o reciba producto primero.</span>}
+              </div>
+            );
+          })()}
+
+          <div className="form-row two-col">
+            {formData.process_mode === 'ransa' && (
+              <div className="form-group">
+                <label>Entrada desde Ransa (Kg)</label>
+                <input type="number" step="0.01" value={formData.initial_weight} onChange={e => {
+                  const w = e.target.value;
+                  setFormData(prev => ({ ...prev, initial_weight: w, waste: (parseFloat(w || 0) - parseFloat(prev.cut_weight || 0)).toFixed(2) }));
+                }} placeholder="0.00" required={formData.process_mode === 'ransa'} />
+              </div>
+            )}
             <div className="form-group">
               <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>Salida Limpia (Lbs)</span>
+                <span>{formData.process_mode === 'direct' ? 'Peso Procesado (Lbs)' : 'Salida Limpia (Lbs)'}</span>
                 <span style={{ color: 'var(--danger)', fontSize: '0.9rem', fontWeight: 900, textShadow: '0 0 10px rgba(239, 68, 68, 0.3)' }}>
                   MERMA: {formData.waste || '0.00'} LBS
                 </span>
-              </label>              <input type="number" step="0.01" value={formData.cut_weight} onChange={e => {
+              </label>
+              <input type="number" step="0.01" value={formData.cut_weight} onChange={e => {
                 const c = e.target.value;
                 setFormData(prev => ({ ...prev, cut_weight: c, waste: (parseFloat(prev.initial_weight || 0) - parseFloat(c || 0)).toFixed(2) }));
               }} placeholder="0.00" required />
