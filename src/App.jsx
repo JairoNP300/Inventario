@@ -899,7 +899,7 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
                       </td>
                     </tr>
                   );
-                }) : <tr><td colSpan={7} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '20px' }}>                }) : <tr><td colSpan={8} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '20px' }}>Sin datos de inventario</td></tr>}
+                }) : <tr><td colSpan={8} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '20px' }}>Sin datos de inventario</td></tr>}
               </tbody>
             </table>
           </div>
