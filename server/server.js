@@ -661,7 +661,7 @@ app.post('/api/reports/ransa', async (req, res) => {
     if (target.col !== 'bodega_1') {
       await query(`UPDATE inventory SET bodega_1 = bodega_1 - ? WHERE product_id = ?`, [scaleKg, product_id]);
     }
-    await query(`UPDATE inventory SET ${target.col} = ${target.col} + ?, initial_stock = initial_stock + ?, cajas = cajas + ? WHERE product_id = ?`, [target.value, target.value, boxCount, product_id]);
+    await query(`UPDATE inventory SET ${target.col} = ${target.col} + ?, initial_stock = initial_stock + ?, cajas = cajas + ?, entradas_cajas = entradas_cajas + ? WHERE product_id = ?`, [target.value, target.value, boxCount, boxCount, product_id]);
 
     await query('INSERT INTO movements (product_id, origin_warehouse, dest_warehouse, weight, type) VALUES (?, ?, ?, ?, ?)', [product_id, 'Ransa (Origen)', distribution_details, scaleKg, 'INCOME']);
 
@@ -728,6 +728,13 @@ app.post('/api/dispatches', async (req, res) => {
 
     const updateResult = await query(`UPDATE inventory SET ${bodegaCol} = ${bodegaCol} - ?, sold_stock = sold_stock + ? WHERE product_id = ?`, [weightInUnits, weightInUnits, product_id]);
     console.log('DISPATCH update result:', JSON.stringify(updateResult));
+
+    // Track cajas dispatched
+    const boxCount = parseInt(cajas) || 0;
+    if (boxCount > 0) {
+      await query('UPDATE inventory SET salidas_cajas = salidas_cajas + ? WHERE product_id = ?', [boxCount, product_id]);
+      console.log('DISPATCH cajas tracked:', boxCount);
+    }
 
     // Verify the update worked: read back the new value
     const { rows: checkRows } = await query(`SELECT ${bodegaCol} FROM inventory WHERE product_id = ?`, [product_id]);
