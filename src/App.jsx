@@ -863,14 +863,14 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
       pageSetup: { orientation: 'landscape', fitToPage: true, margins: { left: 0.4, right: 0.4, top: 0.5, bottom: 0.5, header: 0.2, footer: 0.2 } }
     });
 
-    ws.mergeCells('A1:D1');
+    ws.mergeCells('A1:B1');
     const titleCell = ws.getCell('A1');
-    titleCell.value = 'CONTROL DE CAJAS - ENTRADAS, SALIDAS Y STOCK ACTUAL';
+    titleCell.value = 'CONTROL DE CAJAS - STOCK ACTUAL';
     titleCell.font = { bold: true, size: 14, color: { argb: 'FFB45309' }, name: 'Calibri' };
     titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
     ws.getRow(1).height = 30;
 
-    ws.mergeCells('A2:D2');
+    ws.mergeCells('A2:B2');
     const subCell = ws.getCell('A2');
     subCell.value = `Generado: ${new Date().toLocaleString('es-SV', { timeZone: 'America/El_Salvador', dateStyle: 'long', timeStyle: 'short' })}`;
     subCell.font = { size: 9, color: { argb: 'FF666666' }, italic: true, name: 'Calibri' };
@@ -894,9 +894,9 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
     };
 
     ws.getColumn(1).width = 42;
-    [2,3,4].forEach(c => { ws.getColumn(c).width = 22; });
+    [2].forEach(c => { ws.getColumn(c).width = 22; });
 
-    const headers = ['Producto', 'Entradas (Cajas)', 'Salidas (Cajas)', 'Stock Actual (Cajas)'];
+    const headers = ['Producto', 'Stock Actual (Cajas)'];
     const headerRow = ws.addRow(headers);
     headerRow.height = 22;
     headerRow.eachCell((cell) => { Object.assign(cell, headerStyle); });
@@ -1134,27 +1134,21 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
             <thead>
               <tr>
                 <th className="col-carne">Producto</th>
-                <th className="col-qty">Entradas (Cajas)</th>
-                <th className="col-qty">Salidas (Cajas)</th>
                 <th className="col-qty" style={{ background: 'rgba(245,158,11,0.08)' }}>Stock Actual (Cajas)</th>
               </tr>
             </thead>
             <tbody>
               {displayRows.length > 0 ? displayRows.map(i => {
-                const entradas = toNum(i.entradas_cajas);
-                const salidas = toNum(i.salidas_cajas);
-                const stock = entradas - salidas;
+                const stock = toNum(i.stock_cajas);
                 return (
                   <tr key={`cajas-${i.code}`}>
                     <td className="col-carne" style={{ fontWeight: 700, color: 'var(--text-main)' }}>{i.name || `Producto ${i.code}`}</td>
-                    <td className="col-qty" style={{ color: '#06b6d4', fontWeight: 700 }}>{entradas.toFixed(0)}</td>
-                    <td className="col-qty" style={{ color: '#ef4444', fontWeight: 700 }}>{salidas.toFixed(0)}</td>
                     <td className="col-qty" style={{ background: 'rgba(245,158,11,0.08)', fontWeight: 800 }}>
                       <span style={{ color: stock <= 0 ? '#ef4444' : '#f59e0b', fontSize: '1rem' }}>{stock.toFixed(0)}</span>
                     </td>
                   </tr>
                 );
-              }) : <tr><td colSpan={4} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '20px' }}>Sin datos de cajas</td></tr>}
+              }) : <tr><td colSpan={2} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '20px' }}>Sin datos de cajas</td></tr>}
             </tbody>
           </table>
         </div>
