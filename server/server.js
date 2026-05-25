@@ -1521,7 +1521,6 @@ initDb().then(() => {
     } catch (err) {
       console.error('[SEED] Error:', err.message);
     }
-    }
     
     app.listen(port, '0.0.0.0', () => {
       console.log(`Server running at port ${port}`);
