@@ -863,14 +863,14 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
       pageSetup: { orientation: 'landscape', fitToPage: true, margins: { left: 0.4, right: 0.4, top: 0.5, bottom: 0.5, header: 0.2, footer: 0.2 } }
     });
 
-    ws.mergeCells('A1:B1');
+    ws.mergeCells('A1:D1');
     const titleCell = ws.getCell('A1');
-    titleCell.value = 'CONTROL DE CAJAS - STOCK ACTUAL';
+    titleCell.value = 'CONTROL DE CAJAS - ENTRADAS, SALIDAS Y STOCK ACTUAL';
     titleCell.font = { bold: true, size: 14, color: { argb: 'FFB45309' }, name: 'Calibri' };
     titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
     ws.getRow(1).height = 30;
 
-    ws.mergeCells('A2:B2');
+    ws.mergeCells('A2:D2');
     const subCell = ws.getCell('A2');
     subCell.value = `Generado: ${new Date().toLocaleString('es-SV', { timeZone: 'America/El_Salvador', dateStyle: 'long', timeStyle: 'short' })}`;
     subCell.font = { size: 9, color: { argb: 'FF666666' }, italic: true, name: 'Calibri' };
@@ -894,9 +894,9 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
     };
 
     ws.getColumn(1).width = 42;
-    [2].forEach(c => { ws.getColumn(c).width = 22; });
+    [2,3,4].forEach(c => { ws.getColumn(c).width = 22; });
 
-    const headers = ['Producto', 'Stock Actual (Cajas)'];
+    const headers = ['Producto', 'Entradas (Cajas)', 'Salidas (Cajas)', 'Stock Actual (Cajas)'];
     const headerRow = ws.addRow(headers);
     headerRow.height = 22;
     headerRow.eachCell((cell) => { Object.assign(cell, headerStyle); });
@@ -904,8 +904,10 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
     ws.views = [{ state: 'frozen', ySplit: 3 }];
 
     inventoryRows.forEach((i, idx) => {
-      const stock = toNum(i.stock_cajas);
-      const row = ws.addRow([i.name || `Producto ${i.code}`, stock]);
+      const entradas = toNum(i.entradas_cajas);
+      const salidas = toNum(i.salidas_cajas);
+      const stock = entradas - salidas;
+      const row = ws.addRow([i.name || `Producto ${i.code}`, entradas, salidas, stock]);
       row.height = 20;
       const rowFill = idx % 2 === 0 ? whiteFill : altFill;
       row.eachCell((cell, col) => {
@@ -915,7 +917,9 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
           alignment: { horizontal: col === 1 ? 'left' : 'center', vertical: 'middle' },
           numFmt: col === 1 ? '@' : '#,##0'
         };
-        if (col === 2) Object.assign(baseStyle, { font: { bold: true, size: 11, name: 'Calibri', color: { argb: stock <= 0 ? 'FFDC2626' : 'FFB45309' } } });
+        if (col === 2) Object.assign(baseStyle, { font: { bold: true, size: 10, name: 'Calibri', color: { argb: 'FF0284C7' } } });
+        if (col === 3) Object.assign(baseStyle, { font: { bold: true, size: 10, name: 'Calibri', color: { argb: 'FFDC2626' } } });
+        if (col === 4) Object.assign(baseStyle, { font: { bold: true, size: 11, name: 'Calibri', color: { argb: stock <= 0 ? 'FFDC2626' : 'FFB45309' } } });
         Object.assign(cell, baseStyle);
       });
     });
@@ -929,9 +933,13 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
     totalLabel.getCell(1).border = { top: { style: 'medium', color: { argb: 'FFB45309' } }, bottom: { style: 'double', color: { argb: 'FFB45309' } }, left: { style: 'thin', color: { argb: 'FFCCCCCC' } }, right: { style: 'thin', color: { argb: 'FFCCCCCC' } } };
     totalLabel.height = 22;
 
-    [2].forEach(col => {
+    [2,3,4].forEach(col => {
       const cell = totalLabel.getCell(col);
-      const sum = inventoryRows.reduce((acc, i) => acc + toNum(i.stock_cajas), 0);
+      const sum = inventoryRows.reduce((acc, i) => {
+        const ent = toNum(i.entradas_cajas);
+        const sal = toNum(i.salidas_cajas);
+        return acc + ([0, ent, sal, ent - sal][col - 1]);
+      }, 0);
       cell.value = sum;
       cell.font = { bold: true, size: 10, name: 'Calibri', color: { argb: 'FFFFFFFF' } };
       cell.fill = headerFill;
