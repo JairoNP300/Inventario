@@ -2229,10 +2229,14 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
           {/* Cantidad: visible para todos menos vacío */}
           {formData.agro_id && (
             <div className="form-group">
-              <label>{formData.agro_id === 'TRASLADO' ? 'Cantidad a Trasladar' : 'Cantidad a Despachar'}</label>
+              <label>{formData.agro_id === 'TRASLADO' ? 'Cantidad de Cajas a Trasladar' : 'Cantidad a Despachar'}</label>
               <div style={{ display: 'flex', gap: '8px' }}>
-                <input type="number" step="0.01" value={formData.weight} onChange={e => setFormData({ ...formData, weight: e.target.value })} required style={{ flex: 1 }} />
-                <UnitSelector value={formData.unit_type} onChange={val => setFormData({ ...formData, unit_type: val })} />
+                <input type="number" step={formData.agro_id === 'TRASLADO' ? '1' : '0.01'} min={formData.agro_id === 'TRASLADO' ? '0' : undefined} value={formData.weight} onChange={e => setFormData({ ...formData, weight: e.target.value })} required style={{ flex: 1 }} />
+                {formData.agro_id === 'TRASLADO' ? (
+                  <div style={{ display: 'flex', alignItems: 'center', padding: '8px 16px', background: 'rgba(245,158,11,0.15)', borderRadius: '8px', border: '1px solid rgba(245,158,11,0.3)', color: '#f59e0b', fontWeight: 700, fontSize: '0.85rem', whiteSpace: 'nowrap' }}>Cajas</div>
+                ) : (
+                  <UnitSelector value={formData.unit_type} onChange={val => setFormData({ ...formData, unit_type: val })} />
+                )}
               </div>
             </div>
           )}
