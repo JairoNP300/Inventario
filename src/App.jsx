@@ -704,7 +704,7 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
     const val = parseFloat(adjData.current_stock);
     const cajasVal = parseInt(adjData.cajas) || 0;
     if (isNaN(val) && cajasVal <= 0) { alert('Ingresa una cantidad (stock o cajas)'); return; }
-    const payload = { product_id: adjData.product_id, warehouse: adjData.warehouse, mode: 'add' };
+    const payload = { product_id: adjData.product_id, warehouse: adjData.warehouse, mode: adjData.mode };
     if (!isNaN(val)) payload.current_stock = val;
     if (cajasVal > 0) payload.cajas = cajasVal;
     apiFetch(`${API_BASE}/inventory/adjust`, {
@@ -712,7 +712,7 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
       body: JSON.stringify(payload)
     })
     .then(r => r.json())
-    .then(d => { if (d.error) { alert('Error: ' + d.error); return; } onUpdate(); setAdjData({ product_id: '', current_stock: '', cajas: '', warehouse: 'Ransa' }); alert('Ajuste guardado'); })
+    .then(d => { if (d.error) { alert('Error: ' + d.error); return; } onUpdate(); setAdjData({ product_id: '', current_stock: '', cajas: '', warehouse: 'Ransa', mode: 'add' }); alert('Ajuste guardado'); })
     .catch(err => alert('Error de conexión: ' + err.message));
   };
 
@@ -1020,7 +1020,7 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
       {/* === AJUSTE INDIVIDUAL + TABLA === */}
       <div className="card-grid">
         <form className="form-card" onSubmit={handleAdjust}>
-          <h4><Edit2 size={16} /> Ajuste Individual (suma al existente)</h4>
+          <h4><Edit2 size={16} /> Ajuste Individual</h4>
           <div className="form-group">
             <label>Producto</label>
             <select value={adjData.product_id} onChange={e => setAdjData({ ...adjData, product_id: e.target.value })} required>
@@ -1037,12 +1037,19 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
               {warehouseOptions.map(w => <option key={w.value} value={w.value}>{w.label}</option>)}
             </select>
           </div>
+          <div style={{ display: 'flex', gap: '6px', marginBottom: '0.5rem' }}>
+            <button type="button" onClick={() => setAdjData({ ...adjData, mode: 'add' })} style={{ flex: 1, padding: '6px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '0.75rem', background: adjData.mode === 'add' ? 'var(--accent)' : 'rgba(255,255,255,0.07)', color: adjData.mode === 'add' ? '#020617' : 'var(--text-muted)' }}>Sumar (+)</button>
+            <button type="button" onClick={() => setAdjData({ ...adjData, mode: 'set' })} style={{ flex: 1, padding: '6px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '0.75rem', background: adjData.mode === 'set' ? '#f59e0b' : 'rgba(255,255,255,0.07)', color: adjData.mode === 'set' ? '#020617' : 'var(--text-muted)' }}>Fijar (=)</button>
+          </div>
+          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: '0.8rem' }}>
+            {adjData.mode === 'add' ? 'Suma la cantidad al stock existente' : 'Fija el stock al valor exacto ingresado'}
+          </div>
           <div className="form-group">
-            <label>Agregar Stock ({adjData.warehouse === 'Ransa' ? 'KG' : 'Lbs'})</label>
+            <label>{adjData.mode === 'add' ? 'Agregar' : 'Fijar'} Stock ({adjData.warehouse === 'Ransa' ? 'KG' : 'Lbs'})</label>
             <input type="number" step="0.01" value={adjData.current_stock} onChange={e => setAdjData({ ...adjData, current_stock: e.target.value })} placeholder={adjData.warehouse === 'Ransa' ? 'Ej: 150 kg' : 'Ej: 330 lbs'} />
           </div>
           <div className="form-group">
-            <label>Agregar Cajas</label>
+            <label>{adjData.mode === 'add' ? 'Agregar' : 'Fijar'} Cajas</label>
             <input type="number" step="1" min="0" value={adjData.cajas} onChange={e => setAdjData({ ...adjData, cajas: e.target.value })} placeholder="Ej: 10" />
           </div>
           <button type="submit" className="btn-primary">Guardar Ajuste</button>
