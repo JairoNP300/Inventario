@@ -843,11 +843,8 @@ app.post('/api/inventory/adjust', async (req, res) => {
       const curStock = curEntradas - curSalidas;
       if (mode === 'set') {
         const diff = cajas - curStock;
-        if (diff > 0) {
-          await query('UPDATE inventory SET entradas_cajas = entradas_cajas + ? WHERE product_id = ?', [diff, product_id]);
-        } else if (diff < 0) {
-          await query('UPDATE inventory SET salidas_cajas = salidas_cajas + ? WHERE product_id = ?', [Math.abs(diff), product_id]);
-        }
+        // Adjust entradas_cajas to achieve target stock (preserves salidas/dispatch history)
+        await query('UPDATE inventory SET entradas_cajas = ? WHERE product_id = ?', [curSalidas + cajas, product_id]);
         cajasChange = cajas;
       } else {
         // Sumar mode: add to entradas (boxes arrived)
@@ -922,7 +919,7 @@ app.post('/api/inventory/undo-adjustment', async (req, res) => {
 app.get('/api/reports/inventory-status', async (req, res) => {
   try {
     const { rows } = await query(`
-      SELECT p.code, p.name, i.initial_stock, i.sold_stock, i.bodega_1, i.bodega_2, i.bodega_3, i.bodega_4, i.cajas, i.entradas_cajas, i.salidas_cajas,
+      SELECT p.code, p.name, i.initial_stock, i.sold_stock, i.bodega_1, i.bodega_2, i.bodega_3, i.bodega_4, i.entradas_cajas, i.salidas_cajas,
              (i.bodega_1 + i.bodega_2 + i.bodega_3 + i.bodega_4) as final_stock,
              (i.entradas_cajas - i.salidas_cajas) as stock_cajas
       FROM inventory i
