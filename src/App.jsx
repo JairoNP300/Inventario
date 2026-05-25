@@ -743,6 +743,41 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
     setQuickLoading(false);
   };
 
+  const exportBalanceExcel = () => {
+    const factor = viewUnit === 'Kg' ? 1 : 2.20462;
+    const data = inventoryRows.map(i => {
+      const b1 = viewUnit === 'Kg' ? toNum(i.bodega_1) : toNum(i.bodega_1) * factor;
+      const b2 = viewUnit === 'Kg' ? toNum(i.bodega_2) / factor : toNum(i.bodega_2);
+      const b3 = viewUnit === 'Kg' ? toNum(i.bodega_3) / factor : toNum(i.bodega_3);
+      const b4 = viewUnit === 'Kg' ? toNum(i.bodega_4) / factor : toNum(i.bodega_4);
+      return {
+        Producto: i.name || `Producto ${i.code}`,
+        [`Entradas (${viewUnit})`]: viewUnit === 'Kg' ? toNum(i.initial_stock) : toNum(i.initial_stock) * factor,
+        [`Ransa (${viewUnit})`]: b1,
+        [`Soyapango (${viewUnit})`]: b2,
+        [`Usulután (${viewUnit})`]: b3,
+        [`Lomas (${viewUnit})`]: b4,
+        Cajas: toNum(i.cajas),
+        [`Stock Actual (${viewUnit})`]: b1 + b2 + b3 + b4
+      };
+    });
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data), "Balance Bodegas");
+    XLSX.writeFile(wb, `Balance_Bodegas_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
+  const exportCajasExcel = () => {
+    const data = inventoryRows.map(i => ({
+      Producto: i.name || `Producto ${i.code}`,
+      'Entradas (Cajas)': toNum(i.entradas_cajas),
+      'Salidas (Cajas)': toNum(i.salidas_cajas),
+      'Stock Actual (Cajas)': toNum(i.entradas_cajas) - toNum(i.salidas_cajas)
+    }));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data), "Control Cajas");
+    XLSX.writeFile(wb, `Control_Cajas_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
   return (
     <div>
       <h3>Ajustes y Consolidado de Inventario</h3>
