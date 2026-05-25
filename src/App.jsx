@@ -754,14 +754,14 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
       pageSetup: { orientation: 'landscape', fitToPage: true, margins: { left: 0.4, right: 0.4, top: 0.5, bottom: 0.5, header: 0.2, footer: 0.2 } }
     });
 
-    ws.mergeCells('A1:H1');
+    ws.mergeCells('A1:G1');
     const titleCell = ws.getCell('A1');
     titleCell.value = 'BALANCE CONSOLIDADO POR BODEGA';
     titleCell.font = { bold: true, size: 14, color: { argb: 'FF1E3A5F' }, name: 'Calibri' };
     titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
     ws.getRow(1).height = 30;
 
-    ws.mergeCells('A2:H2');
+    ws.mergeCells('A2:G2');
     const subCell = ws.getCell('A2');
     subCell.value = `Generado: ${new Date().toLocaleString('es-SV', { timeZone: 'America/El_Salvador', dateStyle: 'long', timeStyle: 'short' })}`;
     subCell.font = { size: 9, color: { argb: 'FF666666' }, italic: true, name: 'Calibri' };
@@ -785,11 +785,10 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
       border: { top: { style: 'thin', color: { argb: 'FFE0E0E0' } }, left: { style: 'thin', color: { argb: 'FFE0E0E0' } }, bottom: { style: 'thin', color: { argb: 'FFE0E0E0' } }, right: { style: 'thin', color: { argb: 'FFE0E0E0' } } }
     };
     const numFmt = '#,##0.0';
-    const intFmt = '#,##0';
 
-    const headers = ['Producto', `Entradas (${viewUnit})`, `Ransa (${viewUnit})`, `Soyapango (${viewUnit})`, `Usulután (${viewUnit})`, `Lomas (${viewUnit})`, 'Cajas', `Stock Actual (${viewUnit})`];
+    const headers = ['Producto', `Entradas (${viewUnit})`, `Ransa (${viewUnit})`, `Soyapango (${viewUnit})`, `Usulután (${viewUnit})`, `Lomas (${viewUnit})`, `Stock Actual (${viewUnit})`];
     ws.getColumn(1).width = 42;
-    [2,3,4,5,6,7,8].forEach(c => { ws.getColumn(c).width = 18; });
+    [2,3,4,5,6,7].forEach(c => { ws.getColumn(c).width = 18; });
 
     const headerRow = ws.addRow(headers);
     headerRow.height = 22;
@@ -804,7 +803,7 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
       const b3 = viewUnit === 'Kg' ? toNum(i.bodega_3) / factor : toNum(i.bodega_3);
       const b4 = viewUnit === 'Kg' ? toNum(i.bodega_4) / factor : toNum(i.bodega_4);
       const total = b1 + b2 + b3 + b4;
-      const row = ws.addRow([i.name || `Producto ${i.code}`, viewUnit === 'Kg' ? toNum(i.initial_stock) : toNum(i.initial_stock) * factor, b1, b2, b3, b4, toNum(i.cajas), total]);
+      const row = ws.addRow([i.name || `Producto ${i.code}`, viewUnit === 'Kg' ? toNum(i.initial_stock) : toNum(i.initial_stock) * factor, b1, b2, b3, b4, total]);
       row.height = 20;
       const rowFill = idx % 2 === 0 ? whiteFill : altFill;
       row.eachCell((cell, col) => {
@@ -812,9 +811,9 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
           ...cellStyle,
           fill: rowFill,
           alignment: { horizontal: col === 1 ? 'left' : 'center', vertical: 'middle' },
-          numFmt: col === 1 ? '@' : (col === 7 ? intFmt : numFmt)
+          numFmt: col === 1 ? '@' : numFmt
         });
-        if (col === 8) {
+        if (col === 7) {
           cell.font = { bold: true, size: 10, name: 'Calibri', color: { argb: total < 20 ? 'FFEF4444' : 'FF1E3A5F' } };
         }
       });
@@ -830,21 +829,21 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
     totalLabel.getCell(1).border = { top: { style: 'medium', color: { argb: 'FF1E3A5F' } }, bottom: { style: 'double', color: { argb: 'FF1E3A5F' } }, left: { style: 'thin', color: { argb: 'FFCCCCCC' } }, right: { style: 'thin', color: { argb: 'FFCCCCCC' } } };
     totalLabel.height = 22;
 
-    [2,3,4,5,6,7,8].forEach(col => {
+    [2,3,4,5,6,7].forEach(col => {
       const cell = totalLabel.getCell(col);
       const sum = inventoryRows.reduce((acc, i) => {
         const b1 = viewUnit === 'Kg' ? toNum(i.bodega_1) : toNum(i.bodega_1) * factor;
         const b2 = viewUnit === 'Kg' ? toNum(i.bodega_2) / factor : toNum(i.bodega_2);
         const b3 = viewUnit === 'Kg' ? toNum(i.bodega_3) / factor : toNum(i.bodega_3);
         const b4 = viewUnit === 'Kg' ? toNum(i.bodega_4) / factor : toNum(i.bodega_4);
-        const vals = [0, viewUnit === 'Kg' ? toNum(i.initial_stock) : toNum(i.initial_stock) * factor, b1, b2, b3, b4, toNum(i.cajas), b1 + b2 + b3 + b4];
+        const vals = [0, viewUnit === 'Kg' ? toNum(i.initial_stock) : toNum(i.initial_stock) * factor, b1, b2, b3, b4, b1 + b2 + b3 + b4];
         return acc + vals[col - 1];
       }, 0);
       cell.value = sum;
       cell.font = { bold: true, size: 10, name: 'Calibri', color: { argb: 'FFFFFFFF' } };
       cell.fill = headerFill;
       cell.alignment = { horizontal: 'center', vertical: 'middle' };
-      cell.numFmt = col === 7 ? intFmt : numFmt;
+      cell.numFmt = numFmt;
       cell.border = { top: { style: 'medium', color: { argb: 'FF1E3A5F' } }, bottom: { style: 'double', color: { argb: 'FF1E3A5F' } }, left: { style: 'thin', color: { argb: 'FFCCCCCC' } }, right: { style: 'thin', color: { argb: 'FFCCCCCC' } } };
     });
 
