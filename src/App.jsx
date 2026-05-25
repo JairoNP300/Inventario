@@ -80,7 +80,7 @@ const ROLES = {
     label: 'Soyapango — Bodega',
     group: 'Soyapango',
     password: 'soyapangobodega',
-    tabs: ['distribution','status','cajas'],
+    tabs: ['distribution','status'],
     defaultTab: 'distribution'
   },
   // ── Usulután ────────────────────────────────────────────────────────────────
@@ -132,7 +132,7 @@ const ROLES = {
     label: 'Lomas — Bodega',
     group: 'Lomas de San Francisco',
     password: 'lomasbodega',
-    tabs: ['status','cajas'],
+    tabs: ['status'],
     defaultTab: 'status'
   }
 };
@@ -4301,7 +4301,6 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
     { id: 'production',   label: 'Procesos',   icon: <Cpu size={18} /> },
     { id: 'distribution', label: 'Despacho / Factura',   icon: <Truck size={18} /> },
     { id: 'status',       label: 'Stock',      icon: <BarChart3 size={18} /> },
-    { id: 'cajas',        label: 'Cajas',      icon: <Layers size={18} /> },
     { id: 'reports',      label: 'Export',     icon: <DownloadCloud size={18} /> },
     { id: 'comida',       label: 'Comida',     icon: <Utensils size={18} /> },
     { id: 'monitor',      label: 'Monitor',    icon: <Activity size={18} /> },
@@ -4390,40 +4389,6 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
               {activeTab === 'comida' && <FoodCostingSystem products={products} onUpdate={triggerRefresh} logs={foodCostingLogs} />}
               {activeTab === 'monitor' && <AdminMonitor />}
               {activeTab === 'config' && <ConfigPanel products={products} onUpdate={triggerRefresh} />}
-              {activeTab === 'cajas' && (
-                <div className="form-card">
-                  <h2 style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#f59e0b', marginBottom: '1.5rem' }}><Layers size={22} /> Control de Cajas</h2>
-                  <div className="grid-table-container">
-                    <table>
-                      <thead>
-                        <tr>
-                          <th className="col-carne">Producto</th>
-                          <th className="col-qty">Entradas (Cajas)</th>
-                          <th className="col-qty">Salidas (Cajas)</th>
-                          <th className="col-qty" style={{ background: 'rgba(245,158,11,0.08)' }}>Stock Actual (Cajas)</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {inventorySummary.length > 0 ? inventorySummary.map(i => {
-                          const entradas = parseFloat(i.entradas_cajas) || 0;
-                          const salidas = parseFloat(i.salidas_cajas) || 0;
-                          const stock = entradas - salidas;
-                          return (
-                            <tr key={`ct-${i.code}`}>
-                              <td className="col-carne" style={{ fontWeight: 700, color: 'var(--text-main)' }}>{i.name || `Producto ${i.code}`}</td>
-                              <td className="col-qty" style={{ color: '#06b6d4', fontWeight: 700 }}>{entradas.toFixed(0)}</td>
-                              <td className="col-qty" style={{ color: '#ef4444', fontWeight: 700 }}>{salidas.toFixed(0)}</td>
-                              <td className="col-qty" style={{ background: 'rgba(245,158,11,0.08)', fontWeight: 800 }}>
-                                <span style={{ color: stock <= 0 ? '#ef4444' : '#f59e0b', fontSize: '1rem' }}>{stock.toFixed(0)}</span>
-                              </td>
-                            </tr>
-                          );
-                        }) : <tr><td colSpan={4} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '20px' }}>Cargando datos de cajas...</td></tr>}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
             </TabErrorBoundary>
           </motion.div>
         </AnimatePresence>
