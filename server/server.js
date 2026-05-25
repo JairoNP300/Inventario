@@ -954,7 +954,7 @@ app.get('/api/agros', async (req, res) => {
 });
 
 app.post('/api/inventory/transfer', async (req, res) => {
-  const { product_id, origin, destination, origin_weight, dest_weight, weight } = req.body;
+  const { product_id, origin, destination, origin_weight, dest_weight, weight, unit_type } = req.body;
   try {
     const colMap = {
       'Ransa': 'bodega_1',
@@ -964,15 +964,23 @@ app.post('/api/inventory/transfer', async (req, res) => {
       'Usulután': 'bodega_3',
       'Lomas de San Francisco': 'bodega_4'
     };
-    const originCol = colMap[origin];
-    const destCol = colMap[destination];
     const deductWeight = origin_weight ?? weight ?? 0;
     const addWeight = dest_weight ?? weight ?? 0;
 
-    await query(`UPDATE inventory SET ${originCol} = ${originCol} - ? WHERE product_id = ?`, [deductWeight, product_id]);
-    await query(`UPDATE inventory SET ${destCol} = ${destCol} + ? WHERE product_id = ?`, [addWeight, product_id]);
+    if (unit_type === 'Cajas') {
+      // Cajas transfer: only update salidas_cajas (cajas leave Ransa)
+      const boxCount = parseInt(weight) || 0;
+      if (boxCount > 0) {
+        await query('UPDATE inventory SET salidas_cajas = salidas_cajas + ? WHERE product_id = ?', [boxCount, product_id]);
+      }
+    } else {
+      const originCol = colMap[origin];
+      const destCol = colMap[destination];
+      await query(`UPDATE inventory SET ${originCol} = ${originCol} - ? WHERE product_id = ?`, [deductWeight, product_id]);
+      await query(`UPDATE inventory SET ${destCol} = ${destCol} + ? WHERE product_id = ?`, [addWeight, product_id]);
+    }
 
-    await query('INSERT INTO movements (product_id, origin_warehouse, dest_warehouse, weight, type) VALUES (?, ?, ?, ?, ?)', [product_id, origin, destination, deductWeight, 'TRANSFER']);
+    await query('INSERT INTO movements (product_id, origin_warehouse, dest_warehouse, weight, type, origin_weight, dest_weight) VALUES (?, ?, ?, ?, ?, ?, ?)', [product_id, origin, destination, deductWeight, 'TRANSFER', deductWeight, addWeight]);
 
     res.json({ success: true });
   } catch (err) {
