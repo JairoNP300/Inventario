@@ -377,7 +377,6 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
       setFormData({ product_id: '', initial_kg: '', initial_weight: '', cut_weight: '', waste: '', storage_cost: '', transport_cost: '', labor_cost: '', other_costs: '' });
       setEditingId(null);
       alert(editingId ? 'Cambios guardados correctamente' : 'Proceso registrado');
-      if (!editingId) window.dispatchEvent(new CustomEvent('changeTab', { detail: 'distribution' }));
     });
   };
 
@@ -402,7 +401,6 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
               setFormData({ product_id: '', initial_weight: '', cut_weight: '', waste: '', storage_cost: '', transport_cost: '', labor_cost: '', other_costs: '', process_mode: 'ransa', dest_warehouse: 'Soyapango' });
               setEditingId(null);
               onUpdate();
-              if (!editingId) window.dispatchEvent(new CustomEvent('changeTab', { detail: 'distribution' }));
             })
             .catch(err => { console.error('Error producción:', err); alert('Error de conexión'); });
         }} className="form-card">
