@@ -132,7 +132,7 @@ const ROLES = {
     label: 'Lomas — Bodega',
     group: 'Lomas de San Francisco',
     password: 'lomasbodega',
-    tabs: ['status'],
+    tabs: ['status','cajas'],
     defaultTab: 'status'
   }
 };
