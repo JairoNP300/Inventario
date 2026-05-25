@@ -1395,7 +1395,7 @@ initDb().then(() => {
       
       // Seed entradas_cajas (cajas received per product) if not yet seeded
       try {
-        const { rows: checkRows } = await query('SELECT COUNT(*) as cnt FROM inventory WHERE entradas_cajas > 0');
+        const { rows: checkRows } = await query('SELECT COUNT(*) as cnt FROM inventory WHERE salidas_cajas > 0');
         if (checkRows[0].cnt === 0) {
           const cajasSeed = { "1618":326,"1619":200,"1620":114,"1621":45,"1622":43,"1623":45,"1624":105,"1625":55,"1626":46,"1627":53,"1628":186 };
           const salidasSeed = { "1618":103,"1619":41,"1620":105,"1621":32,"1622":20,"1623":34,"1624":1,"1625":55,"1626":2,"1627":21,"1628":33 };
