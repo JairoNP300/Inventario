@@ -4701,7 +4701,7 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
           <div className="status-item" style={{ borderColor: 'rgba(245,158,11,0.3)' }}>
             <div className="status-label">CAJAS TOTALES</div>
             <div className="status-value" style={{ color: '#f59e0b' }}>
-              {Math.round(inventorySummary.reduce((acc, i) => acc + (parseFloat(i.cajas) || 0), 0)).toLocaleString()}
+              {Math.round(inventorySummary.reduce((acc, i) => acc + (parseFloat(i.stock_cajas ?? i.cajas) || 0), 0)).toLocaleString()}
             </div>
           </div>
 
