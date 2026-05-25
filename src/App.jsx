@@ -1126,21 +1126,27 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
             <thead>
               <tr>
                 <th className="col-carne">Producto</th>
+                <th className="col-qty">Entradas (Cajas)</th>
+                <th className="col-qty">Salidas (Cajas)</th>
                 <th className="col-qty" style={{ background: 'rgba(245,158,11,0.08)' }}>Stock Actual (Cajas)</th>
               </tr>
             </thead>
             <tbody>
               {displayRows.length > 0 ? displayRows.map(i => {
-                const stock = toNum(i.stock_cajas);
+                const entradas = toNum(i.entradas_cajas);
+                const salidas = toNum(i.salidas_cajas);
+                const stock = entradas - salidas;
                 return (
                   <tr key={`cajas-${i.code}`}>
                     <td className="col-carne" style={{ fontWeight: 700, color: 'var(--text-main)' }}>{i.name || `Producto ${i.code}`}</td>
+                    <td className="col-qty" style={{ color: '#06b6d4', fontWeight: 700 }}>{entradas.toFixed(0)}</td>
+                    <td className="col-qty" style={{ color: '#ef4444', fontWeight: 700 }}>{salidas.toFixed(0)}</td>
                     <td className="col-qty" style={{ background: 'rgba(245,158,11,0.08)', fontWeight: 800 }}>
                       <span style={{ color: stock <= 0 ? '#ef4444' : '#f59e0b', fontSize: '1rem' }}>{stock.toFixed(0)}</span>
                     </td>
                   </tr>
                 );
-              }) : <tr><td colSpan={2} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '20px' }}>Sin datos de cajas</td></tr>}
+              }) : <tr><td colSpan={4} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '20px' }}>Sin datos de cajas</td></tr>}
             </tbody>
           </table>
         </div>
