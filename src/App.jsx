@@ -34,7 +34,7 @@ import {
   Bell,
   Clock
 } from 'lucide-react';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import InvoiceLayout from './components/InvoiceLayout.jsx';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
