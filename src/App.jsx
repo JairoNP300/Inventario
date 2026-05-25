@@ -65,7 +65,7 @@ const ROLES = {
     label: 'Administrador',
     group: 'Administración',
     password: 'admin2026',
-    tabs: ['income','production','distribution','status','reports','comida','monitor','config'],
+    tabs: ['income','production','distribution','status','cajas','reports','comida','monitor','config'],
     defaultTab: 'income'
   },
   // ── Soyapango ───────────────────────────────────────────────────────────────
@@ -4301,6 +4301,7 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
     { id: 'production',   label: 'Procesos',   icon: <Cpu size={18} /> },
     { id: 'distribution', label: 'Despacho / Factura',   icon: <Truck size={18} /> },
     { id: 'status',       label: 'Stock',      icon: <BarChart3 size={18} /> },
+    { id: 'cajas',        label: 'Cajas',      icon: <Layers size={18} /> },
     { id: 'reports',      label: 'Export',     icon: <DownloadCloud size={18} /> },
     { id: 'comida',       label: 'Comida',     icon: <Utensils size={18} /> },
     { id: 'monitor',      label: 'Monitor',    icon: <Activity size={18} /> },
