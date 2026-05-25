@@ -80,7 +80,7 @@ const ROLES = {
     label: 'Soyapango — Bodega',
     group: 'Soyapango',
     password: 'soyapangobodega',
-    tabs: ['distribution','status'],
+    tabs: ['distribution','status','cajas'],
     defaultTab: 'distribution'
   },
   // ── Usulután ────────────────────────────────────────────────────────────────
