@@ -2174,85 +2174,98 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
         )}
 
         {activeSubTab === 'dispatch' && (
-          <div className="grid-2col">
-            <div className="form-group">
-              <label>Punto de Entrega (Destino)</label>
-              <select value={formData.agro_id} onChange={e => {
-                const val = e.target.value;
-                if (val === 'VENTA_DIRECTA') {
-                  setFormData({ ...formData, agro_id: val, client_name: '', client_nit: '', client_nrc: '', client_address: '' });
-                } else if (val === 'TRASLADO') {
-                  setFormData({ ...formData, agro_id: val });
-                } else {
-                  setFormData({ ...formData, agro_id: val, client_name: '' });
-                }
-              }} required>
-                <option value="">Seleccione Destino...</option>
-                <option value="VENTA_DIRECTA">Venta directa</option>
-                <option value="TRASLADO">Traslado (cambio de bodega)</option>
-                {agros.filter(a => a.name !== 'Ransa').map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
-              </select>
-              {formData.agro_id === 'TRASLADO' && (
-                <div style={{ marginTop: '10px', display: 'flex', gap: '8px', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--accent)', fontWeight: 700 }}>Desde {formData.origin} →</span>
-                  <select
-                    value={formData.transfer_destination}
-                    onChange={e => setFormData({ ...formData, transfer_destination: e.target.value })}
-                    style={{ flex: 1, padding: '8px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', color: 'white', borderRadius: '8px' }}
-                  >
-                    <option value="Usulután">Usulután</option>
-                    <option value="Soyapango">Soyapango</option>
-                    <option value="Lomas de San Francisco">Lomas de San Francisco</option>
-                  </select>
-                </div>
-              )}
+          <>
+          <div className="form-group">
+            <label>Punto de Entrega (Destino)</label>
+            <select value={formData.agro_id} onChange={e => {
+              const val = e.target.value;
+              if (val === 'VENTA_DIRECTA') {
+                setFormData({ ...formData, agro_id: val, client_name: '', client_nit: '', client_nrc: '', client_address: '' });
+              } else if (val === 'TRASLADO') {
+                setFormData({ ...formData, agro_id: val });
+              } else {
+                setFormData({ ...formData, agro_id: val, client_name: '' });
+              }
+            }} required>
+              <option value="">Seleccione Destino...</option>
+              <option value="TRASLADO">Traslado (cambio de bodega)</option>
+              <option value="VENTA_DIRECTA">Venta directa</option>
+              {agros.filter(a => a.name !== 'Ransa').map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+            </select>
+          </div>
+
+          {/* Traslado: solo origen, destino y peso */}
+          {formData.agro_id === 'TRASLADO' && (
+            <div className="grid-2col">
+              <div className="form-group">
+                <label>Bodega de Origen</label>
+                <select value={formData.origin} onChange={e => setFormData({ ...formData, origin: e.target.value })} required style={{ border: '2px solid var(--border)', background: 'rgba(0,0,0,0.2)', padding: '8px', borderRadius: '8px', color: 'white', width: '100%' }}>
+                  <option value="Ransa">Ransa</option>
+                  <option value="Soyapango">Soyapango</option>
+                  <option value="Usulután">Usulután</option>
+                  <option value="Lomas de San Francisco">Lomas de San Francisco</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Bodega Destino</label>
+                <select value={formData.transfer_destination} onChange={e => setFormData({ ...formData, transfer_destination: e.target.value })} required style={{ border: '2px solid var(--accent)', background: 'rgba(0,0,0,0.2)', padding: '8px', borderRadius: '8px', color: 'white', width: '100%' }}>
+                  <option value="Usulután">Usulután</option>
+                  <option value="Soyapango">Soyapango</option>
+                  <option value="Lomas de San Francisco">Lomas de San Francisco</option>
+                  <option value="Ransa">Ransa</option>
+                </select>
+              </div>
             </div>
+          )}
+
+          {/* Venta directa: no necesita bodega origen (default Soyapango) */}
+          {formData.agro_id === 'VENTA_DIRECTA' && (
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
+              Venta desde: <b style={{ color: 'var(--accent)' }}>{formData.origin}</b>
+            </div>
+          )}
+
+          {/* Cliente con factura: mostrar origen */}
+          {formData.agro_id && formData.agro_id !== 'TRASLADO' && formData.agro_id !== 'VENTA_DIRECTA' && (
             <div className="form-group">
               <label>Bodega de Origen</label>
-              <motion.select
-                whileFocus={{ scale: 1.05, borderColor: 'var(--accent)' }}
-                value={formData.origin}
-                onChange={e => setFormData({ ...formData, origin: e.target.value })}
-                required
-                style={{ border: '2px solid var(--border)', background: 'rgba(0,0,0,0.2)' }}
-              >
+              <select value={formData.origin} onChange={e => setFormData({ ...formData, origin: e.target.value })} required style={{ border: '2px solid var(--border)', background: 'rgba(0,0,0,0.2)', padding: '8px', borderRadius: '8px', color: 'white', width: '100%' }}>
                 <option value="Ransa">Ransa</option>
-                <option value="Lomas de San Francisco">Lomas de San Francisco</option>
                 <option value="Soyapango">Soyapango</option>
                 <option value="Usulután">Usulután</option>
-              </motion.select>
+                <option value="Lomas de San Francisco">Lomas de San Francisco</option>
+              </select>
             </div>
-          </div>
-        )}
+          )}
 
-        {(activeSubTab === 'transfer' || activeSubTab === 'dispatch') && (
-          <div className="form-group">
-            <label>{activeSubTab === 'dispatch' ? 'Cantidad a Despachar' : 'Peso a Mover'}</label>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <input type="number" step="0.01" value={formData.weight} onChange={e => setFormData({ ...formData, weight: e.target.value })} required style={{ flex: 1 }} />
-              <UnitSelector value={formData.unit_type} onChange={val => setFormData({ ...formData, unit_type: val })} />
-            </div>
-          </div>
-        )}
-
-        {activeSubTab === 'dispatch' && (
-          <>
-            <div className="form-row two-col">
-              <div className="form-group">
-                <label>Descuento (%)</label>
-                <input type="number" step="0.01" min="0" max="100" value={formData.discount_percent} onChange={e => setFormData({ ...formData, discount_percent: e.target.value })} placeholder="0" />
-              </div>
-              <div className="form-group">
-                <label>Valor Monetario Total ($)</label>
-                <input type="number" step="0.01" value={formData.value} onChange={e => setFormData({ ...formData, value: e.target.value })} required />
+          {/* Cantidad: visible para todos menos vacío */}
+          {formData.agro_id && (
+            <div className="form-group">
+              <label>{formData.agro_id === 'TRASLADO' ? 'Cantidad a Trasladar' : 'Cantidad a Despachar'}</label>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input type="number" step="0.01" value={formData.weight} onChange={e => setFormData({ ...formData, weight: e.target.value })} required style={{ flex: 1 }} />
+                <UnitSelector value={formData.unit_type} onChange={val => setFormData({ ...formData, unit_type: val })} />
               </div>
             </div>
-            
-            <hr style={{ opacity: 0.1, margin: '2rem 0' }} />
-            
-            {formData.agro_id === 'VENTA_DIRECTA' ? (
-              <>
-                <h4 style={{ color: 'var(--accent)', marginBottom: '1rem' }}>Datos de Entrega</h4>
+          )}
+
+          {/* Precio, Descuento, Factura: solo para ventas NO traslado */}
+          {formData.agro_id && formData.agro_id !== 'TRASLADO' && (
+            <>
+              <div className="form-row two-col">
+                <div className="form-group">
+                  <label>Descuento (%)</label>
+                  <input type="number" step="0.01" min="0" max="100" value={formData.discount_percent} onChange={e => setFormData({ ...formData, discount_percent: e.target.value })} placeholder="0" />
+                </div>
+                <div className="form-group">
+                  <label>Valor Monetario Total ($)</label>
+                  <input type="number" step="0.01" value={formData.value} onChange={e => setFormData({ ...formData, value: e.target.value })} required />
+                </div>
+              </div>
+              
+              <hr style={{ opacity: 0.1, margin: '2rem 0' }} />
+              
+              {formData.agro_id === 'VENTA_DIRECTA' ? (
                 <div className="form-row two-col">
                   <div className="form-group">
                     <label>Nombre del que Entrega</label>
@@ -2263,51 +2276,52 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
                     <input type="text" placeholder="Persona que recibe" value={formData.receiver_name} onChange={e => setFormData({ ...formData, receiver_name: e.target.value })} />
                   </div>
                 </div>
-              </>
-            ) : (
-              <>
-                <h4 style={{ color: 'var(--accent)', marginBottom: '1rem' }}>Extensión de Factura</h4>
-                <div className="form-row two-col">
-                  <div className="form-group">
-                    <label>NIT / DUI</label>
-                    <input type="text" placeholder="0000-000000-000-0" value={formData.client_nit} onChange={e => setFormData({ ...formData, client_nit: e.target.value })} />
+              ) : (
+                <>
+                  <h4 style={{ color: 'var(--accent)', marginBottom: '1rem' }}>Extensión de Factura</h4>
+                  <div className="form-row two-col">
+                    <div className="form-group">
+                      <label>NIT / DUI</label>
+                      <input type="text" placeholder="0000-000000-000-0" value={formData.client_nit} onChange={e => setFormData({ ...formData, client_nit: e.target.value })} />
+                    </div>
+                    <div className="form-group">
+                      <label>NRC</label>
+                      <input type="text" placeholder="367641-0" value={formData.client_nrc} onChange={e => setFormData({ ...formData, client_nrc: e.target.value })} />
+                    </div>
                   </div>
-                  <div className="form-group">
-                    <label>NRC</label>
-                    <input type="text" placeholder="367641-0" value={formData.client_nrc} onChange={e => setFormData({ ...formData, client_nrc: e.target.value })} />
+                  <div className="form-row two-col">
+                    <div className="form-group">
+                      <label>Dirección</label>
+                      <input type="text" placeholder="Dirección completa" value={formData.client_address} onChange={e => setFormData({ ...formData, client_address: e.target.value })} />
+                    </div>
+                    <div className="form-group">
+                      <label>Condición de la Operación</label>
+                      <select value={formData.payment_condition} onChange={e => setFormData({ ...formData, payment_condition: e.target.value })}>
+                        <option value="CONTADO">CONTADO</option>
+                        <option value="CREDITO">CRÉDITO</option>
+                      </select>
+                    </div>
                   </div>
-                </div>
-                <div className="form-row two-col">
-                  <div className="form-group">
-                    <label>Dirección</label>
-                    <input type="text" placeholder="Dirección completa" value={formData.client_address} onChange={e => setFormData({ ...formData, client_address: e.target.value })} />
+                  <div className="form-row two-col">
+                    <div className="form-group">
+                      <label>Observaciones</label>
+                      <input type="text" placeholder="Notas adicionales..." value={formData.observations} onChange={e => setFormData({ ...formData, observations: e.target.value })} />
+                    </div>
+                    <div className="form-group">
+                      <label>Nombre Entrega</label>
+                      <input type="text" placeholder="Persona que entrega" value={formData.client_deliverer} onChange={e => setFormData({ ...formData, client_deliverer: e.target.value })} />
+                    </div>
                   </div>
-                  <div className="form-group">
-                    <label>Condición de la Operación</label>
-                    <select value={formData.payment_condition} onChange={e => setFormData({ ...formData, payment_condition: e.target.value })}>
-                      <option value="CONTADO">CONTADO</option>
-                      <option value="CREDITO">CRÉDITO</option>
-                    </select>
+                  <div className="form-row two-col">
+                    <div className="form-group">
+                      <label>Nombre Recibe</label>
+                      <input type="text" placeholder="Persona que recibe" value={formData.receiver_name} onChange={e => setFormData({ ...formData, receiver_name: e.target.value })} />
+                    </div>
                   </div>
-                </div>
-                <div className="form-row two-col">
-                  <div className="form-group">
-                    <label>Observaciones</label>
-                    <input type="text" placeholder="Notas adicionales..." value={formData.observations} onChange={e => setFormData({ ...formData, observations: e.target.value })} />
-                  </div>
-                  <div className="form-group">
-                    <label>Nombre Entrega</label>
-                    <input type="text" placeholder="Persona que entrega" value={formData.client_deliverer} onChange={e => setFormData({ ...formData, client_deliverer: e.target.value })} />
-                  </div>
-                </div>
-                <div className="form-row two-col">
-                  <div className="form-group">
-                    <label>Nombre Recibe</label>
-                    <input type="text" placeholder="Persona que recibe" value={formData.receiver_name} onChange={e => setFormData({ ...formData, receiver_name: e.target.value })} />
-                  </div>
-                </div>
-              </>
-            )}
+                </>
+              )}
+            </>
+          )}
           </>
         )}
 
