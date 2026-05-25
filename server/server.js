@@ -836,11 +836,22 @@ app.post('/api/inventory/adjust', async (req, res) => {
       }
     }
     if (cajas !== undefined) {
+      // Get current entradas/salidas to compute proper adjustment
+      const { rows: curRows } = await query('SELECT entradas_cajas, salidas_cajas FROM inventory WHERE product_id = ?', [product_id]);
+      const curEntradas = parseFloat(curRows[0]?.entradas_cajas) || 0;
+      const curSalidas = parseFloat(curRows[0]?.salidas_cajas) || 0;
+      const curStock = curEntradas - curSalidas;
       if (mode === 'set') {
-        await query(`UPDATE inventory SET cajas = ? WHERE product_id = ?`, [cajas, product_id]);
+        const diff = cajas - curStock;
+        if (diff > 0) {
+          await query('UPDATE inventory SET entradas_cajas = entradas_cajas + ? WHERE product_id = ?', [diff, product_id]);
+        } else if (diff < 0) {
+          await query('UPDATE inventory SET salidas_cajas = salidas_cajas + ? WHERE product_id = ?', [Math.abs(diff), product_id]);
+        }
         cajasChange = cajas;
       } else {
-        await query(`UPDATE inventory SET cajas = cajas + ? WHERE product_id = ?`, [cajas, product_id]);
+        // Sumar mode: add to entradas (boxes arrived)
+        await query('UPDATE inventory SET entradas_cajas = entradas_cajas + ? WHERE product_id = ?', [cajas, product_id]);
         cajasChange = cajas;
       }
     }
