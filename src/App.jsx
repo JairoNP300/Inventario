@@ -1881,22 +1881,23 @@ const ExportReport = ({ products, agros, productWeightData, refreshTrigger }) =>
   );
 };
 
-// --- LogisticsHub (Unificado) ---
+  // --- LogisticsHub (Unificado) ---
+const initialFormState = {
+  product_id: '', origin: 'Ransa', destination: 'Lomas de San Francisco',
+  weight: '', tag_weight: '', scale_weight: '', units_per_box: '', cajas: '',
+  unit_type: 'Lbs', value: '', agro_id: '',
+  total_to_distribute: '', distributions: {},
+  discount_percent: 0,
+  client_name: '', client_nit: '', client_nrc: '', client_address: '', client_deliverer: '',
+  payment_condition: 'CONTADO',
+  observations: '',
+  receiver_name: '',
+  transfer_destination: 'Usulután'
+};
 const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUpdate, forceMode, incomeLogs = [], dispatchLogs = [] }) => {
   const [activeSubTab, setActiveSubTab] = useState(forceMode === 'unified' ? 'unified' : (forceMode === 'distribution' ? 'dispatch' : 'income'));
   const [editingId, setEditingId] = useState(null);
-  const [formData, setFormData] = useState({
-    product_id: '', origin: 'Ransa', destination: 'Lomas de San Francisco',
-    weight: '', tag_weight: '', scale_weight: '', units_per_box: '', cajas: '',
-    unit_type: 'Lbs', value: '', agro_id: '',
-    total_to_distribute: '', distributions: {},
-    discount_percent: 0,
-    client_name: '', client_nit: '', client_nrc: '', client_address: '', client_deliverer: '',
-    payment_condition: 'CONTADO',
-    observations: '',
-    receiver_name: '',
-    transfer_destination: 'Usulután'
-  });
+  const [formData, setFormData] = useState(initialFormState);
   const [dispatchCart, setDispatchCart] = useState([]);
   const [showCartPreview, setShowCartPreview] = useState(false);
 
