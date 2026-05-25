@@ -1033,29 +1033,7 @@ app.get('/api/movements', async (req, res) => {
 app.delete('/api/movements/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    const { rows } = await query('SELECT * FROM movements WHERE id = ?', [id]);
-    if (rows.length > 0) {
-      const mov = rows[0];
-      if (mov.unit_type === 'Cajas') {
-        // Reverse cajas: decrement salidas_cajas (restore stock)
-        await query('UPDATE inventory SET salidas_cajas = salidas_cajas - ? WHERE product_id = ?', [mov.weight, mov.product_id]);
-      } else {
-        const colMap = {
-          'Ransa': 'bodega_1',
-          'Central de abasto - Soyapango (Cuarto Frío)': 'bodega_2',
-          'Soyapango': 'bodega_2',
-          'Central de abasto - Usulután (Cuarto Frío)': 'bodega_3',
-          'Usulután': 'bodega_3',
-          'Lomas de San Francisco': 'bodega_4'
-        };
-        const originCol = colMap[mov.origin_warehouse];
-        const destCol = colMap[mov.dest_warehouse];
-        if (originCol && destCol) {
-          await query(`UPDATE inventory SET ${originCol} = ${originCol} + ? WHERE product_id = ?`, [mov.origin_weight || mov.weight, mov.product_id]);
-          await query(`UPDATE inventory SET ${destCol} = ${destCol} - ? WHERE product_id = ?`, [mov.dest_weight || mov.weight, mov.product_id]);
-        }
-      }
-    }
+    // Transfers are final — no inventory restoration
     await query('DELETE FROM movements WHERE id = ?', [id]);
     res.json({ success: true });
   } catch (err) {
