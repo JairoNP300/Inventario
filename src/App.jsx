@@ -744,39 +744,86 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
     setQuickLoading(false);
   };
 
-  const exportBalanceExcel = () => {
+  const exportBalanceExcel = async () => {
+    const wb = new ExcelJS.Workbook();
+    wb.creator = 'Sistema Logística';
+    wb.created = new Date();
+    const ws = wb.addWorksheet('Balance Bodegas', {
+      pageSetup: { orientation: 'landscape', fitToPage: true, margins: { left: 0.5, right: 0.5, top: 0.5, bottom: 0.5, header: 0.3, footer: 0.3 } }
+    });
+
     const factor = viewUnit === 'Kg' ? 1 : 2.20462;
-    const data = inventoryRows.map(i => {
+    const headerStyle = { font: { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 }, fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E40AF' } }, alignment: { horizontal: 'center', vertical: 'middle', wrapText: true }, border: { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } } };
+    const cellStyle = { alignment: { horizontal: 'center', vertical: 'middle' }, border: { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } } };
+    const totalStyle = { ...cellStyle, font: { bold: true, color: { argb: 'FF1E40AF' } } };
+
+    const headers = ['Producto', `Entradas (${viewUnit})`, `Ransa (${viewUnit})`, `Soyapango (${viewUnit})`, `Usulután (${viewUnit})`, `Lomas (${viewUnit})`, 'Cajas', `Stock Actual (${viewUnit})`];
+    ws.getColumn(1).width = 40;
+    [2,3,4,5,6,7,8].forEach(c => { ws.getColumn(c).width = 16; });
+
+    const headerRow = ws.addRow(headers);
+    headerRow.eachCell((cell) => { Object.assign(cell, headerStyle); });
+    ws.views = [{ state: 'frozen', ySplit: 1 }];
+
+    inventoryRows.forEach(i => {
       const b1 = viewUnit === 'Kg' ? toNum(i.bodega_1) : toNum(i.bodega_1) * factor;
       const b2 = viewUnit === 'Kg' ? toNum(i.bodega_2) / factor : toNum(i.bodega_2);
       const b3 = viewUnit === 'Kg' ? toNum(i.bodega_3) / factor : toNum(i.bodega_3);
       const b4 = viewUnit === 'Kg' ? toNum(i.bodega_4) / factor : toNum(i.bodega_4);
-      return {
-        Producto: i.name || `Producto ${i.code}`,
-        [`Entradas (${viewUnit})`]: viewUnit === 'Kg' ? toNum(i.initial_stock) : toNum(i.initial_stock) * factor,
-        [`Ransa (${viewUnit})`]: b1,
-        [`Soyapango (${viewUnit})`]: b2,
-        [`Usulután (${viewUnit})`]: b3,
-        [`Lomas (${viewUnit})`]: b4,
-        Cajas: toNum(i.cajas),
-        [`Stock Actual (${viewUnit})`]: b1 + b2 + b3 + b4
-      };
+      const row = ws.addRow([i.name || `Producto ${i.code}`, viewUnit === 'Kg' ? toNum(i.initial_stock) : toNum(i.initial_stock) * factor, b1, b2, b3, b4, toNum(i.cajas), b1 + b2 + b3 + b4]);
+      row.eachCell((cell, col) => {
+        Object.assign(cell, col === 1 ? { ...cellStyle, alignment: { horizontal: 'left', vertical: 'middle' } } : { ...cellStyle, numFmt: '#,##0.0' });
+        if (col === 8) Object.assign(cell, totalStyle);
+      });
     });
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data), "Balance Bodegas");
-    XLSX.writeFile(wb, `Balance_Bodegas_${new Date().toISOString().split('T')[0]}.xlsx`);
+
+    const buf = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = `Balance_Bodegas_${new Date().toISOString().split('T')[0]}.xlsx`; a.click();
+    URL.revokeObjectURL(url);
   };
 
-  const exportCajasExcel = () => {
-    const data = inventoryRows.map(i => ({
-      Producto: i.name || `Producto ${i.code}`,
-      'Entradas (Cajas)': toNum(i.entradas_cajas),
-      'Salidas (Cajas)': toNum(i.salidas_cajas),
-      'Stock Actual (Cajas)': toNum(i.entradas_cajas) - toNum(i.salidas_cajas)
-    }));
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data), "Control Cajas");
-    XLSX.writeFile(wb, `Control_Cajas_${new Date().toISOString().split('T')[0]}.xlsx`);
+  const exportCajasExcel = async () => {
+    const wb = new ExcelJS.Workbook();
+    wb.creator = 'Sistema Logística';
+    wb.created = new Date();
+    const ws = wb.addWorksheet('Control Cajas', {
+      pageSetup: { orientation: 'landscape', fitToPage: true, margins: { left: 0.5, right: 0.5, top: 0.5, bottom: 0.5, header: 0.3, footer: 0.3 } }
+    });
+
+    const headerStyle = { font: { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 }, fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF59E0B' } }, alignment: { horizontal: 'center', vertical: 'middle', wrapText: true }, border: { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } } };
+    const cellStyle = { alignment: { horizontal: 'center', vertical: 'middle' }, border: { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } } };
+    const stockStyle = { ...cellStyle, font: { bold: true, color: { argb: 'FFF59E0B' }, size: 12 } };
+    const entradasStyle = { ...cellStyle, font: { bold: true, color: { argb: 'FF06B6D4' } } };
+    const salidasStyle = { ...cellStyle, font: { bold: true, color: { argb: 'FFEF4444' } } };
+
+    const headers = ['Producto', 'Entradas (Cajas)', 'Salidas (Cajas)', 'Stock Actual (Cajas)'];
+    ws.getColumn(1).width = 40;
+    [2,3,4].forEach(c => { ws.getColumn(c).width = 20; });
+
+    const headerRow = ws.addRow(headers);
+    headerRow.eachCell((cell) => { Object.assign(cell, headerStyle); });
+    ws.views = [{ state: 'frozen', ySplit: 1 }];
+
+    inventoryRows.forEach(i => {
+      const entradas = toNum(i.entradas_cajas);
+      const salidas = toNum(i.salidas_cajas);
+      const stock = entradas - salidas;
+      const row = ws.addRow([i.name || `Producto ${i.code}`, entradas, salidas, stock]);
+      row.eachCell((cell, col) => {
+        if (col === 1) Object.assign(cell, { ...cellStyle, alignment: { horizontal: 'left', vertical: 'middle' }, numFmt: '0' });
+        else if (col === 2) Object.assign(cell, { ...entradasStyle, numFmt: '#,##0' });
+        else if (col === 3) Object.assign(cell, { ...salidasStyle, numFmt: '#,##0' });
+        else if (col === 4) Object.assign(cell, { ...stockStyle, numFmt: '#,##0' });
+      });
+    });
+
+    const buf = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = `Control_Cajas_${new Date().toISOString().split('T')[0]}.xlsx`; a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
