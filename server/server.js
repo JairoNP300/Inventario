@@ -1398,11 +1398,12 @@ initDb().then(() => {
         const { rows: checkRows } = await query('SELECT COUNT(*) as cnt FROM inventory WHERE entradas_cajas > 0');
         if (checkRows[0].cnt === 0) {
           const cajasSeed = { "1618":326,"1619":200,"1620":114,"1621":45,"1622":43,"1623":45,"1624":105,"1625":55,"1626":46,"1627":53,"1628":186 };
+          const salidasSeed = { "1618":103,"1619":41,"1620":105,"1621":32,"1622":20,"1623":34,"1624":1,"1625":55,"1626":2,"1627":21,"1628":33 };
           for (const [code, cajas] of Object.entries(cajasSeed)) {
             const { rows: pRows } = await query('SELECT id FROM products WHERE code = ?', [code]);
             if (pRows.length > 0) {
-              await query('UPDATE inventory SET entradas_cajas = ? WHERE product_id = ?', [cajas, pRows[0].id]);
-              console.log(`[SEED] entradas_cajas for code ${code}: ${cajas} cajas`);
+              await query('UPDATE inventory SET entradas_cajas = ?, salidas_cajas = ? WHERE product_id = ?', [cajas, salidasSeed[code] || 0, pRows[0].id]);
+              console.log(`[SEED] code ${code}: entradas=${cajas}, salidas=${salidasSeed[code] || 0}`);
             }
           }
           console.log('[SEED] entradas_cajas seeded successfully');
