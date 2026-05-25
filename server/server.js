@@ -243,6 +243,20 @@ const migrateDatabase = async () => {
     console.log('cajas column already exists in inventory');
   }
 
+  // Add entradas_cajas and salidas_cajas columns to inventory if not exists
+  try {
+    if (isProduction) {
+      await query(`ALTER TABLE inventory ADD COLUMN entradas_cajas DECIMAL(10,2) DEFAULT 0`);
+      await query(`ALTER TABLE inventory ADD COLUMN salidas_cajas DECIMAL(10,2) DEFAULT 0`);
+    } else {
+      sqliteDb.prepare('ALTER TABLE inventory ADD COLUMN entradas_cajas DECIMAL(10,2) DEFAULT 0').run();
+      sqliteDb.prepare('ALTER TABLE inventory ADD COLUMN salidas_cajas DECIMAL(10,2) DEFAULT 0').run();
+    }
+    console.log('entradas_cajas and salidas_cajas columns added to inventory');
+  } catch(e) {
+    console.log('entradas_cajas/salidas_cajas columns already exist in inventory');
+  }
+
   console.log('Database migration completed successfully');
 };
 
