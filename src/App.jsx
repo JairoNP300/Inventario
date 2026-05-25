@@ -4504,6 +4504,7 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
   const [productionLogs, setProductionLogs] = useState([]);
   const [incomeLogs, setIncomeLogs] = useState([]);
   const [dispatchLogs, setDispatchLogs] = useState([]);
+  const [movements, setMovements] = useState([]);
   const [inventorySummary, setInventorySummary] = useState([]);
   const [foodCostingLogs, setFoodCostingLogs] = useState([]);
 
