@@ -272,6 +272,18 @@ const migrateDatabase = async () => {
   } catch(e) {
     console.log('origin_weight/dest_weight columns already exist in movements');
   }
+
+  // Add unit_type to movements if not exists
+  try {
+    if (isProduction) {
+      await query(`ALTER TABLE movements ADD COLUMN unit_type TEXT DEFAULT 'Lbs'`);
+    } else {
+      sqliteDb.prepare("ALTER TABLE movements ADD COLUMN unit_type TEXT DEFAULT 'Lbs'").run();
+    }
+    console.log('unit_type column added to movements');
+  } catch(e) {
+    console.log('unit_type column already exists in movements');
+  }
 };
 
 // --- INITIALIZATION ---
