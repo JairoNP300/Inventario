@@ -1127,20 +1127,21 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
       </div>
 
       {/* === CONTROL DE CAJAS === */}
-      <div className="form-card" style={{ marginTop: '2rem' }}>
-        <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#f59e0b' }}><Layers size={16} /> Control de Cajas
-          <button onClick={exportCajasExcel} title="Exportar a Excel" style={{ marginLeft: '8px', padding: '4px 10px', borderRadius: '6px', border: '1px solid #f59e0b', background: 'rgba(245,158,11,0.1)', color: '#f59e0b', fontSize: '0.7rem', fontWeight: 700, cursor: 'pointer' }}>
-            <Download size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }} /> Excel
+      <div className="form-card" style={{ marginTop: '2rem', border: '1px solid rgba(245,158,11,0.15)', boxShadow: '0 8px 32px rgba(0,0,0,0.15)' }}>
+        <h4 style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#f59e0b', margin: 0, marginBottom: '1rem' }}>
+          <Layers size={18} style={{ color: '#f59e0b' }} /> Control de Cajas
+          <button onClick={exportCajasExcel} title="Exportar a Excel" style={{ marginLeft: 'auto', padding: '6px 14px', borderRadius: '8px', border: 'none', background: 'linear-gradient(135deg, #d97706, #b45309)', color: '#fff', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', boxShadow: '0 2px 8px rgba(217,119,6,0.3)' }}>
+            <Download size={14} style={{ verticalAlign: 'middle', marginRight: '6px' }} /> Exportar Excel
           </button>
         </h4>
-        <div className="grid-table-container">
+        <div className="grid-table-container" style={{ borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(245,158,11,0.1)' }}>
           <table>
             <thead>
               <tr>
-                <th className="col-carne">Producto</th>
-                <th className="col-qty">Entradas (Cajas)</th>
-                <th className="col-qty">Salidas (Cajas)</th>
-                <th className="col-qty" style={{ background: 'rgba(245,158,11,0.08)' }}>Stock Actual (Cajas)</th>
+                <th className="col-carne" style={{ background: 'linear-gradient(135deg, #1c1917, #292524)', color: '#fbbf24', fontWeight: 700, fontSize: '0.82rem', padding: '12px 10px', letterSpacing: '0.5px' }}>Producto</th>
+                <th className="col-qty" style={{ background: 'linear-gradient(135deg, #1c1917, #292524)', color: '#06b6d4', fontWeight: 700, fontSize: '0.82rem', padding: '12px 10px', letterSpacing: '0.5px' }}>Entradas (Cajas)</th>
+                <th className="col-qty" style={{ background: 'linear-gradient(135deg, #1c1917, #292524)', color: '#ef4444', fontWeight: 700, fontSize: '0.82rem', padding: '12px 10px', letterSpacing: '0.5px' }}>Salidas (Cajas)</th>
+                <th className="col-qty" style={{ background: 'linear-gradient(135deg, #1c1917, #292524)', color: '#f59e0b', fontWeight: 800, fontSize: '0.85rem', padding: '12px 10px', letterSpacing: '0.5px' }}>Stock Actual (Cajas)</th>
               </tr>
             </thead>
             <tbody>
