@@ -888,6 +888,7 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
                   return (
                     <tr key={i.code}>
                       <td className="col-carne" style={{ fontWeight: 700, color: 'var(--text-main)' }}>{i.name || `Producto ${i.code}`}</td>
+                      <td className="col-qty" style={{ color: '#06b6d4', fontWeight: 700 }}>{(isKg ? toNum(i.initial_stock) : toNum(i.initial_stock) * factor).toFixed(1)}</td>
                       <td className="col-qty" style={{ color: 'var(--accent)' }}>{b1.toFixed(1)}</td>
                       <td className="col-qty" style={{ color: 'var(--success)' }}>{b2.toFixed(1)}</td>
                       <td className="col-qty" style={{ color: 'var(--success)' }}>{b3.toFixed(1)}</td>
@@ -898,7 +899,7 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
                       </td>
                     </tr>
                   );
-                }) : <tr><td colSpan={7} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '20px' }}>Sin datos de inventario</td></tr>}
+                }) : <tr><td colSpan={7} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '20px' }}>Sin datos de inventario</td></tr>}return (
               </tbody>
             </table>
           </div>
