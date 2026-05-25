@@ -67,14 +67,16 @@ export default function InvoiceLayout({
         #invoice-print-area {
           background: #ffffff !important;
           color: #111827 !important;
-          font-family: Arial, Helvetica, sans-serif !important;
+          font-family: 'Segoe UI', Arial, Helvetica, sans-serif !important;
           font-size: 10px !important;
-          line-height: 1.4 !important;
-          padding: 10px 14px !important;
+          line-height: 1.5 !important;
+          padding: 12px 16px !important;
           width: 100% !important;
           max-width: 190mm !important;
           margin: 0 auto !important;
           box-sizing: border-box !important;
+          border-radius: 8px !important;
+          box-shadow: 0 4px 24px rgba(0,0,0,0.08) !important;
         }
         #invoice-preview-section {
           display: flex !important;
@@ -85,26 +87,44 @@ export default function InvoiceLayout({
           width: 100%;
         }
         #invoice-print-area .header-badge {
-          background: #f3f4f6 !important;
-          color: #4b5563 !important;
-          font-size: 8px !important;
+          background: linear-gradient(135deg, #1e3a5f, #2d5a87) !important;
+          color: #ffffff !important;
+          font-size: 9px !important;
           font-weight: 700 !important;
-          letter-spacing: 0.5px !important;
-          padding: 4px 10px !important;
+          letter-spacing: 1px !important;
+          padding: 5px 14px !important;
           display: inline-block !important;
-          margin-bottom: 10px !important;
+          margin-bottom: 12px !important;
+          border-radius: 3px !important;
         }
-        #invoice-print-area h1 {
-          font-size: 1.4rem !important;
+        #invoice-print-area .company-header {
+          display: flex !important;
+          justify-content: space-between !important;
+          align-items: flex-start !important;
+          margin-bottom: 12px !important;
+          border-bottom: 2px solid #1e3a5f !important;
+          padding-bottom: 10px !important;
+        }
+        #invoice-print-area .company-info h1 {
+          font-size: 1.5rem !important;
           font-weight: 900 !important;
-          color: #111827 !important;
-          margin: 0 0 5px 0 !important;
+          color: #1e3a5f !important;
+          margin: 0 0 3px 0 !important;
           letter-spacing: -0.5px !important;
         }
-        #invoice-print-area p {
-          margin: 3px 0 !important;
-          font-size: 0.8rem !important;
+        #invoice-print-area .company-info p {
+          margin: 2px 0 !important;
+          font-size: 0.75rem !important;
+          color: #4b5563 !important;
+        }
+        #invoice-print-area .company-right {
+          text-align: right !important;
+          font-size: 0.72rem !important;
           color: #374151 !important;
+          white-space: nowrap !important;
+        }
+        #invoice-print-area .company-right strong {
+          color: #1e3a5f !important;
         }
         #invoice-print-area table {
           width: 100% !important;
@@ -115,8 +135,8 @@ export default function InvoiceLayout({
         }
         #invoice-print-area th,
         #invoice-print-area td {
-          padding: 6px 8px !important;
-          font-size: 10px !important;
+          padding: 7px 8px !important;
+          font-size: 9.5px !important;
           color: #111827 !important;
           background: transparent !important;
           border: 0 !important;
@@ -128,135 +148,167 @@ export default function InvoiceLayout({
           line-height: 1.3 !important;
         }
         #invoice-print-area thead th {
-          background: #1f2937 !important;
+          background: #1e3a5f !important;
           color: #ffffff !important;
           font-weight: 800 !important;
           font-size: 8px !important;
           text-transform: uppercase !important;
           letter-spacing: 0.5px !important;
-          padding: 6px 8px !important;
-          border-bottom: 0 !important;
+          padding: 8px 8px !important;
+          border-bottom: 2px solid #2d5a87 !important;
+        }
+        #invoice-print-area tbody tr:hover td {
+          background: #f8fafc !important;
         }
         #invoice-print-area tbody tr:last-child td {
-          border-bottom: 0 !important;
+          border-bottom: 1px solid #d1d5db !important;
         }
         .il-totals-box {
-          background: #ffffff !important;
-          border: 1px solid #e5e7eb !important;
-          padding: 8px 12px !important;
+          background: #f8fafc !important;
+          border: 1px solid #e2e8f0 !important;
+          border-radius: 6px !important;
+          padding: 10px 14px !important;
           width: 100% !important;
-          margin-bottom: 10px !important;
+          margin-bottom: 12px !important;
           box-sizing: border-box !important;
         }
         .il-totals-box .il-row {
           display: flex !important;
           justify-content: space-between !important;
           font-size: 10px !important;
-          margin-bottom: 4px !important;
-          color: #111827 !important;
+          margin-bottom: 5px !important;
+          color: #374151 !important;
         }
         .il-totals-box .il-total-row {
           display: flex !important;
           justify-content: space-between !important;
-          border-top: 2px solid #1f2937 !important;
-          padding-top: 5px !important;
-          font-size: 12px !important;
+          border-top: 2px solid #1e3a5f !important;
+          padding-top: 6px !important;
+          margin-top: 4px !important;
+          font-size: 13px !important;
           font-weight: 900 !important;
-          color: #111827 !important;
+          color: #1e3a5f !important;
         }
         .il-son-box {
-          padding: 8px 12px !important;
-          background: #fefce8 !important;
-          border: 1px solid #fef08a !important;
-          border-radius: 5px !important;
+          padding: 10px 14px !important;
+          background: #fffbeb !important;
+          border: 1px solid #fde68a !important;
+          border-radius: 6px !important;
           margin-bottom: 14px !important;
         }
         .il-son-box .il-son-label {
           font-size: 9px !important;
           font-weight: 700 !important;
-          color: #a16207 !important;
+          color: #92400e !important;
           margin-bottom: 3px !important;
+          text-transform: uppercase !important;
+          letter-spacing: 0.5px !important;
         }
         .il-son-box .il-son-words {
-          font-size: 10px !important;
-          color: #713f12 !important;
+          font-size: 11px !important;
+          color: #78350f !important;
           font-weight: 600 !important;
+          line-height: 1.5 !important;
         }
         .il-son-box .il-disclaimer {
-          font-size: 8px !important;
+          font-size: 7.5px !important;
           color: #a16207 !important;
-          margin-top: 5px !important;
+          margin-top: 6px !important;
+          font-style: italic !important;
         }
         .il-section-header {
           font-size: 8px !important;
           color: #ffffff !important;
           font-weight: 700 !important;
           text-transform: uppercase !important;
-          padding: 3px 8px !important;
-          background: #1f2937 !important;
-          margin-bottom: 0 !important;
+          letter-spacing: 0.5px !important;
+          padding: 4px 10px !important;
+          background: #1e3a5f !important;
         }
         .il-meta {
-          display: block !important;
-          margin-bottom: 10px !important;
-          padding: 6px 8px !important;
-          background: #f9fafb !important;
-          border: 1px solid #e5e7eb !important;
+          display: flex !important;
+          justify-content: space-between !important;
+          margin-bottom: 12px !important;
+          padding: 8px 12px !important;
+          background: #f8fafc !important;
+          border: 1px solid #e2e8f0 !important;
+          border-radius: 6px !important;
         }
         .il-meta > div {
           font-size: 8px !important;
           color: #6b7280 !important;
-          margin-bottom: 5px !important;
-        }
-        .il-meta > div:last-child {
-          margin-bottom: 0 !important;
+          flex: 1 !important;
         }
         .il-meta .il-label {
-          font-size: 8px !important;
+          font-size: 7.5px !important;
           color: #6b7280 !important;
           font-weight: 700 !important;
           text-transform: uppercase !important;
+          letter-spacing: 0.3px !important;
         }
         .il-meta .il-value {
           font-size: 10px !important;
           font-weight: 800 !important;
           color: #111827 !important;
+          margin-top: 2px !important;
+        }
+        .il-meta .il-value.mono {
+          font-family: 'Courier New', monospace !important;
+          font-size: 8.5px !important;
+          font-weight: 600 !important;
+          letter-spacing: 0 !important;
         }
         .il-recipient-grid {
-          display: block !important;
-          font-size: 10px !important;
-          padding: 7px 10px !important;
+          display: grid !important;
+          grid-template-columns: 1fr 1fr !important;
+          gap: 4px 16px !important;
+          font-size: 9.5px !important;
+          padding: 8px 10px !important;
           color: #111827 !important;
         }
         .il-recipient-grid > div {
-          margin-bottom: 4px !important;
+          margin-bottom: 2px !important;
         }
         .il-extension-grid {
-          display: block !important;
-          padding: 6px 8px !important;
-          font-size: 10px !important;
+          display: grid !important;
+          grid-template-columns: 1fr 1fr !important;
+          gap: 4px 16px !important;
+          padding: 8px 10px !important;
+          font-size: 9.5px !important;
           color: #111827 !important;
         }
         .il-extension-grid > div {
-          margin-bottom: 4px !important;
+          margin-bottom: 2px !important;
         }
         #invoice-print-area .il-no-print {
           display: flex !important;
           gap: 10px !important;
-          margin-top: 12px !important;
+          margin-top: 14px !important;
         }
         #invoice-print-area .il-no-print button {
           flex: 1 !important;
-          padding: 9px 16px !important;
-          border-radius: 7px !important;
+          padding: 10px 18px !important;
+          border-radius: 8px !important;
           font-weight: 700 !important;
-          font-size: 10px !important;
+          font-size: 11px !important;
           border: none !important;
           cursor: pointer !important;
           color: white !important;
+          transition: all 0.2s !important;
         }
-        .il-btn-save { background: #10b981 !important; }
-        .il-btn-cancel { background: #64748b !important; }
+        #invoice-print-area .il-no-print button:hover {
+          transform: translateY(-1px) !important;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+        }
+        .il-btn-save { background: linear-gradient(135deg, #059669, #047857) !important; }
+        .il-btn-cancel { background: linear-gradient(135deg, #64748b, #475569) !important; }
+        .il-section-box {
+          margin-bottom: 10px !important;
+          border: 1px solid #e2e8f0 !important;
+          border-radius: 6px !important;
+          overflow: hidden !important;
+        }
+        p { margin: 0 !important; }
         @media print {
           .no-print, .no-print * { display: none !important; }
           body {
@@ -264,7 +316,6 @@ export default function InvoiceLayout({
             margin: 0 !important;
             padding: 0 !important;
           }
-          /* Hide all non-invoice elements on the page */
           .report-content { padding: 0 !important; margin: 0 !important; }
           .report-content > *:not(#invoice-preview-section) { display: none !important; }
           #invoice-preview-section {
@@ -281,45 +332,50 @@ export default function InvoiceLayout({
             width: 100% !important;
             max-width: 195mm !important;
             margin: 0 auto !important;
-            padding: 12px 16px !important;
+            padding: 14px 18px !important;
             box-shadow: none !important;
             border: none !important;
+            border-radius: 0 !important;
             font-size: 10px !important;
             line-height: 1.4 !important;
           }
           #invoice-print-area .header-badge { font-size: 8px !important; padding: 4px 10px !important; margin-bottom: 8px !important; }
-          #invoice-print-area h1 { font-size: 1.3rem !important; margin: 0 0 4px 0 !important; }
-          #invoice-print-area p { margin: 3px 0 !important; font-size: 0.75rem !important; }
-          #invoice-print-area > div { margin-bottom: 6px !important; }
+          #invoice-print-area .company-info h1 { font-size: 1.3rem !important; margin: 0 0 2px 0 !important; }
+          #invoice-print-area .company-info p { margin: 1px 0 !important; font-size: 0.7rem !important; }
           #invoice-print-area th,
           #invoice-print-area td { padding: 5px 7px !important; font-size: 9px !important; }
-          #invoice-print-area thead th { padding: 5px 7px !important; font-size: 7px !important; }
-          .il-totals-box { padding: 6px 10px !important; margin-bottom: 8px !important; }
+          #invoice-print-area thead th { padding: 6px 7px !important; font-size: 7.5px !important; }
+          .il-totals-box { padding: 8px 12px !important; margin-bottom: 8px !important; }
           .il-totals-box .il-row { font-size: 9px !important; margin-bottom: 3px !important; }
-          .il-totals-box .il-total-row { font-size: 11px !important; padding-top: 4px !important; }
-          .il-son-box { padding: 6px 10px !important; margin-bottom: 8px !important; }
-          .il-son-box .il-son-words { font-size: 9px !important; }
+          .il-totals-box .il-total-row { font-size: 12px !important; padding-top: 4px !important; }
+          .il-son-box { padding: 8px 12px !important; margin-bottom: 8px !important; }
+          .il-son-box .il-son-words { font-size: 10px !important; }
           .il-son-box .il-disclaimer { font-size: 7px !important; }
-          .il-meta { padding: 5px 7px !important; margin-bottom: 6px !important; }
+          .il-meta { padding: 6px 10px !important; margin-bottom: 8px !important; }
           .il-meta .il-value { font-size: 9px !important; }
-          .il-recipient-grid { padding: 5px 8px !important; font-size: 9px !important; }
-          .il-recipient-grid > div { margin-bottom: 3px !important; }
-          .il-extension-grid { padding: 5px 7px !important; font-size: 9px !important; }
-          .il-extension-grid > div { margin-bottom: 3px !important; }
-          .il-section-header { font-size: 7px !important; padding: 2px 7px !important; }
+          .il-meta .il-value.mono { font-size: 8px !important; }
+          .il-recipient-grid { padding: 6px 8px !important; font-size: 9px !important; gap: 2px 12px !important; }
+          .il-extension-grid { padding: 6px 8px !important; font-size: 9px !important; gap: 2px 12px !important; }
+          .il-section-header { font-size: 7px !important; padding: 3px 8px !important; }
+          .il-section-box { margin-bottom: 8px !important; }
           #invoice-print-area .il-no-print { display: none !important; }
-          [style*="borderBottom"] { margin-bottom: 4px !important; padding-bottom: 4px !important; }
           @page { size: A4 portrait; margin: 8mm; }
         }
       `}</style>
       <div id="invoice-print-area">
         <div className="header-badge">DOCUMENTO TRIBUTARIO ELECTRÓNICO</div>
 
-        <div style={{ marginBottom: 8, borderBottom: '1px solid #d1d5db', paddingBottom: 6 }}>
-          <h1>{company}</h1>
-          <p>{address}</p>
-          <p><strong>TELÉFONO:</strong> {phone} | <strong>CORREO:</strong> {email}</p>
-          <p style={{ marginTop: 3 }}><strong>NIT:</strong> {nit} | <strong>NRC:</strong> {nrc}</p>
+        <div className="company-header">
+          <div className="company-info">
+            <h1>{company}</h1>
+            <p>{address}</p>
+            <p>{phone} &nbsp;|&nbsp; {email}</p>
+          </div>
+          <div className="company-right">
+            <div><strong>NIT:</strong> {nit}</div>
+            <div><strong>NRC:</strong> {nrc}</div>
+            <div style={{ marginTop: 6, fontSize: '8px', color: '#6b7280' }}>Giro: Compra-Venta de Carnes</div>
+          </div>
         </div>
 
         <div className="il-meta">
@@ -329,7 +385,7 @@ export default function InvoiceLayout({
           </div>
           <div>
             <div className="il-label">Código de Generación</div>
-            <div style={{ fontSize: '8px', color: '#1f2937', fontFamily: 'monospace' }}>{codigoFactura}</div>
+            <div className="il-value mono">{codigoFactura}</div>
           </div>
           <div>
             <div className="il-label">Fecha de Emisión</div>
@@ -339,7 +395,7 @@ export default function InvoiceLayout({
           </div>
         </div>
 
-        <div style={{ marginBottom: 6, border: '1px solid #e5e7eb' }}>
+        <div className="il-section-box">
           <div className="il-section-header">DATOS DEL RECEPTOR</div>
           <div className="il-recipient-grid">
             <div><strong>Nombre/Razón Social:</strong> {recipient.name || '---'}</div>
@@ -349,7 +405,7 @@ export default function InvoiceLayout({
           </div>
         </div>
 
-        <div style={{ marginBottom: 6, border: '1px solid #e5e7eb' }}>
+        <div className="il-section-box">
           <table>
             <thead>
               <tr>
@@ -363,16 +419,16 @@ export default function InvoiceLayout({
             </thead>
             <tbody>
               {items.length === 0 && (
-                <tr><td colSpan={6} style={{ textAlign: 'center', padding: '10px', color: '#6b7280' }}>No hay productos registrados en el detalle</td></tr>
+                <tr><td colSpan={6} style={{ textAlign: 'center', padding: '12px', color: '#9ca3af' }}>No hay productos registrados en el detalle</td></tr>
               )}
               {items.map((it, idx) => (
                 <tr key={idx}>
                   <td style={{ textAlign: 'center', fontWeight: 500 }}>{idx + 1}</td>
                   <td style={{ textAlign: 'center' }}>{Number(it.qty || 0).toFixed(2)}</td>
                   <td style={{ textAlign: 'center' }}>{it.unit || 'Und'}</td>
-                   <td style={{ fontWeight: 600 }}>{it.description || it.name || 'Producto'}</td>
+                  <td style={{ fontWeight: 600 }}>{it.description || it.name || 'Producto'}</td>
                   <td style={{ textAlign: 'right' }}>${Number(it.unitPrice || it.price || 0).toFixed(2)}</td>
-                  <td style={{ textAlign: 'right', fontWeight: 700 }}>${Number(it.total || it.subtotal || 0).toFixed(2)}</td>
+                  <td style={{ textAlign: 'right', fontWeight: 700, color: '#1e3a5f' }}>${Number(it.total || it.subtotal || 0).toFixed(2)}</td>
                 </tr>
               ))}
             </tbody>
@@ -381,22 +437,22 @@ export default function InvoiceLayout({
 
         <div className="il-totals-box">
           <div className="il-row">
-            <span>Sumatoria Ventas Gravadas</span>
+            <span>Sumatoria de Ventas Gravadas</span>
             <span style={{ fontWeight: 700 }}>${subtotal.toFixed(2)}</span>
           </div>
           {discount > 0 && (
             <div className="il-row">
-              <span style={{ color: '#f59e0b' }}>Descuento ({discount}%)</span>
-              <span style={{ fontWeight: 700, color: '#f59e0b' }}>${(subtotal * discount / 100).toFixed(2)}</span>
+              <span style={{ color: '#d97706' }}>Descueto ({discount}%)</span>
+              <span style={{ fontWeight: 700, color: '#d97706' }}>$ {(subtotal * discount / 100).toFixed(2)}</span>
             </div>
           )}
           <div className="il-total-row">
             <span>MONTO TOTAL A PAGAR</span>
-            <span>${total.toFixed(2)}</span>
+            <span>$ {total.toFixed(2)}</span>
           </div>
         </div>
 
-        <div style={{ marginBottom: 6, border: '1px solid #e5e7eb' }}>
+        <div className="il-section-box">
           <div className="il-section-header">EXTENSIÓN</div>
           <div className="il-extension-grid">
             <div><strong>Condición:</strong> {paymentCondition || recipient.paymentCondition || 'CONTADO'}</div>
