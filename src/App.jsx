@@ -817,7 +817,7 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
               <option value="">Seleccione Producto...</option>
               {productRows.map(p => {
                 const inv = inventoryRows.find(i => i.name === p.name);
-                return <option key={p.id} value={p.id}>{p.code}: {p.name} — {toNum(inv?.bodega_1).toFixed(1)} kg | {toNum(inv?.cajas).toFixed(0)} cajas</option>;
+                return <option key={p.id} value={p.id}>{p.code}: {p.name} — Ransa: {toNum(inv?.bodega_1).toFixed(1)} kg | Soyapango: {toNum(inv?.bodega_2).toFixed(1)} lbs | Usulután: {toNum(inv?.bodega_3).toFixed(1)} lbs | Lomas: {toNum(inv?.bodega_4).toFixed(1)} lbs | Cajas: {toNum(inv?.cajas).toFixed(0)}</option>;
               })}
             </select>
           </div>
@@ -4323,17 +4323,6 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
           <div className="status-value">
             {Math.round(inventorySummary.reduce((acc, i) => acc + (parseFloat(i.final_stock) || 0), 0)).toLocaleString()} <small style={{ fontSize: '0.6rem' }}>LBS</small>
           </div>
-        </div>
-
-        <div className="banner-actions">
-          <motion.button
-            whileHover={{ rotate: 180 }}
-            onClick={triggerRefresh}
-            className="btn-primary"
-            style={{ width: '50px', height: '50px', padding: 0, borderRadius: '50%', display: 'flex', alignItems: 'center', justifySelf: 'center', justifyContent: 'center' }}
-          >
-            <RefreshCcw size={20} />
-          </motion.button>
         </div>
       </div>
 
