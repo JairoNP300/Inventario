@@ -874,7 +874,11 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
 
         <div className="form-card" style={{ gridColumn: 'span 2' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-            <h4 style={{ margin: 0 }}>Balance Consolidado por Bodega</h4>
+            <h4 style={{ margin: 0 }}>Balance Consolidado por Bodega
+              <button onClick={exportBalanceExcel} title="Exportar a Excel" style={{ marginLeft: '10px', padding: '4px 10px', borderRadius: '6px', border: '1px solid var(--accent)', background: 'rgba(56,189,248,0.1)', color: 'var(--accent)', fontSize: '0.7rem', fontWeight: 700, cursor: 'pointer', verticalAlign: 'middle' }}>
+                <Download size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }} /> Excel
+              </button>
+            </h4>
             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
               <select 
                 value={sortConfig.key || ''} 
@@ -943,7 +947,11 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
 
       {/* === CONTROL DE CAJAS === */}
       <div className="form-card" style={{ marginTop: '2rem' }}>
-        <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#f59e0b' }}><Layers size={16} /> Control de Cajas</h4>
+        <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#f59e0b' }}><Layers size={16} /> Control de Cajas
+          <button onClick={exportCajasExcel} title="Exportar a Excel" style={{ marginLeft: '8px', padding: '4px 10px', borderRadius: '6px', border: '1px solid #f59e0b', background: 'rgba(245,158,11,0.1)', color: '#f59e0b', fontSize: '0.7rem', fontWeight: 700, cursor: 'pointer' }}>
+            <Download size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }} /> Excel
+          </button>
+        </h4>
         <div className="grid-table-container">
           <table>
             <thead>
