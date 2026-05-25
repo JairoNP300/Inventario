@@ -1894,7 +1894,8 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
     client_name: '', client_nit: '', client_nrc: '', client_address: '', client_deliverer: '',
     payment_condition: 'CONTADO',
     observations: '',
-    receiver_name: ''
+    receiver_name: '',
+    transfer_destination: 'Usulután'
   });
   const [dispatchCart, setDispatchCart] = useState([]);
   const [showCartPreview, setShowCartPreview] = useState(false);
@@ -1924,7 +1925,7 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
     }
     const product = products.find(p => String(p.id) === String(formData.product_id));
     if (!product) return;
-    const price = formData.unit_type === 'Lbs' ? product.price_per_lb : product.price_per_kg;
+    const price = formData.unit_type === 'Lbs' ? product.price_per_lb : formData.unit_type === 'Kg' ? product.price_per_kg : (product.price_per_box || 0);
     const subtotal = parseFloat(formData.weight) * (price || 0);
     const discount = parseFloat(formData.discount_percent) || 0;
     const total = subtotal * (1 - discount / 100);
