@@ -2429,59 +2429,87 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
         <div className="grid-table-container">
           <table>
             <thead>
-              {activeSubTab === 'unified' ? (
-                <tr>
-                  <th className="col-date">Fecha</th>
-                  <th className="col-carne">Producto</th>
-                  <th className="col-qty">Peso Viñeta (Kg)</th>
-                  <th className="col-qty">Peso Báscula (Kg)</th>
-                  <th className="col-carne">Destino</th>
-                  <th className="col-actions">Acciones</th>
-                </tr>
-              ) : (
-                <tr>
-                  <th className="col-date">Fecha</th>
-                  <th className="col-carne">Producto</th>
-                  <th className="col-qty">Cant.</th>
-                  <th className="col-carne">Destino</th>
-                  <th className="col-qty">Valor</th>
-                  <th className="col-actions">Acciones</th>
-                </tr>
-              )}
+              <tr>
+                <th className="col-date">Fecha</th>
+                <th className="col-carne">Producto</th>
+                <th className="col-carne">Tipo</th>
+                <th className="col-carne">Origen → Destino</th>
+                <th className="col-qty">Cantidad</th>
+                {activeSubTab === 'unified' && <><th className="col-qty">Viñeta</th><th className="col-qty">Báscula</th></>}
+                {activeSubTab !== 'unified' && <th className="col-qty">Valor</th>}
+                <th className="col-actions">Acciones</th>
+              </tr>
             </thead>
             <tbody>
-              {(activeSubTab === 'unified' ? incomeLogs : dispatchLogs).length === 0 ? (
-                <tr><td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '20px' }}>Sin movimientos registrados</td></tr>
-              ) : (
-                (activeSubTab === 'unified' ? incomeLogs : dispatchLogs).slice().reverse().map(log => (
-                  <tr key={log.id} className="fade-in">
-                    <td className="col-date">{new Date(log.date).toLocaleDateString()}</td>
-                    <td className="col-carne" style={{ fontWeight: 700 }}>{log.product_name || '—'}</td>
-                    {activeSubTab === 'unified' ? (
-                      <>
-                        <td className="col-qty">{parseFloat(log.tag_weight || 0).toFixed(2)} <small>Kg</small></td>
-                        <td className="col-qty">{parseFloat(log.scale_weight || 0).toFixed(2)} <small>Kg</small></td>
-                        <td className="col-carne" style={{ color: 'var(--accent)', fontWeight: 700 }}>{log.distribution_details || log.destination || 'Central'}</td>
-                      </>
-                    ) : (
-                      <>
-                        <td className="col-qty">{parseFloat(log.weight || 0).toFixed(2)} <small>{log.unit_type || 'Lbs'}</small></td>
-                        <td className="col-carne" style={{ color: 'var(--accent)', fontWeight: 700 }}>{log.agro_name || log.destination || '—'}</td>
-                        <td className="col-qty">${parseFloat(log.value || 0).toFixed(2)}</td>
-                      </>
-                    )}
-                    <td className="col-actions">
-                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                        <motion.button whileHover={{ scale: 1.2 }} onClick={() => handleEdit(log)} style={{ background: 'none', border: 'none', color: '#f59e0b', cursor: 'pointer' }}><Edit2 size={14} /></motion.button>
-                        <motion.button whileHover={{ scale: 1.2 }} onClick={() => {
-                          const type = activeSubTab === 'unified' ? 'ransa' : 'dispatches';
-                          if (confirm('¿Eliminar?')) { fetch(`${API_BASE}/${type === 'ransa' ? 'reports/ransa' : 'dispatches'}/${log.id}`, { method: 'DELETE' }).then(onUpdate); }
-                        }} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer' }}><Trash2 size={14} /></motion.button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
+              {(() => {
+                let combined = [];
+                if (activeSubTab === 'unified') {
+                  combined = [
+                    ...incomeLogs.map(l => ({ ...l, _type: 'income' })),
+                    ...movements.map(l => ({ ...l, _type: 'movement' }))
+                  ];
+                } else {
+                  combined = [
+                    ...dispatchLogs.map(l => ({ ...l, _type: 'dispatch' })),
+                    ...movements.map(l => ({ ...l, _type: 'movement' }))
+                  ];
+                }
+                combined.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+                if (combined.length === 0) {
+                  return <tr><td colSpan={8} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '20px' }}>Sin movimientos registrados</td></tr>;
+                }
+                return combined.map(log => {
+                  const isIncome = log._type === 'income';
+                  const isMovement = log._type === 'movement';
+                  const isDispatch = log._type === 'dispatch';
+                  const typeLabel = isIncome ? 'Recepción' : isMovement ? 'Traslado' : 'Despacho';
+                  const typeColor = isIncome ? '#06b6d4' : isMovement ? '#f59e0b' : '#10b981';
+                  const productName = log.product_name || log.name || '—';
+                  const origin = log.origin_warehouse || (isIncome ? 'Ransa' : '—');
+                  const dest = log.dest_warehouse || log.distribution_details || log.agro_name || log.destination || '—';
+                  const qty = isIncome ? (parseFloat(log.scale_weight || 0).toFixed(1) + ' Kg') : (parseFloat(log.weight || 0).toFixed(1) + ' ' + (log.unit_type || 'Lbs'));
+                  return (
+                    <tr key={`${log._type}-${log.id}`} className="fade-in">
+                      <td className="col-date">{new Date(log.date).toLocaleDateString()}</td>
+                      <td className="col-carne" style={{ fontWeight: 700 }}>{productName}</td>
+                      <td className="col-carne"><span style={{ color: typeColor, fontWeight: 700, fontSize: '0.75rem', background: `${typeColor}15`, padding: '2px 8px', borderRadius: '4px' }}>{typeLabel}</span></td>
+                      <td className="col-carne" style={{ color: 'var(--accent)', fontWeight: 600, fontSize: '0.8rem' }}>
+                        {origin} <small style={{ color: 'var(--text-muted)' }}>→</small> {dest}
+                      </td>
+                      <td className="col-qty" style={{ fontWeight: 700 }}>{qty}</td>
+                      {activeSubTab === 'unified' && isIncome && (
+                        <>
+                          <td className="col-qty">{parseFloat(log.tag_weight || 0).toFixed(1)}</td>
+                          <td className="col-qty">{parseFloat(log.scale_weight || 0).toFixed(1)}</td>
+                        </>
+                      )}
+                      {activeSubTab === 'unified' && !isIncome && (
+                        <><td className="col-qty" style={{ color: 'var(--text-muted)' }}>—</td><td className="col-qty" style={{ color: 'var(--text-muted)' }}>—</td></>
+                      )}
+                      {activeSubTab !== 'unified' && (
+                        <td className="col-qty" style={{ color: isMovement ? 'var(--text-muted)' : 'var(--accent)' }}>
+                          {isMovement ? '—' : `$${parseFloat(log.value || 0).toFixed(2)}`}
+                        </td>
+                      )}
+                      <td className="col-actions">
+                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                          {!isMovement && (
+                            <motion.button whileHover={{ scale: 1.2 }} onClick={() => handleEdit(log)} style={{ background: 'none', border: 'none', color: '#f59e0b', cursor: 'pointer' }}><Edit2 size={14} /></motion.button>
+                          )}
+                          {isMovement && (
+                            <motion.button whileHover={{ scale: 1.2 }} onClick={() => handleEditMovement(log)} style={{ background: 'none', border: 'none', color: '#f59e0b', cursor: 'pointer' }}><Edit2 size={14} /></motion.button>
+                          )}
+                          <motion.button whileHover={{ scale: 1.2 }} onClick={() => {
+                            if (!confirm('¿Eliminar este movimiento?')) return;
+                            const ep = isIncome ? 'reports/ransa' : isMovement ? 'movements' : 'dispatches';
+                            fetch(`${API_BASE}/${ep}/${log.id}`, { method: 'DELETE' }).then(onUpdate);
+                          }} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer' }}><Trash2 size={14} /></motion.button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                });
+              })()}
             </tbody>
           </table>
         </div>
