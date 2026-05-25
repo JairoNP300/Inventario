@@ -904,10 +904,8 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
     ws.views = [{ state: 'frozen', ySplit: 3 }];
 
     inventoryRows.forEach((i, idx) => {
-      const entradas = toNum(i.entradas_cajas);
-      const salidas = toNum(i.salidas_cajas);
-      const stock = entradas - salidas;
-      const row = ws.addRow([i.name || `Producto ${i.code}`, entradas, salidas, stock]);
+      const stock = toNum(i.stock_cajas);
+      const row = ws.addRow([i.name || `Producto ${i.code}`, stock]);
       row.height = 20;
       const rowFill = idx % 2 === 0 ? whiteFill : altFill;
       row.eachCell((cell, col) => {
@@ -917,9 +915,7 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
           alignment: { horizontal: col === 1 ? 'left' : 'center', vertical: 'middle' },
           numFmt: col === 1 ? '@' : '#,##0'
         };
-        if (col === 2) Object.assign(baseStyle, { font: { bold: true, size: 10, name: 'Calibri', color: { argb: 'FF0284C7' } } });
-        if (col === 3) Object.assign(baseStyle, { font: { bold: true, size: 10, name: 'Calibri', color: { argb: 'FFDC2626' } } });
-        if (col === 4) Object.assign(baseStyle, { font: { bold: true, size: 11, name: 'Calibri', color: { argb: stock <= 0 ? 'FFDC2626' : 'FFB45309' } } });
+        if (col === 2) Object.assign(baseStyle, { font: { bold: true, size: 11, name: 'Calibri', color: { argb: stock <= 0 ? 'FFDC2626' : 'FFB45309' } } });
         Object.assign(cell, baseStyle);
       });
     });
@@ -933,13 +929,9 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
     totalLabel.getCell(1).border = { top: { style: 'medium', color: { argb: 'FFB45309' } }, bottom: { style: 'double', color: { argb: 'FFB45309' } }, left: { style: 'thin', color: { argb: 'FFCCCCCC' } }, right: { style: 'thin', color: { argb: 'FFCCCCCC' } } };
     totalLabel.height = 22;
 
-    [2,3,4].forEach(col => {
+    [2].forEach(col => {
       const cell = totalLabel.getCell(col);
-      const sum = inventoryRows.reduce((acc, i) => {
-        const ent = toNum(i.entradas_cajas);
-        const sal = toNum(i.salidas_cajas);
-        return acc + ([0, ent, sal, ent - sal][col - 1]);
-      }, 0);
+      const sum = inventoryRows.reduce((acc, i) => acc + toNum(i.stock_cajas), 0);
       cell.value = sum;
       cell.font = { bold: true, size: 10, name: 'Calibri', color: { argb: 'FFFFFFFF' } };
       cell.fill = headerFill;
