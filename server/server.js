@@ -1383,6 +1383,24 @@ initDb().then(() => {
         }
       }
       
+      // Seed entradas_cajas (cajas received per product) if not yet seeded
+      try {
+        const { rows: checkRows } = await query('SELECT COUNT(*) as cnt FROM inventory WHERE entradas_cajas > 0');
+        if (checkRows[0].cnt === 0) {
+          const cajasSeed = { "1618":326,"1619":200,"1620":114,"1621":45,"1622":43,"1623":45,"1624":105,"1625":55,"1626":46,"1627":53,"1628":186 };
+          for (const [code, cajas] of Object.entries(cajasSeed)) {
+            const { rows: pRows } = await query('SELECT id FROM products WHERE code = ?', [code]);
+            if (pRows.length > 0) {
+              await query('UPDATE inventory SET entradas_cajas = ? WHERE product_id = ?', [cajas, pRows[0].id]);
+              console.log(`[SEED] entradas_cajas for code ${code}: ${cajas} cajas`);
+            }
+          }
+          console.log('[SEED] entradas_cajas seeded successfully');
+        }
+      } catch (err) {
+        console.log('[SEED] entradas_cajas already seeded or error:', err.message);
+      }
+      
       if (syncedCount > 0) {
         console.log(`[AUTO-SYNC] ✅ ${syncedCount} productos inicializados con stock base`);
       } else {
