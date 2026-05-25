@@ -1485,83 +1485,42 @@ app.get('*', (req, res) => {
 // Initialize database and run migration
 initDb().then(() => {
   migrateDatabase().then(async () => {
-    // Auto-sync inventory on startup - only for products with zero stock
+    // Only seed on completely empty inventory (first-ever startup)
     try {
-      console.log('[AUTO-SYNC] Checking inventory for zero-stock products...');
-      const { rows: products } = await query('SELECT id, code, name FROM products');
-      let syncedCount = 0;
-      
-      for (const product of products) {
-        const physicalData = physicalInventoryData[product.code];
-        if (physicalData) {
-          // Check current inventory values
-          const { rows: current } = await query('SELECT bodega_1, bodega_2, bodega_3, bodega_4 FROM inventory WHERE product_id = ?', [product.id]);
-          const inv = current[0] || {};
-          const totalStock = (inv.bodega_1 || 0) + (inv.bodega_2 || 0) + (inv.bodega_3 || 0) + (inv.bodega_4 || 0);
-          
-          // Only sync if product has no stock (all zeros)
-          if (totalStock === 0) {
+      const { rows: countRows } = await query('SELECT COUNT(*) as cnt FROM inventory');
+      const isEmpty = countRows[0].cnt === 0;
+
+      if (isEmpty) {
+        console.log('[SEED] Inventory is empty — seeding initial data...');
+        const { rows: products } = await query('SELECT id, code FROM products');
+        for (const product of products) {
+          const physicalData = physicalInventoryData[product.code];
+          if (physicalData) {
             await query(`
               UPDATE inventory SET 
-                bodega_1 = ?,
-                bodega_2 = 0,
-                bodega_3 = ?,
-                bodega_4 = 0,
+                bodega_1 = ?, bodega_2 = 0, bodega_3 = ?, bodega_4 = 0,
                 current_stock = ? + ?
               WHERE product_id = ?
-            `, [
-              physicalData.bodega_1, physicalData.bodega_3,
-              physicalData.bodega_1, physicalData.bodega_3, product.id
-            ]);
-            console.log(`[AUTO-SYNC] Initialized product ${product.code} (${product.name}): bodega_3=${physicalData.bodega_3}`);
-            syncedCount++;
+            `, [physicalData.bodega_1, physicalData.bodega_3, physicalData.bodega_1, physicalData.bodega_3, product.id]);
           }
         }
-      }
-      
-      // Seed entradas_cajas (cajas received per product) if not yet seeded
-      try {
-        const { rows: checkRows } = await query('SELECT COUNT(*) as cnt FROM inventory WHERE salidas_cajas > 0');
-        if (checkRows[0].cnt === 0) {
-          const cajasSeed = { "1618":326,"1619":200,"1620":114,"1621":45,"1622":43,"1623":45,"1624":105,"1625":55,"1626":46,"1627":53,"1628":186 };
-          const salidasSeed = { "1618":103,"1619":41,"1620":105,"1621":32,"1622":20,"1623":34,"1624":1,"1625":55,"1626":2,"1627":21,"1628":33 };
-          for (const [code, cajas] of Object.entries(cajasSeed)) {
-            const { rows: pRows } = await query('SELECT id FROM products WHERE code = ?', [code]);
-            if (pRows.length > 0) {
-              await query('UPDATE inventory SET entradas_cajas = ?, salidas_cajas = ? WHERE product_id = ?', [cajas, salidasSeed[code] || 0, pRows[0].id]);
-              console.log(`[SEED] code ${code}: entradas=${cajas}, salidas=${salidasSeed[code] || 0}`);
-            }
-          }
-          console.log('[SEED] entradas_cajas seeded successfully');
-        }
-      } catch (err) {
-        console.log('[SEED] entradas_cajas already seeded or error:', err.message);
-      }
 
-      // Seed real Usulután stock (bodega_3) from physical inventory data if still using default seed (100)
-      try {
-        const { rows: stillDefault } = await query('SELECT COUNT(*) as cnt FROM inventory i JOIN products p ON i.product_id = p.id WHERE p.code = ? AND i.bodega_3 = 100', ["1618"]);
-        if (stillDefault[0].cnt > 0) {
-          for (const [code, data] of Object.entries(physicalInventoryData)) {
-            const { rows: pRows } = await query('SELECT id FROM products WHERE code = ?', [code]);
-            if (pRows.length > 0) {
-              await query('UPDATE inventory SET bodega_3 = ?, bodega_1 = ? WHERE product_id = ?', [data.bodega_3, data.bodega_1, pRows[0].id]);
-              console.log(`[SEED] ${code}: bodega_1=${data.bodega_1}, bodega_3=${data.bodega_3}`);
-            }
+        // Seed cajas
+        const cajasSeed = { "1618":326,"1619":200,"1620":114,"1621":45,"1622":43,"1623":45,"1624":105,"1625":55,"1626":46,"1627":53,"1628":186 };
+        const salidasSeed = { "1618":103,"1619":41,"1620":105,"1621":32,"1622":20,"1623":34,"1624":1,"1625":55,"1626":2,"1627":21,"1628":33 };
+        for (const [code, cajas] of Object.entries(cajasSeed)) {
+          const { rows: pRows } = await query('SELECT id FROM products WHERE code = ?', [code]);
+          if (pRows.length > 0) {
+            await query('UPDATE inventory SET entradas_cajas = ?, salidas_cajas = ? WHERE product_id = ?', [cajas, salidasSeed[code] || 0, pRows[0].id]);
           }
-          console.log('[SEED] Real Usulután stock seeded successfully');
         }
-      } catch (err) {
-        console.log('[SEED] Usulután stock already seeded or error:', err.message);
-      }
-      
-      if (syncedCount > 0) {
-        console.log(`[AUTO-SYNC] ✅ ${syncedCount} productos inicializados con stock base`);
+        console.log('[SEED] Initial data seeded successfully');
       } else {
-        console.log('[AUTO-SYNC] ✅ Todos los productos ya tienen stock - no se requiere sincronización');
+        console.log('[SEED] Inventory has data — no seeding needed');
       }
     } catch (err) {
-      console.error('[AUTO-SYNC] Error:', err.message);
+      console.error('[SEED] Error:', err.message);
+    }
     }
     
     app.listen(port, '0.0.0.0', () => {
