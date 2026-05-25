@@ -744,22 +744,6 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
     setQuickLoading(false);
   };
 
-  const handleUndoAdjustment = (id) => {
-    if (!confirm('¿Revertir este ajuste? Se restará la cantidad que agregaste.')) return;
-    fetch(`${API_BASE}/inventory/undo-adjustment`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id })
-    })
-    .then(r => r.json())
-    .then(d => {
-      if (d.error) { alert('Error: ' + d.error); return; }
-      onUpdate();
-      alert('Ajuste revertido correctamente');
-    })
-    .catch(err => alert('Error de conexión: ' + err.message));
-  };
-
   return (
     <div>
       <h3>Ajustes y Consolidado de Inventario</h3>
@@ -934,7 +918,6 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
                 <th style={{ textAlign: 'right', padding: '8px', color: 'var(--text-muted)' }}>Peso +</th>
                 <th style={{ textAlign: 'right', padding: '8px', color: 'var(--text-muted)' }}>Cajas +</th>
                 <th style={{ textAlign: 'center', padding: '8px', color: 'var(--text-muted)' }}>Fecha</th>
-                <th style={{ textAlign: 'center', padding: '8px', color: 'var(--text-muted)' }}>Acción</th>
               </tr>
             </thead>
             <tbody>
@@ -945,11 +928,6 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
                   <td style={{ padding: '8px', textAlign: 'right', color: 'var(--success)' }}>{parseFloat(a.weight_change) > 0 ? '+' + parseFloat(a.weight_change).toFixed(1) : '-'}</td>
                   <td style={{ padding: '8px', textAlign: 'right', color: '#f59e0b' }}>{parseInt(a.cajas_change) > 0 ? '+' + a.cajas_change : '-'}</td>
                   <td style={{ padding: '8px', textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-muted)' }}>{new Date(a.created_at).toLocaleString('es-SV')}</td>
-                  <td style={{ padding: '8px', textAlign: 'center' }}>
-                    <button onClick={() => handleUndoAdjustment(a.id)} style={{ background: '#ef4444', border: 'none', borderRadius: '6px', padding: '5px 12px', color: 'white', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700 }}>
-                      Revertir
-                    </button>
-                  </td>
                 </tr>
               ))}
             </tbody>
