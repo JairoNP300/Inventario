@@ -717,19 +717,29 @@ app.post('/api/dispatches', async (req, res) => {
     // bodega_1 (Ransa) is in KG, others in LBS
     let weightInUnits = parseFloat(weight);
     console.log('DISPATCH raw weight parse:', weightInUnits);
-    if (bodegaCol === 'bodega_1') {
-      // Ransa: convert dispatch weight to KG if it came in Lbs
-      if (unit_type === 'Lbs') weightInUnits = weightInUnits / 2.20462;
+
+    if (unit_type === 'Cajas') {
+      // Cajas dispatch: only track via salidas_cajas, don't deduct weight columns
+      const boxCount = parseInt(weight) || 0;
+      if (boxCount > 0) {
+        await query('UPDATE inventory SET salidas_cajas = salidas_cajas + ? WHERE product_id = ?', [boxCount, product_id]);
+        console.log('DISPATCH cajas tracked (from weight):', boxCount);
+      }
     } else {
-      // Other bodegas: convert to LBS if came in Kg
-      if (unit_type === 'Kg') weightInUnits = weightInUnits * 2.20462;
+      if (bodegaCol === 'bodega_1') {
+        // Ransa: convert dispatch weight to KG if it came in Lbs
+        if (unit_type === 'Lbs') weightInUnits = weightInUnits / 2.20462;
+      } else {
+        // Other bodegas: convert to LBS if came in Kg
+        if (unit_type === 'Kg') weightInUnits = weightInUnits * 2.20462;
+      }
+      console.log('DISPATCH weightInUnits:', weightInUnits, 'product_id:', product_id);
+
+      const updateResult = await query(`UPDATE inventory SET ${bodegaCol} = ${bodegaCol} - ?, sold_stock = sold_stock + ? WHERE product_id = ?`, [weightInUnits, weightInUnits, product_id]);
+      console.log('DISPATCH update result:', JSON.stringify(updateResult));
     }
-    console.log('DISPATCH weightInUnits:', weightInUnits, 'product_id:', product_id);
 
-    const updateResult = await query(`UPDATE inventory SET ${bodegaCol} = ${bodegaCol} - ?, sold_stock = sold_stock + ? WHERE product_id = ?`, [weightInUnits, weightInUnits, product_id]);
-    console.log('DISPATCH update result:', JSON.stringify(updateResult));
-
-    // Track cajas dispatched
+    // Track cajas dispatched (separate field from weight)
     const boxCount = parseInt(cajas) || 0;
     if (boxCount > 0) {
       await query('UPDATE inventory SET salidas_cajas = salidas_cajas + ? WHERE product_id = ?', [boxCount, product_id]);
@@ -930,7 +940,7 @@ app.get('/api/agros', async (req, res) => {
 });
 
 app.post('/api/inventory/transfer', async (req, res) => {
-  const { product_id, origin, destination, weight } = req.body;
+  const { product_id, origin, destination, origin_weight, dest_weight, weight } = req.body;
   try {
     const colMap = {
       'Ransa': 'bodega_1',
@@ -942,11 +952,13 @@ app.post('/api/inventory/transfer', async (req, res) => {
     };
     const originCol = colMap[origin];
     const destCol = colMap[destination];
+    const deductWeight = origin_weight ?? weight ?? 0;
+    const addWeight = dest_weight ?? weight ?? 0;
 
-    await query(`UPDATE inventory SET ${originCol} = ${originCol} - ? WHERE product_id = ?`, [weight, product_id]);
-    await query(`UPDATE inventory SET ${destCol} = ${destCol} + ? WHERE product_id = ?`, [weight, product_id]);
+    await query(`UPDATE inventory SET ${originCol} = ${originCol} - ? WHERE product_id = ?`, [deductWeight, product_id]);
+    await query(`UPDATE inventory SET ${destCol} = ${destCol} + ? WHERE product_id = ?`, [addWeight, product_id]);
 
-    await query('INSERT INTO movements (product_id, origin_warehouse, dest_warehouse, weight, type) VALUES (?, ?, ?, ?, ?)', [product_id, origin, destination, weight, 'TRANSFER']);
+    await query('INSERT INTO movements (product_id, origin_warehouse, dest_warehouse, weight, type) VALUES (?, ?, ?, ?, ?)', [product_id, origin, destination, deductWeight, 'TRANSFER']);
 
     res.json({ success: true });
   } catch (err) {
