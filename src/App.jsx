@@ -1055,11 +1055,11 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
           <button type="submit" className="btn-primary">Guardar Ajuste</button>
         </form>
 
-        <div className="form-card" style={{ gridColumn: 'span 2' }}>
+        <div className="form-card" style={{ gridColumn: 'span 2', border: '1px solid rgba(56,189,248,0.15)', boxShadow: '0 8px 32px rgba(0,0,0,0.15)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-            <h4 style={{ margin: 0 }}>Balance Consolidado por Bodega
-              <button onClick={exportBalanceExcel} title="Exportar a Excel" style={{ marginLeft: '10px', padding: '4px 10px', borderRadius: '6px', border: '1px solid var(--accent)', background: 'rgba(56,189,248,0.1)', color: 'var(--accent)', fontSize: '0.7rem', fontWeight: 700, cursor: 'pointer', verticalAlign: 'middle' }}>
-                <Download size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }} /> Excel
+            <h4 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}><BarChart3 size={18} style={{ color: 'var(--accent)' }} /> Balance Consolidado por Bodega
+              <button onClick={exportBalanceExcel} title="Exportar a Excel" style={{ marginLeft: '10px', padding: '6px 14px', borderRadius: '8px', border: 'none', background: 'linear-gradient(135deg, #059669, #047857)', color: '#fff', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', verticalAlign: 'middle', boxShadow: '0 2px 8px rgba(5,150,105,0.3)' }}>
+                <Download size={14} style={{ verticalAlign: 'middle', marginRight: '6px' }} /> Exportar Excel
               </button>
             </h4>
             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
@@ -1083,17 +1083,17 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
               <div style={{ width: '200px' }}><UnitSelector value={viewUnit} onChange={setViewUnit} /></div>
             </div>
           </div>
-          <div className="grid-table-container">
+          <div className="grid-table-container" style={{ borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(56,189,248,0.1)' }}>
             <table>
               <thead>
                   <tr>
-                    <th className="col-carne">Producto</th>
-                    <th className="col-qty">Entradas ({viewUnit})</th>
-                    <th className="col-qty">Ransa ({viewUnit})</th>
-                    <th className="col-qty">Soyapango ({viewUnit})</th>
-                    <th className="col-qty">Usulután ({viewUnit})</th>
-                    <th className="col-qty">Lomas ({viewUnit})</th>
-                    <th className="col-qty">Stock Actual ({viewUnit})</th>
+                    <th className="col-carne" style={{ background: 'linear-gradient(135deg, #0f172a, #1e293b)', color: '#e2e8f0', fontWeight: 700, fontSize: '0.82rem', padding: '12px 10px', letterSpacing: '0.5px' }}>Producto</th>
+                    <th className="col-qty" style={{ background: 'linear-gradient(135deg, #0f172a, #1e293b)', color: '#06b6d4', fontWeight: 700, fontSize: '0.82rem', padding: '12px 10px', letterSpacing: '0.5px' }}>Entradas ({viewUnit})</th>
+                    <th className="col-qty" style={{ background: 'linear-gradient(135deg, #0f172a, #1e293b)', color: '#38bdf8', fontWeight: 700, fontSize: '0.82rem', padding: '12px 10px', letterSpacing: '0.5px' }}>Ransa ({viewUnit})</th>
+                    <th className="col-qty" style={{ background: 'linear-gradient(135deg, #0f172a, #1e293b)', color: '#4ade80', fontWeight: 700, fontSize: '0.82rem', padding: '12px 10px', letterSpacing: '0.5px' }}>Soyapango ({viewUnit})</th>
+                    <th className="col-qty" style={{ background: 'linear-gradient(135deg, #0f172a, #1e293b)', color: '#4ade80', fontWeight: 700, fontSize: '0.82rem', padding: '12px 10px', letterSpacing: '0.5px' }}>Usulután ({viewUnit})</th>
+                    <th className="col-qty" style={{ background: 'linear-gradient(135deg, #0f172a, #1e293b)', color: '#c084fc', fontWeight: 700, fontSize: '0.82rem', padding: '12px 10px', letterSpacing: '0.5px' }}>Lomas ({viewUnit})</th>
+                    <th className="col-qty" style={{ background: 'linear-gradient(135deg, #0f172a, #1e293b)', color: '#ffa94d', fontWeight: 800, fontSize: '0.85rem', padding: '12px 10px', letterSpacing: '0.5px' }}>Stock Actual ({viewUnit})</th>
                   </tr>
               </thead>
               <tbody>
