@@ -992,7 +992,7 @@ app.post('/api/inventory/transfer', async (req, res) => {
       await query(`UPDATE inventory SET ${destCol} = ${destCol} + ? WHERE product_id = ?`, [addWeight, product_id]);
     }
 
-    await query('INSERT INTO movements (product_id, origin_warehouse, dest_warehouse, weight, type, origin_weight, dest_weight) VALUES (?, ?, ?, ?, ?, ?, ?)', [product_id, origin, destination, deductWeight, 'TRANSFER', deductWeight, addWeight]);
+    await query('INSERT INTO movements (product_id, origin_warehouse, dest_warehouse, weight, type, origin_weight, dest_weight, unit_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [product_id, origin, destination, deductWeight, 'TRANSFER', deductWeight, addWeight, unit_type || 'Lbs']);
 
     res.json({ success: true });
   } catch (err) {
