@@ -347,6 +347,18 @@ const migrateDatabase = async () => {
   } catch(e) {
     console.log('unit_type column already exists in movements');
   }
+
+  // Add dest_warehouse column to production_logs if not exists
+  try {
+    if (isProduction) {
+      await query(`ALTER TABLE production_logs ADD COLUMN dest_warehouse TEXT DEFAULT ''`);
+    } else {
+      sqliteDb.prepare("ALTER TABLE production_logs ADD COLUMN dest_warehouse TEXT DEFAULT ''").run();
+    }
+    console.log('dest_warehouse column added to production_logs');
+  } catch(e) {
+    console.log('dest_warehouse column already exists in production_logs');
+  }
 };
 
 // --- INITIALIZATION ---
