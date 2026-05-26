@@ -1132,6 +1132,7 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
               <thead>
                   <tr>
                     <th className="col-carne" style={{ background: 'linear-gradient(135deg, #0f172a, #1e293b)', color: '#e2e8f0', fontWeight: 700, fontSize: '0.82rem', padding: '12px 10px', letterSpacing: '0.5px' }}>Producto</th>
+                    <th className="col-qty" style={{ background: 'linear-gradient(135deg, #1a1a2e, #16213e)', color: '#f97316', fontWeight: 700, fontSize: '0.82rem', padding: '12px 10px', letterSpacing: '0.5px' }}>Peso Sin Procesar (Lbs)</th>
                     <th className="col-qty" style={{ background: 'linear-gradient(135deg, #0f172a, #1e293b)', color: '#06b6d4', fontWeight: 700, fontSize: '0.82rem', padding: '12px 10px', letterSpacing: '0.5px' }}>Entradas ({viewUnit})</th>
                     <th className="col-qty" style={{ background: 'linear-gradient(135deg, #0f172a, #1e293b)', color: '#38bdf8', fontWeight: 700, fontSize: '0.82rem', padding: '12px 10px', letterSpacing: '0.5px' }}>Ransa ({viewUnit})</th>
                     <th className="col-qty" style={{ background: 'linear-gradient(135deg, #0f172a, #1e293b)', color: '#4ade80', fontWeight: 700, fontSize: '0.82rem', padding: '12px 10px', letterSpacing: '0.5px' }}>Soyapango ({viewUnit})</th>
