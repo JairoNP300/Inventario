@@ -1777,68 +1777,7 @@ app.post('/api/admin/reset', async (req, res) => {
   }
 });
 
-// Sync inventory from physical inventory data
-// Bodega mapping: bodega_1 = Ransa (KG), bodega_2 = Soyapango (LBS), bodega_3 = Usulután (LBS), bodega_4 = Lomas (LBS)
-const physicalInventoryData = {
-  "1618": { name: "Sin Hueso Nalga Adentro", bodega_1: 0, bodega_3: 9168.1 },
-  "1619": { name: "Cajas Tortuguita", bodega_1: 0, bodega_3: 5948.9 },
-  "1620": { name: "Con Hueso Cogote", bodega_1: 0, bodega_3: 0 },
-  "1621": { name: "Sin Hueso Bife Angosto", bodega_1: 0, bodega_3: 0 },
-  "1622": { name: "Recorte 80.20", bodega_1: 0, bodega_3: 0 },
-  "1623": { name: "Recorte 50.50", bodega_1: 0, bodega_3: 0 },
-  "1624": { name: "Aguja", bodega_1: 0, bodega_3: 4808.9 },
-  "1625": { name: "Corazón Cuadril", bodega_1: 0, bodega_3: 0 },
-  "1626": { name: "Sin Hueso Delantero", bodega_1: 0, bodega_3: 1072.3 },
-  "1627": { name: "Sin Hueso Tapa Cuadril", bodega_1: 0, bodega_3: 0 },
-  "1628": { name: "Sin Hueso Recorte de Carne", bodega_1: 0, bodega_3: 5595.4 }
-};
 
-app.post('/api/admin/sync-inventory-weights', async (req, res) => {
-  try {
-    console.log('[SYNC-INVENTORY] Starting inventory sync from physical data...');
-    const { rows: products } = await query('SELECT id, code, name FROM products');
-    let syncedCount = 0;
-    
-    for (const product of products) {
-      const physicalData = physicalInventoryData[product.code];
-      if (physicalData) {
-        // Check current inventory values - only sync if all bodegas are zero
-        const { rows: current } = await query('SELECT bodega_1, bodega_2, bodega_3, bodega_4 FROM inventory WHERE product_id = ?', [product.id]);
-        const inv = current[0] || {};
-        const totalStock = (inv.bodega_1 || 0) + (inv.bodega_2 || 0) + (inv.bodega_3 || 0) + (inv.bodega_4 || 0);
-        
-        // Only sync if product has no stock (all zeros)
-        if (totalStock === 0) {
-          await query(`
-            UPDATE inventory SET 
-              bodega_1 = ?,
-              bodega_2 = 0,
-              bodega_3 = ?,
-              bodega_4 = 0,
-              current_stock = ? + ?
-            WHERE product_id = ?
-          `, [
-            physicalData.bodega_1, physicalData.bodega_3,
-            physicalData.bodega_1, physicalData.bodega_3, product.id
-          ]);
-          console.log(`[SYNC] Initialized product ${product.code} (${product.name}): bodega_1=${physicalData.bodega_1}, bodega_3=${physicalData.bodega_3}`);
-          syncedCount++;
-        } else {
-          console.log(`[SYNC] Skipped product ${product.code} (${product.name}): already has stock (${totalStock})`);
-        }
-      }
-    }
-    
-    // Verify the sync
-    const verify = await query('SELECT p.code, p.name, i.bodega_1, i.bodega_2, i.bodega_3, i.bodega_4, (i.bodega_1 + i.bodega_2 + i.bodega_3 + i.bodega_4) as total FROM inventory i JOIN products p ON i.product_id = p.id ORDER BY CAST(p.code AS INTEGER)');
-    console.log('[SYNC-INVENTORY] Verification after sync:', verify.rows);
-    
-    res.json({ success: true, message: `Inventario sincronizado: ${syncedCount} productos inicializados (los demás ya tenían stock)`, data: verify.rows });
-  } catch (err) {
-    console.error('[SYNC-INVENTORY] Error:', err);
-    res.status(500).json({ error: err.message });
-  }
-});
 
 // ─── ARCHIVE ENDPOINTS ────────────────────────────────────────────────────
 
@@ -1927,24 +1866,7 @@ initDb().then(() => {
     console.log('[SEED] No seed values — database is user-managed');
 
 
-    // Seed Usulután (bodega_3) stock on fresh database
-    try {
-      const { rows: b3Check } = await query('SELECT COUNT(*) as cnt FROM inventory WHERE bodega_3 > 0');
-      if (parseInt(b3Check[0]?.cnt || 0) === 0) {
-        const b3Seed = { "1618":9468.1,"1619":5948.9,"1624":4808.9,"1626":1072.3,"1628":5595.4 };
-        for (const [code, val] of Object.entries(b3Seed)) {
-          const { rows: pRows } = await query('SELECT id FROM products WHERE code = ?', [code]);
-          if (pRows.length > 0) {
-            await query('UPDATE inventory SET bodega_3 = ? WHERE product_id = ?', [val, pRows[0].id]);
-          }
-        }
-        console.log('[SEED] Usulután bodega_3 seeded successfully');
-      } else {
-        console.log('[SEED] Usulután bodega_3 already has data — no seeding needed');
-      }
-    } catch (err) {
-      console.error('[SEED] Usulután bodega_3 error:', err.message);
-    }
+
     
     // Auto-backup before starting
     await backupDatabase();
