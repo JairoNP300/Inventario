@@ -364,18 +364,18 @@ const migrateDatabase = async () => {
   // Ensure inventory rows exist for all products — NEVER overwrite existing data
   const products = await query('SELECT id FROM products');
   for (const product of products.rows) {
-    if (isProduction) {
-      await query(`
-        INSERT INTO inventory (product_id, bodega_1, bodega_2, bodega_3, bodega_4, initial_stock, current_stock, sold_stock)
-        VALUES (?, 0, 0, 0, 0, 0, 0, 0)
-        ON CONFLICT(product_id) DO NOTHING
-      `, [product.id]);
-    } else {
-      await query(`
-        INSERT OR IGNORE INTO inventory (product_id, bodega_1, bodega_2, bodega_3, bodega_4, initial_stock, current_stock, sold_stock)
-        VALUES (?, 0, 0, 0, 0, 0, 0, 0)
-      `, [product.id]);
-    }
+       if (isProduction) {
+         await query(`
+           INSERT INTO inventory (product_id, bodega_1, bodega_2, bodega_3, bodega_4, initial_stock, current_stock, sold_stock)
+           VALUES (?, 100, 100, 100, 100, 400, 400, 0)
+           ON CONFLICT(product_id) DO NOTHING
+         `, [product.id]);
+       } else {
+         await query(`
+           INSERT OR IGNORE INTO inventory (product_id, bodega_1, bodega_2, bodega_3, bodega_4, initial_stock, current_stock, sold_stock)
+           VALUES (?, 100, 100, 100, 100, 400, 400, 0)
+         `, [product.id]);
+       }
   }
   // Fix existing tables (SQLite only handles one column at a time)
   const columns = ['current_stock', 'final_stock'];
