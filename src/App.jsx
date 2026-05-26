@@ -4571,17 +4571,18 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
         .then(r => r.json())
         .then(d => setAgros(Array.isArray(d) ? d : []))
         .catch(() => setAgros([]));
+      const extractRows = (d) => Array.isArray(d) ? d : (d?.rows || []);
       fetch(`${API_BASE}/production/logs`)
         .then(r => r.json())
-        .then(d => setProductionLogs(Array.isArray(d) ? d : []))
+        .then(d => setProductionLogs(extractRows(d)))
         .catch(() => setProductionLogs([]));
       fetch(`${API_BASE}/reports/dispatches`)
         .then(r => r.json())
-        .then(d => setDispatchLogs(Array.isArray(d) ? d : []))
+        .then(d => setDispatchLogs(extractRows(d)))
         .catch(() => setDispatchLogs([]));
       fetch(`${API_BASE}/reports/ransa`)
         .then(r => r.json())
-        .then(d => setIncomeLogs(Array.isArray(d) ? d : []))
+        .then(d => setIncomeLogs(extractRows(d)))
         .catch(() => setIncomeLogs([]));
       fetch(`${API_BASE}/reports/inventory-status`)
         .then(r => r.json())
@@ -4591,12 +4592,12 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
         .then(r => r.json())
         .then(d => {
           console.log('Food costing logs fetched:', d);
-          setFoodCostingLogs(Array.isArray(d) ? d : []);
+          setFoodCostingLogs(extractRows(d));
         })
         .catch(() => setFoodCostingLogs([]));
       fetch(`${API_BASE}/movements`)
         .then(r => r.json())
-        .then(d => setMovements(Array.isArray(d) ? d : []))
+        .then(d => setMovements(extractRows(d)))
         .catch(() => setMovements([]));
     };
     fetchData();
