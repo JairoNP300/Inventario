@@ -2601,6 +2601,10 @@ class TabErrorBoundary extends React.Component {
     return { hasError: true, error };
   }
 
+  componentDidCatch(error, info) {
+    console.error('TabErrorBoundary caught:', error, info);
+  }
+
   componentDidUpdate(prevProps) {
     if (prevProps.resetKey !== this.props.resetKey && this.state.hasError) {
       this.setState({ hasError: false, error: null });
@@ -2615,6 +2619,9 @@ class TabErrorBoundary extends React.Component {
           <p style={{ color: 'var(--text-muted)' }}>
             Ocurrió un error inesperado en el renderizado. Presiona refrescar y vuelve a intentar.
           </p>
+          <pre style={{ color: '#ef4444', fontSize: '0.75rem', background: 'rgba(0,0,0,0.3)', padding: '10px', borderRadius: '8px', maxHeight: '200px', overflow: 'auto', whiteSpace: 'pre-wrap' }}>
+            {this.state.error?.message}
+          </pre>
           <button className="btn-primary" onClick={this.props.onRetry} style={{ width: 'auto' }}>
             Reintentar
           </button>
