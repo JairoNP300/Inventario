@@ -1,4 +1,4 @@
-﻿import express from 'express';
+import express from 'express';
 // import Database from 'better-sqlite3'; // Moved to dynamic import for production optimization
 
 import cors from 'cors';
@@ -53,7 +53,7 @@ let pool;
 let sqliteDb;
 
 if (isProduction) {
-  console.log('≡ƒîÉ Conectando a PostgreSQL (Producci├│n)...');
+  console.log('🌐 Conectando a PostgreSQL (Producción)...');
   
   try {
     pool = new Pool({
@@ -66,27 +66,27 @@ if (isProduction) {
     
     // Test the connection
     const client = await pool.connect();
-    console.log('Γ£à PostgreSQL conectado exitosamente');
+    console.log('✅ PostgreSQL conectado exitosamente');
     client.release();
   } catch (e) {
-    console.error('Γ¥î Error conectando PostgreSQL:', e.message);
-    console.log('ΓÜá∩╕Å Fallback a SQLite...');
+    console.error('❌ Error conectando PostgreSQL:', e.message);
+    console.log('⚠️ Fallback a SQLite...');
     pool = null;
   }
 }
 
 // Use SQLite if not in production or if PostgreSQL failed
 if (!pool) {
-  console.log('≡ƒôé Iniciando SQLite...');
+  console.log('📂 Iniciando SQLite...');
   try {
     const Database = (await import('better-sqlite3')).default;
     const dbPath = join(__dirname, '../inventario_oficial.db');
-    console.log('≡ƒôü Database path:', dbPath);
+    console.log('📁 Database path:', dbPath);
     sqliteDb = new Database(dbPath);
     sqliteDb.pragma('journal_mode = WAL');
-    console.log('Γ£à SQLite inicializado');
+    console.log('✅ SQLite inicializado');
   } catch (e) {
-    console.error('Γ¥î Error cargando SQLite:', e.message);
+    console.error('❌ Error cargando SQLite:', e.message);
     process.exit(1);
   }
 }
@@ -95,7 +95,7 @@ if (!pool) {
 async function query(sql, params = []) {
   if (isProduction) {
     if (!pool) {
-      console.warn('ΓÜá∩╕Å Query intentada sin conexi├│n a base de datos (DATABASE_URL faltante).');
+      console.warn('⚠️ Query intentada sin conexión a base de datos (DATABASE_URL faltante).');
       return { rows: [], lastInsertRowid: null };
     }
     // Convert ? to $1, $2, etc for PostgreSQL
@@ -144,7 +144,7 @@ async function runTransaction(updates) {
 // Validate numeric input, returns parsed float or throws
 function sanitizeNumber(val, fieldName, allowZero = true) {
   const n = parseFloat(val);
-  if (isNaN(n)) throw new Error(`El campo '${fieldName}' debe ser un n├║mero v├ílido`);
+  if (isNaN(n)) throw new Error(`El campo '${fieldName}' debe ser un número válido`);
   if (!allowZero && n <= 0) throw new Error(`El campo '${fieldName}' debe ser mayor que 0`);
   return n;
 }
@@ -183,7 +183,7 @@ async function backupDatabase() {
 async function exec(sql) {
   if (isProduction) {
     if (!pool) {
-      console.warn('ΓÜá∩╕Å Exec intentada sin conexi├│n a base de datos.');
+      console.warn('⚠️ Exec intentada sin conexión a base de datos.');
       return { rows: [] };
     }
     // Postgres uses SERIAL or IDENTITY instead of AUTOINCREMENT
@@ -212,7 +212,7 @@ const migrateDatabase = async () => {
   }
   const agros = [
     [1, 'Soyapango - Puesto'],
-    [2, 'Usulut├ín - Puesto'],
+    [2, 'Usulután - Puesto'],
     [3, 'Agro Quezaltepeque'],
     [4, 'Agro Aguilares'],
     [5, 'Agro Opico'],
@@ -235,7 +235,7 @@ const migrateDatabase = async () => {
     }
   }
 
-  // Ensure inventory rows exist for all products ΓÇö NEVER overwrite existing data
+  // Ensure inventory rows exist for all products — NEVER overwrite existing data
   const products = await query('SELECT id FROM products');
   for (const product of products.rows) {
     if (isProduction) {
@@ -532,11 +532,11 @@ const initDb = async () => {
     ['1624', 'cajas de Aguja/chuck', 'Cortes', 4.25, 9.37, 85.00],
     ['1625', 'ANGELINA / CORAZON DE CUADRIL', 'Cortes', 4.75, 10.47, 95.00],
     ['1626', 'CARNE BOVINA CONGELADA SIN HUESO DELANTERO', 'Cortes', 3.95, 8.71, 75.00],
-    ['1627', 'CARNE BOVINA CONGELADA SIN HUESO TAPA CUADRIL / PICA├æA', 'Prime', 9.20, 20.28, 180.00],
+    ['1627', 'CARNE BOVINA CONGELADA SIN HUESO TAPA CUADRIL / PICAÑA', 'Prime', 9.20, 20.28, 180.00],
     ['1628', 'CARNE BOVINA CONGELADA SIN HUESO RECORTE DE CARNE 90 VL premium', 'Industrial', 4.65, 10.25, 90.00]
   ];
 
-  console.log('≡ƒöä Automatizando sincronizaci├│n de cat├ílogo oficial...');
+  console.log('🔄 Automatizando sincronización de catálogo oficial...');
   for (const p of products) {
     if (isProduction) {
       await query('INSERT INTO products (code, name, category, price_per_lb, price_per_kg, price_per_box) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(name) DO UPDATE SET price_per_lb = excluded.price_per_lb, price_per_kg = excluded.price_per_kg, price_per_box = excluded.price_per_box, code = excluded.code', p);
@@ -548,7 +548,7 @@ const initDb = async () => {
     }
   }
 
-  // Ensure inventory exists for all products ΓÇö only insert if not exists, NEVER overwrite existing data
+  // Ensure inventory exists for all products — only insert if not exists, NEVER overwrite existing data
   const { rows: prods } = await query('SELECT id FROM products');
   for (const p of prods) {
     if (isProduction) {
@@ -563,12 +563,12 @@ const initDb = async () => {
         VALUES (?, 0, 0, 0, 0, 0, 0)
       `, [p.id]);
     }
-    // DO NOT force-update existing inventory ΓÇö real data must be preserved
+    // DO NOT force-update existing inventory — real data must be preserved
   }
 
   const agros = [
     'Soyapango - Puesto',
-    'Usulut├ín - Puesto',
+    'Usulután - Puesto',
     'Agro Quezaltepeque',
     'Agro Aguilares',
     'Agro Opico',
@@ -613,7 +613,7 @@ const initDb = async () => {
 
 initDb().catch(console.error);
 
-// ΓöÇΓöÇΓöÇ HELPER: registrar actividad ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+// ─── HELPER: registrar actividad ─────────────────────────────────────────────
 async function logActivity({ role = 'sistema', action, entity, details = '', product_name = '', quantity = null, unit = '', location = '' }) {
   try {
     await query(
@@ -625,7 +625,7 @@ async function logActivity({ role = 'sistema', action, entity, details = '', pro
   }
 }
 
-// ΓöÇΓöÇΓöÇ ENDPOINT: obtener log de actividad (solo admin) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+// ─── ENDPOINT: obtener log de actividad (solo admin) ─────────────────────────
 app.get('/api/admin/activity', async (req, res) => {
   try {
     const page = Math.max(1, parseInt(req.query.page) || 1);
@@ -640,7 +640,7 @@ app.get('/api/admin/activity', async (req, res) => {
   }
 });
 
-// ΓöÇΓöÇΓöÇ ENDPOINT: eliminar log de actividad ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+// ─── ENDPOINT: eliminar log de actividad ─────────────────────────────────────
 app.delete('/api/admin/activity', async (req, res) => {
   try {
     await query('DELETE FROM activity_log');
@@ -677,14 +677,14 @@ app.delete('/api/reports/ransa/:id', async (req, res) => {
   const { id } = req.params;
   try {
     const { rows } = await query('SELECT * FROM ransa_requests WHERE id = ?', [id]);
-    if (rows.length === 0) return res.status(404).json({ error: 'Recepci├│n no encontrada' });
+    if (rows.length === 0) return res.status(404).json({ error: 'Recepción no encontrada' });
     const log = rows[0];
     const scaleKg = parseFloat(log.scale_weight) || 0;
     const colMap = {
       'Ransa': { col: 'bodega_1', factor: 1 },
       'Lomas de San Francisco': { col: 'bodega_4', factor: 2.20462 },
-      'Central de abasto - Soyapango (Cuarto Fr├¡o)': { col: 'bodega_2', factor: 2.20462 },
-      'Central de abasto - Usulut├ín (Cuarto Fr├¡o)': { col: 'bodega_3', factor: 2.20462 }
+      'Central de abasto - Soyapango (Cuarto Frío)': { col: 'bodega_2', factor: 2.20462 },
+      'Central de abasto - Usulután (Cuarto Frío)': { col: 'bodega_3', factor: 2.20462 }
     };
     const target = colMap[log.distribution_details] || { col: 'bodega_1', factor: 1 };
     const val = scaleKg * target.factor;
@@ -714,7 +714,7 @@ app.put('/api/reports/ransa/:id', async (req, res) => {
   try {
     validateRequired(req.body, ['product_id', 'scale_weight', 'distribution_details']);
     const { rows } = await query('SELECT * FROM ransa_requests WHERE id = ?', [id]);
-    if (rows.length === 0) return res.status(404).json({ error: 'Recepci├│n no encontrada' });
+    if (rows.length === 0) return res.status(404).json({ error: 'Recepción no encontrada' });
     const old = rows[0];
 
     const oldKg = parseFloat(old.scale_weight) || 0;
@@ -725,8 +725,8 @@ app.put('/api/reports/ransa/:id', async (req, res) => {
     const colMap = {
       'Ransa': { col: 'bodega_1', factor: 1 },
       'Lomas de San Francisco': { col: 'bodega_4', factor: 2.20462 },
-      'Central de abasto - Soyapango (Cuarto Fr├¡o)': { col: 'bodega_2', factor: 2.20462 },
-      'Central de abasto - Usulut├ín (Cuarto Fr├¡o)': { col: 'bodega_3', factor: 2.20462 }
+      'Central de abasto - Soyapango (Cuarto Frío)': { col: 'bodega_2', factor: 2.20462 },
+      'Central de abasto - Usulután (Cuarto Frío)': { col: 'bodega_3', factor: 2.20462 }
     };
 
     const oldTarget = colMap[old.distribution_details] || { col: 'bodega_1', factor: 1 };
@@ -746,7 +746,7 @@ app.put('/api/reports/ransa/:id', async (req, res) => {
       const { rows: check } = await query('SELECT bodega_1 FROM inventory WHERE product_id = ?', [product_id]);
       const current = parseFloat(check[0]?.bodega_1) || 0;
       if (current + oldKg < newKg) {
-        return res.status(400).json({ error: `Stock insuficiente en Ransa para la nueva distribuci├│n: necesita ${newKg.toFixed(2)} kg` });
+        return res.status(400).json({ error: `Stock insuficiente en Ransa para la nueva distribución: necesita ${newKg.toFixed(2)} kg` });
       }
     }
 
@@ -784,8 +784,8 @@ app.post('/api/reports/ransa', async (req, res) => {
     const colMap = {
       'Ransa': { col: 'bodega_1', value: scaleKg },
       'Lomas de San Francisco': { col: 'bodega_4', value: scaleLbs },
-      'Central de abasto - Soyapango (Cuarto Fr├¡o)': { col: 'bodega_2', value: scaleLbs },
-      'Central de abasto - Usulut├ín (Cuarto Fr├¡o)': { col: 'bodega_3', value: scaleLbs }
+      'Central de abasto - Soyapango (Cuarto Frío)': { col: 'bodega_2', value: scaleLbs },
+      'Central de abasto - Usulután (Cuarto Frío)': { col: 'bodega_3', value: scaleLbs }
     };
     const target = colMap[distribution_details] || { col: 'bodega_1', value: scaleKg };
 
@@ -812,8 +812,8 @@ app.post('/api/reports/ransa', async (req, res) => {
     const { rows: pRows } = await query('SELECT name FROM products WHERE id = ?', [product_id]);
     const pName = pRows[0]?.name || `Producto #${product_id}`;
     const role = req.headers['x-role'] || 'desconocido';
-    const details = boxCount > 0 ? `Vi├▒eta: ${tagKg} kg ΓåÆ B├íscula: ${scaleKg} kg ΓåÆ ${distribution_details} | Cajas: ${boxCount}` : `Vi├▒eta: ${tagKg} kg ΓåÆ B├íscula: ${scaleKg} kg ΓåÆ ${distribution_details}`;
-    await logActivity({ role, action: 'RECEPCI├ôN', entity: 'ransa_requests', product_name: pName, quantity: scaleKg, unit: 'KG', location: distribution_details, details });
+    const details = boxCount > 0 ? `Viñeta: ${tagKg} kg → Báscula: ${scaleKg} kg → ${distribution_details} | Cajas: ${boxCount}` : `Viñeta: ${tagKg} kg → Báscula: ${scaleKg} kg → ${distribution_details}`;
+    await logActivity({ role, action: 'RECEPCIÓN', entity: 'ransa_requests', product_name: pName, quantity: scaleKg, unit: 'KG', location: distribution_details, details });
 
     res.json({ id: info.lastInsertRowid });
   } catch (err) {
@@ -853,10 +853,10 @@ app.post('/api/dispatches', async (req, res) => {
     const colMap = {
       'Ransa': 'bodega_1',
       'Lomas de San Francisco': 'bodega_4',
-      'Central de abasto - Soyapango (Cuarto Fr├¡o)': 'bodega_2',
+      'Central de abasto - Soyapango (Cuarto Frío)': 'bodega_2',
       'Soyapango': 'bodega_2',
-      'Central de abasto - Usulut├ín (Cuarto Fr├¡o)': 'bodega_3',
-      'Usulut├ín': 'bodega_3'
+      'Central de abasto - Usulután (Cuarto Frío)': 'bodega_3',
+      'Usulután': 'bodega_3'
     };
     const bodegaCol = colMap[origin_warehouse] || 'bodega_2';
 
@@ -905,7 +905,7 @@ app.post('/api/dispatches', async (req, res) => {
     const { rows: aRows } = await query('SELECT name FROM agros WHERE id = ?', [agro_id]);
     const aName = aRows[0]?.name || `Destino #${agro_id}`;
     const role2 = req.headers['x-role'] || 'desconocido';
-    await logActivity({ role: role2, action: 'DESPACHO', entity: 'dispatches', product_name: pName2, quantity: weightVal, unit: unit_type || 'Lbs', location: origin_warehouse || 'Bodega', details: `${weight} ${unit_type} ΓåÆ ${aName} | $${valueVal}` });
+    await logActivity({ role: role2, action: 'DESPACHO', entity: 'dispatches', product_name: pName2, quantity: weightVal, unit: unit_type || 'Lbs', location: origin_warehouse || 'Bodega', details: `${weight} ${unit_type} → ${aName} | $${valueVal}` });
 
     res.json({ id: info.lastInsertRowid });
   } catch (err) {
@@ -934,8 +934,8 @@ app.post('/api/inventory/adjust', async (req, res) => {
     validateRequired(req.body, ['product_id']);
     const colMap = {
       'Ransa': { col: 'bodega_1', unit: 'KG' },
-      'Central de abasto - Soyapango (Cuarto Fr├¡o)': { col: 'bodega_2', unit: 'Lbs' },
-      'Central de abasto - Usulut├ín (Cuarto Fr├¡o)': { col: 'bodega_3', unit: 'Lbs' },
+      'Central de abasto - Soyapango (Cuarto Frío)': { col: 'bodega_2', unit: 'Lbs' },
+      'Central de abasto - Usulután (Cuarto Frío)': { col: 'bodega_3', unit: 'Lbs' },
       'Lomas de San Francisco': { col: 'bodega_4', unit: 'Lbs' }
     };
     const target = colMap[warehouse] || { col: 'bodega_1', unit: 'KG' };
@@ -1130,16 +1130,16 @@ app.post('/api/inventory/transfer', async (req, res) => {
     const addWeight = sanitizeNumber(dest_weight ?? weight ?? 0, 'dest_weight', false);
     const colMap = {
       'Ransa': 'bodega_1',
-      'Central de abasto - Soyapango (Cuarto Fr├¡o)': 'bodega_2',
+      'Central de abasto - Soyapango (Cuarto Frío)': 'bodega_2',
       'Soyapango': 'bodega_2',
-      'Central de abasto - Usulut├ín (Cuarto Fr├¡o)': 'bodega_3',
-      'Usulut├ín': 'bodega_3',
+      'Central de abasto - Usulután (Cuarto Frío)': 'bodega_3',
+      'Usulután': 'bodega_3',
       'Lomas de San Francisco': 'bodega_4'
     };
     const originCol = colMap[origin];
     const destCol = colMap[destination];
     if (!originCol || !destCol) {
-      return res.status(400).json({ error: 'Origen o destino inv├ílido' });
+      return res.status(400).json({ error: 'Origen o destino inválido' });
     }
 
     if (unit_type === 'Cajas') {
@@ -1196,7 +1196,7 @@ app.get('/api/movements', async (req, res) => {
 app.delete('/api/movements/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    // Transfers are final ΓÇö no inventory restoration
+    // Transfers are final — no inventory restoration
     await query('DELETE FROM movements WHERE id = ?', [id]);
     res.json({ success: true });
   } catch (err) {
@@ -1208,7 +1208,7 @@ app.put('/api/movements/:id', async (req, res) => {
   const { id } = req.params;
   const { weight, origin_weight, dest_weight, unit_type } = req.body;
   try {
-    // Transfers are final ΓÇö update only the log, no inventory changes
+    // Transfers are final — update only the log, no inventory changes
     await query('UPDATE movements SET weight = ?, origin_weight = ?, dest_weight = ?, unit_type = ? WHERE id = ?',
       [weight ?? origin_weight ?? 0, origin_weight ?? weight ?? 0, dest_weight ?? weight ?? 0, unit_type || 'Cajas', id]);
     res.json({ success: true });
@@ -1263,7 +1263,7 @@ app.get('/api/production/logs', async (req, res) => {
   }
 });
 
-// POST /api/production/logs ΓÇö usado por el formulario de producci├│n del frontend
+// POST /api/production/logs — usado por el formulario de producción del frontend
 app.post('/api/production/logs', async (req, res) => {
   const { product_id, initial_weight, cut_weight, waste, storage_cost, transport_cost, labor_cost, other_costs, process_mode, dest_warehouse } = req.body;
   try {
@@ -1279,12 +1279,12 @@ app.post('/api/production/logs', async (req, res) => {
     if (process_mode === 'direct') {
       const destColMap = {
         'Soyapango': 'bodega_2',
-        'Usulut├ín': 'bodega_3',
+        'Usulután': 'bodega_3',
         'Lomas de San Francisco': 'bodega_4'
       };
       const destCol = destColMap[dest_warehouse];
       if (!destCol) {
-        return res.status(400).json({ error: 'Destino de producci├│n directa inv├ílido' });
+        return res.status(400).json({ error: 'Destino de producción directa inválido' });
       }
       if (cutLbs > 0) {
         updates.push({ sql: `UPDATE inventory SET ${destCol} = ${destCol} + ? WHERE product_id = ?`, params: [cutLbs, product_id] });
@@ -1294,7 +1294,7 @@ app.post('/api/production/logs', async (req, res) => {
       await runTransaction(updates);
       const { rows: pRowsProd } = await query('SELECT name FROM products WHERE id = ?', [product_id]);
       const pNameProd = pRowsProd[0]?.name || `Producto #${product_id}`;
-      await logActivity({ role: req.headers['x-role'] || 'desconocido', action: 'PRODUCCI├ôN DIRECTA', entity: 'production_logs', product_name: pNameProd, quantity: cutLbs, unit: 'Lbs', location: dest_warehouse, details: `Peso procesado: ${cutLbs} lbs ΓåÆ ${dest_warehouse}` });
+      await logActivity({ role: req.headers['x-role'] || 'desconocido', action: 'PRODUCCIÓN DIRECTA', entity: 'production_logs', product_name: pNameProd, quantity: cutLbs, unit: 'Lbs', location: dest_warehouse, details: `Peso procesado: ${cutLbs} lbs → ${dest_warehouse}` });
     } else if (initKg > 0) {
       // Verify sufficient stock
       const { rows: check } = await query('SELECT bodega_1 FROM inventory WHERE product_id = ?', [product_id]);
@@ -1309,12 +1309,12 @@ app.post('/api/production/logs', async (req, res) => {
       await runTransaction(updates);
       const { rows: pRowsProd } = await query('SELECT name FROM products WHERE id = ?', [product_id]);
       const pNameProd = pRowsProd[0]?.name || `Producto #${product_id}`;
-      await logActivity({ role: req.headers['x-role'] || 'desconocido', action: 'PRODUCCI├ôN', entity: 'production_logs', product_name: pNameProd, quantity: initKg, unit: 'KG', location: 'Ransa ΓåÆ Soyapango', details: `Entrada: ${initKg} kg | Salida: ${cutLbs} lbs | Merma: ${wasteVal.toFixed(2)} lbs` });
+      await logActivity({ role: req.headers['x-role'] || 'desconocido', action: 'PRODUCCIÓN', entity: 'production_logs', product_name: pNameProd, quantity: initKg, unit: 'KG', location: 'Ransa → Soyapango', details: `Entrada: ${initKg} kg | Salida: ${cutLbs} lbs | Merma: ${wasteVal.toFixed(2)} lbs` });
     } else {
       await runTransaction(updates);
       const { rows: pRowsProd } = await query('SELECT name FROM products WHERE id = ?', [product_id]);
       const pNameProd = pRowsProd[0]?.name || `Producto #${product_id}`;
-      await logActivity({ role: req.headers['x-role'] || 'desconocido', action: 'PRODUCCI├ôN', entity: 'production_logs', product_name: pNameProd, quantity: cutLbs, unit: 'Lbs', location: 'Proceso', details: `Salida: ${cutLbs} lbs` });
+      await logActivity({ role: req.headers['x-role'] || 'desconocido', action: 'PRODUCCIÓN', entity: 'production_logs', product_name: pNameProd, quantity: cutLbs, unit: 'Lbs', location: 'Proceso', details: `Salida: ${cutLbs} lbs` });
     }
 
     res.json({ success: true });
@@ -1327,7 +1327,7 @@ app.delete('/api/production/logs/:id', async (req, res) => {
   const { id } = req.params;
   try {
     const { rows } = await query('SELECT * FROM production_logs WHERE id = ?', [id]);
-    if (rows.length === 0) return res.status(404).json({ error: 'Producci├│n no encontrada' });
+    if (rows.length === 0) return res.status(404).json({ error: 'Producción no encontrada' });
     const log = rows[0];
     const initKg = parseFloat(log.initial_weight) || 0;
 
@@ -1346,7 +1346,7 @@ app.delete('/api/production/logs/:id', async (req, res) => {
     } else {
       // Direct process: use stored dest_warehouse to revert
       const wh = log.dest_warehouse || 'Soyapango';
-      const destColMap = { 'Soyapango': 'bodega_2', 'Usulut├ín': 'bodega_3', 'Lomas de San Francisco': 'bodega_4' };
+      const destColMap = { 'Soyapango': 'bodega_2', 'Usulután': 'bodega_3', 'Lomas de San Francisco': 'bodega_4' };
       const destCol = destColMap[wh] || 'bodega_2';
       const { rows: check } = await query(`SELECT ${destCol} FROM inventory WHERE product_id = ?`, [log.product_id]);
       const current = parseFloat(check[0]?.[destCol]) || 0;
@@ -1368,7 +1368,7 @@ app.put('/api/production/logs/:id', async (req, res) => {
   try {
     validateRequired(req.body, ['cut_weight']);
     const { rows } = await query('SELECT * FROM production_logs WHERE id = ?', [id]);
-    if (rows.length === 0) return res.status(404).json({ error: 'Producci├│n no encontrada' });
+    if (rows.length === 0) return res.status(404).json({ error: 'Producción no encontrada' });
     const old = rows[0];
     const initKg = sanitizeNumber(initial_weight, 'initial_weight');
     const cutLbs = sanitizeNumber(cut_weight, 'cut_weight', false);
@@ -1448,7 +1448,7 @@ app.put('/api/dispatches/:id', async (req, res) => {
 app.delete('/api/dispatches/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    // Simple delete ΓÇö dispatches are final sales, inventory is NOT restored
+    // Simple delete — dispatches are final sales, inventory is NOT restored
     await query('DELETE FROM dispatches WHERE id = ?', [id]);
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
@@ -1573,7 +1573,7 @@ app.post('/api/admin/sync-catalog', async (req, res) => {
       ['1624', 'cajas de Aguja/chuck', 'Cortes', 4.25],
       ['1625', 'ANGELINA / CORAZON DE CUADRIL', 'Cortes', 4.75],
       ['1626', 'CARNE BOVINA CONGELADA SIN HUESO DELANTERO', 'Cortes', 3.95],
-      ['1627', 'CARNE BOVINA CONGELADA SIN HUESO TAPA CUADRIL / PICA├æA', 'Prime', 9.20],
+      ['1627', 'CARNE BOVINA CONGELADA SIN HUESO TAPA CUADRIL / PICAÑA', 'Prime', 9.20],
       ['1628', 'CARNE BOVINA CONGELADA SIN HUESO RECORTE DE CARNE 90 VL premium', 'Industrial', 4.65]
     ];
 
@@ -1599,7 +1599,7 @@ app.post('/api/admin/sync-catalog', async (req, res) => {
       `, [p.id, physicalData.bodega_1 || 0, physicalData.bodega_3 || 0]);
     }
 
-    res.json({ success: true, message: 'Cat├ílogo sincronizado con la imagen' });
+    res.json({ success: true, message: 'Catálogo sincronizado con la imagen' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -1642,7 +1642,7 @@ app.post('/api/admin/reset', async (req, res) => {
 });
 
 // Sync inventory from physical inventory data
-// Bodega mapping: bodega_1 = Ransa (KG), bodega_2 = Soyapango (LBS), bodega_3 = Usulut├ín (LBS), bodega_4 = Lomas (LBS)
+// Bodega mapping: bodega_1 = Ransa (KG), bodega_2 = Soyapango (LBS), bodega_3 = Usulután (LBS), bodega_4 = Lomas (LBS)
 const physicalInventoryData = {
   "1618": { name: "Sin Hueso Nalga Adentro", bodega_1: 0, bodega_3: 9168.1 },
   "1619": { name: "Cajas Tortuguita", bodega_1: 0, bodega_3: 5948.9 },
@@ -1651,7 +1651,7 @@ const physicalInventoryData = {
   "1622": { name: "Recorte 80.20", bodega_1: 0, bodega_3: 0 },
   "1623": { name: "Recorte 50.50", bodega_1: 0, bodega_3: 0 },
   "1624": { name: "Aguja", bodega_1: 0, bodega_3: 4808.9 },
-  "1625": { name: "Coraz├│n Cuadril", bodega_1: 0, bodega_3: 0 },
+  "1625": { name: "Corazón Cuadril", bodega_1: 0, bodega_3: 0 },
   "1626": { name: "Sin Hueso Delantero", bodega_1: 0, bodega_3: 1072.3 },
   "1627": { name: "Sin Hueso Tapa Cuadril", bodega_1: 0, bodega_3: 0 },
   "1628": { name: "Sin Hueso Recorte de Carne", bodega_1: 0, bodega_3: 5595.4 }
@@ -1697,7 +1697,7 @@ app.post('/api/admin/sync-inventory-weights', async (req, res) => {
     const verify = await query('SELECT p.code, p.name, i.bodega_1, i.bodega_2, i.bodega_3, i.bodega_4, (i.bodega_1 + i.bodega_2 + i.bodega_3 + i.bodega_4) as total FROM inventory i JOIN products p ON i.product_id = p.id ORDER BY CAST(p.code AS INTEGER)');
     console.log('[SYNC-INVENTORY] Verification after sync:', verify.rows);
     
-    res.json({ success: true, message: `Inventario sincronizado: ${syncedCount} productos inicializados (los dem├ís ya ten├¡an stock)`, data: verify.rows });
+    res.json({ success: true, message: `Inventario sincronizado: ${syncedCount} productos inicializados (los demás ya tenían stock)`, data: verify.rows });
   } catch (err) {
     console.error('[SYNC-INVENTORY] Error:', err);
     res.status(500).json({ error: err.message });
@@ -1729,13 +1729,13 @@ initDb().then(() => {
           console.log('[SEED] Cajas seeded successfully');
         }
       } else {
-        console.log('[SEED] Cajas already have data ΓÇö no seeding needed');
+        console.log('[SEED] Cajas already have data — no seeding needed');
       }
     } catch (err) {
       console.error('[SEED] Error:', err.message);
     }
 
-    // Seed Usulut├ín (bodega_3) stock on fresh database
+    // Seed Usulután (bodega_3) stock on fresh database
     try {
       const { rows: b3Check } = await query('SELECT COUNT(*) as cnt FROM inventory WHERE bodega_3 > 0');
       if (parseInt(b3Check[0]?.cnt || 0) === 0) {
@@ -1746,12 +1746,12 @@ initDb().then(() => {
             await query('UPDATE inventory SET bodega_3 = ? WHERE product_id = ?', [val, pRows[0].id]);
           }
         }
-        console.log('[SEED] Usulut├ín bodega_3 seeded successfully');
+        console.log('[SEED] Usulután bodega_3 seeded successfully');
       } else {
-        console.log('[SEED] Usulut├ín bodega_3 already has data ΓÇö no seeding needed');
+        console.log('[SEED] Usulután bodega_3 already has data — no seeding needed');
       }
     } catch (err) {
-      console.error('[SEED] Usulut├ín bodega_3 error:', err.message);
+      console.error('[SEED] Usulután bodega_3 error:', err.message);
     }
     
     // Auto-backup before starting
@@ -1763,13 +1763,13 @@ initDb().then(() => {
 
       // Auto-deploy watcher: starts automatically when running locally
       if (!process.env.RENDER) {
-        console.log('≡ƒæÇ Iniciando auto-deploy watcher (local)...');
+        console.log('👀 Iniciando auto-deploy watcher (local)...');
         const watcher = spawn('node', [join(__dirname, '../scripts/watch-deploy.js')], {
           cwd: join(__dirname, '..'),
           stdio: 'inherit',
           env: { ...process.env }
         });
-        watcher.on('error', (err) => console.error('ΓÜá∩╕Å Auto-deploy watcher error:', err.message));
+        watcher.on('error', (err) => console.error('⚠️ Auto-deploy watcher error:', err.message));
         watcher.on('exit', (code) => console.log(`Auto-deploy watcher exited with code ${code}`));
       }
     });
