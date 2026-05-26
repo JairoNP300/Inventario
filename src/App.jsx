@@ -521,7 +521,7 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
               style={{ width: '200px', padding: '10px 18px', fontSize: '0.8rem', borderRadius: '25px', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', color: '#fff' }}
             />
           </div>
-          <div className="grid-table-container" style={{ maxHeight: '400px', overflowY: 'auto' }}>
+          <div className="grid-table-container" style={{ maxHeight: '700px', overflowY: 'auto' }}>
             <table>
               <thead>
                 <tr>
