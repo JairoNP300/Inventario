@@ -1260,11 +1260,25 @@ app.delete('/api/production/logs/:id', async (req, res) => {
   const { id } = req.params;
   try {
     const { rows } = await query('SELECT * FROM production_logs WHERE id = ?', [id]);
-    if (rows.length > 0) {
-      const log = rows[0];
-      // Revert: restore KG to bodega_1 (Ransa), remove LBS from bodega_2 (Soyapango)
-      await query('UPDATE inventory SET bodega_1 = bodega_1 + ? WHERE product_id = ?', [log.initial_weight, log.product_id]);
-      await query('UPDATE inventory SET bodega_2 = bodega_2 - ? WHERE product_id = ?', [log.cut_weight, log.product_id]);
+    if (rows.length === 0) return res.status(404).json({ error: 'Producción no encontrada' });
+    const log = rows[0];
+
+    // Verify sufficient stock in Soyapango to revert if needed
+    const { rows: check } = await query('SELECT bodega_2 FROM inventory WHERE product_id = ?', [log.product_id]);
+    const current = parseFloat(check[0]?.bodega_2) || 0;
+    if (current < log.cut_weight) {
+      return res.status(400).json({ error: `Stock insuficiente en Soyapango para revertir: tiene ${current.toFixed(2)} lbs, necesita ${log.cut_weight} lbs` });
+    }
+
+    // Transfers are final — only restore if standard Ransa process
+    if (parseFloat(log.initial_weight) > 0) {
+      await runTransaction([
+        { sql: 'UPDATE inventory SET bodega_1 = bodega_1 + ? WHERE product_id = ?', params: [log.initial_weight, log.product_id] },
+        { sql: 'UPDATE inventory SET bodega_2 = bodega_2 - ? WHERE product_id = ?', params: [log.cut_weight, log.product_id] },
+        { sql: 'DELETE FROM production_logs WHERE id = ?', params: [id] }
+      ]);
+    } else {
+      // Direct process: only remove from destination
       await query('DELETE FROM production_logs WHERE id = ?', [id]);
     }
     res.json({ success: true });
