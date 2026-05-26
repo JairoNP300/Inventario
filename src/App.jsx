@@ -481,10 +481,22 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
                   </span>
                 )}
               </label>
-              <input type="number" step="0.01" value={formData.cut_weight} onChange={e => {
-                const c = e.target.value;
-                setFormData(prev => ({ ...prev, cut_weight: c, waste: prev.process_mode === 'direct' ? '0' : (parseFloat(prev.initial_weight || 0) - parseFloat(c || 0)).toFixed(2) }));
-              }} placeholder="0.00" required />
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input type="number" step="0.01" value={formData.cut_weight} onChange={e => {
+                  const c = e.target.value;
+                  setFormData(prev => ({ ...prev, cut_weight: c, waste: prev.process_mode === 'direct' ? '0' : (parseFloat(prev.initial_weight || 0) - parseFloat(c || 0)).toFixed(2) }));
+                }} placeholder="0.00" required={!(formData.process_mode === 'direct' && cart.length > 0)} style={{ flex: 1 }} />
+                {formData.process_mode === 'direct' && (
+                  <button type="button" onClick={() => {
+                    const w = parseFloat(formData.cut_weight);
+                    if (!w || w <= 0) { alert('Ingrese un peso válido'); return; }
+                    setCart(prev => [...prev, w]);
+                    setFormData(prev => ({ ...prev, cut_weight: '' }));
+                  }} style={{ padding: '10px 16px', borderRadius: '10px', border: '2px solid #f59e0b', background: 'rgba(245,158,11,0.15)', color: '#f59e0b', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                    + Agregar al carrito
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
