@@ -3989,12 +3989,10 @@ const AdminMonitor = () => {
     try {
       const r = await fetch(`${API_BASE}/admin/activity`);
       const data = await r.json();
-      if (Array.isArray(data)) {
-        setLogs(data);
-        // Contar nuevos desde la última vez que se vio
-        const newOnes = data.filter(l => l.id > lastSeen).length;
-        if (newOnes > 0 && lastSeen > 0) setNewCount(prev => prev + newOnes);
-      }
+      const logsArr = Array.isArray(data) ? data : (data?.rows || []);
+      setLogs(logsArr);
+      const newOnes = logsArr.filter(l => l.id > lastSeen).length;
+      if (newOnes > 0 && lastSeen > 0) setNewCount(prev => prev + newOnes);
     } catch(e) {}
   };
 
