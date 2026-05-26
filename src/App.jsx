@@ -426,7 +426,7 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
 
           <div className="form-group">
             <label>Producto a Procesar</label>
-            <select value={formData.product_id} onChange={e => setFormData({ ...formData, product_id: e.target.value })} required>
+            <select value={formData.product_id} onChange={e => { setFormData({ ...formData, product_id: e.target.value }); setCart([]); }} required>
               <option value="">Seleccione Producto...</option>
               {products.map(p => <option key={p.id} value={p.id}>{p.code ? `${p.code}: ` : ''}{p.name}</option>)}
             </select>
@@ -547,7 +547,7 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
           </div>
 
           <button type="submit" className="btn-primary" style={{ background: editingId ? 'var(--secondary)' : 'var(--accent)', marginTop: '20px' }}>
-            {editingId ? <><Save size={18} /> Actualizar Conversión</> : <><Package size={18} /> Finalizar Producción & Conversión</>}
+            {editingId ? <><Save size={18} /> Actualizar Conversión</> : formData.process_mode === 'direct' && cart.length > 0 ? <><Package size={18} /> Guardar {cart.length} pesos ({cart.reduce((a, b) => a + b, 0).toFixed(1)} lbs)</> : <><Package size={18} /> Finalizar Producción & Conversión</>}
           </button>
           {editingId && <button type="button" onClick={() => { setEditingId(null); setFormData({ product_id: '', initial_kg: '', initial_weight: '', cut_weight: '', waste: '', storage_cost: '', transport_cost: '', labor_cost: '', other_costs: '' }); }} className="btn-primary" style={{ background: '#64748b', marginTop: '10px' }}>Cancelar Edición</button>}
         </form>
