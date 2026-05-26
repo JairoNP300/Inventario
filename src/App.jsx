@@ -4847,21 +4847,7 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
         </div>
       </div>
 
-      {dataAge && (function() {
-        try {
-          const d = Math.floor((Date.now() - new Date(dataAge).getTime()) / 86400000);
-          if (d < 30) return null;
-          return (
-            <div style={{ background: 'linear-gradient(135deg, rgba(245,158,11,0.15), rgba(239,68,68,0.1))', border: '1px solid rgba(245,158,11,0.3)', borderRadius: '12px', padding: '10px 16px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.85rem' }}>
-              <span style={{ fontSize: '1.2rem' }}>⚠️</span>
-              <span>Hay datos desde hace <strong>{d} días</strong> ({new Date(dataAge).toLocaleDateString('es-SV')}). </span>
-              <button onClick={() => safeSetTab('config')} className="btn-primary" style={{ background: '#d97706', width: 'auto', padding: '6px 14px', fontSize: '0.8rem', marginLeft: 'auto', flexShrink: 0 }}>
-                Exportar ahora
-              </button>
-            </div>
-          );
-        } catch(e) { return null; }
-      })()}
+      {dataAgeBanner}
 
       <nav className="nav-tabs">
         {visibleTabs.map(t => (
