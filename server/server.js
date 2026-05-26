@@ -728,16 +728,12 @@ app.put('/api/reports/ransa/:id', async (req, res) => {
 app.post('/api/reports/ransa', async (req, res) => {
   const { product_id, tag_weight, scale_weight, units_per_box, cajas, unit_type, distribution_details } = req.body;
   try {
-    const scaleKg = parseFloat(scale_weight) || 0;
-    const tagKg = parseFloat(tag_weight) || 0;
+    validateRequired(req.body, ['product_id', 'scale_weight', 'distribution_details']);
+    const scaleKg = sanitizeNumber(scale_weight, 'scale_weight', false);
+    const tagKg = sanitizeNumber(tag_weight, 'tag_weight');
     const boxCount = parseInt(cajas) || 0;
     const scaleLbs = scaleKg * 2.20462;
     const unitsPerBox = (units_per_box !== '' && units_per_box != null) ? parseInt(units_per_box) : null;
-
-    const info = await query(`
-      INSERT INTO ransa_requests (product_id, tag_weight, scale_weight, units_per_box, unit_type, distribution_details)
-      VALUES (?, ?, ?, ?, ?, ?) RETURNING id
-    `, [product_id, tagKg, scaleKg, unitsPerBox, 'Kg', distribution_details]);
 
     const colMap = {
       'Ransa': { col: 'bodega_1', value: scaleKg },
@@ -747,12 +743,25 @@ app.post('/api/reports/ransa', async (req, res) => {
     };
     const target = colMap[distribution_details] || { col: 'bodega_1', value: scaleKg };
 
+    // Verify sufficient stock in Ransa if distributing elsewhere
     if (target.col !== 'bodega_1') {
-      await query(`UPDATE inventory SET bodega_1 = bodega_1 - ? WHERE product_id = ?`, [scaleKg, product_id]);
+      const { rows: check } = await query('SELECT bodega_1 FROM inventory WHERE product_id = ?', [product_id]);
+      const current = parseFloat(check[0]?.bodega_1) || 0;
+      if (current < scaleKg) {
+        return res.status(400).json({ error: `Stock insuficiente en Ransa: tiene ${current.toFixed(2)} kg, necesita ${scaleKg.toFixed(2)} kg` });
+      }
     }
-    await query(`UPDATE inventory SET ${target.col} = ${target.col} + ?, initial_stock = initial_stock + ?, entradas_cajas = entradas_cajas + ? WHERE product_id = ?`, [target.value, target.value, boxCount, product_id]);
 
-    await query('INSERT INTO movements (product_id, origin_warehouse, dest_warehouse, weight, type) VALUES (?, ?, ?, ?, ?)', [product_id, 'Ransa (Origen)', distribution_details, scaleKg, 'INCOME']);
+    const info = await query(`
+      INSERT INTO ransa_requests (product_id, tag_weight, scale_weight, units_per_box, unit_type, distribution_details)
+      VALUES (?, ?, ?, ?, ?, ?) RETURNING id
+    `, [product_id, tagKg, scaleKg, unitsPerBox, 'Kg', distribution_details]);
+
+    await runTransaction([
+      { sql: `UPDATE inventory SET ${target.col} = ${target.col} + ?, initial_stock = initial_stock + ?, entradas_cajas = entradas_cajas + ? WHERE product_id = ?`, params: [target.value, target.value, boxCount, product_id] },
+      ...(target.col !== 'bodega_1' ? [{ sql: 'UPDATE inventory SET bodega_1 = bodega_1 - ? WHERE product_id = ?', params: [scaleKg, product_id] }] : []),
+      { sql: 'INSERT INTO movements (product_id, origin_warehouse, dest_warehouse, weight, type) VALUES (?, ?, ?, ?, ?)', params: [product_id, 'Ransa (Origen)', distribution_details, scaleKg, 'INCOME'] }
+    ]);
 
     const { rows: pRows } = await query('SELECT name FROM products WHERE id = ?', [product_id]);
     const pName = pRows[0]?.name || `Producto #${product_id}`;
@@ -1571,6 +1580,9 @@ initDb().then(() => {
       console.error('[SEED] Error:', err.message);
     }
     
+    // Auto-backup before starting
+    await backupDatabase();
+
     app.listen(port, '0.0.0.0', () => {
       console.log(`Server running at port ${port}`);
       console.log('All changes applied: New locations, stock levels, and deduction logic');
