@@ -1866,10 +1866,28 @@ app.get('*', (req, res) => {
 // Initialize database and run migration
 initDb().then(() => {
   migrateDatabase().then(async () => {
-    console.log('[SEED] No seed values — database is user-managed');
-
-
-
+    // Seed cajas solo si están en cero (migración única, no permanente)
+    try {
+      const { rows: countRows } = await query('SELECT COUNT(*) as cnt FROM inventory WHERE salidas_cajas > 0');
+      if (countRows[0].cnt === 0) {
+        const { rows: pCount } = await query('SELECT COUNT(*) as cnt FROM products');
+        if (pCount[0].cnt > 0) {
+          const cajasSeed = { "1618":326,"1619":200,"1620":114,"1621":45,"1622":43,"1623":45,"1624":105,"1625":55,"1626":46,"1627":53,"1628":186 };
+          const salidasSeed = { "1618":103,"1619":41,"1620":105,"1621":32,"1622":20,"1623":34,"1624":1,"1625":55,"1626":2,"1627":21,"1628":33 };
+          for (const [code, cajas] of Object.entries(cajasSeed)) {
+            const { rows: pRows } = await query('SELECT id FROM products WHERE code = ?', [code]);
+            if (pRows.length > 0) {
+              await query('UPDATE inventory SET entradas_cajas = ?, salidas_cajas = ? WHERE product_id = ?', [cajas, salidasSeed[code] || 0, pRows[0].id]);
+            }
+          }
+          console.log('[SEED] Cajas seeded successfully');
+        }
+      } else {
+        console.log('[SEED] Cajas already have data — no seeding needed');
+      }
+    } catch (err) {
+      console.error('[SEED] Error:', err.message);
+    }
     
     // Auto-backup before starting
     await backupDatabase();
