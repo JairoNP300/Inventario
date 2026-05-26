@@ -1707,6 +1707,80 @@ app.post('/api/admin/sync-inventory-weights', async (req, res) => {
   }
 });
 
+// --- DATA EXPORT & CLEANUP ---
+// Returns the oldest record date across all transaction tables (for reminders)
+app.get('/api/admin/data-age', async (req, res) => {
+  try {
+    const results = await query(`
+      SELECT MIN(mindate) as oldest FROM (
+        SELECT MIN(date) as mindate FROM movements
+        UNION ALL SELECT MIN(date) FROM dispatches
+        UNION ALL SELECT MIN(date) FROM sales
+        UNION ALL SELECT MIN(date) FROM production_logs
+        UNION ALL SELECT MIN(date) FROM ransa_requests
+        UNION ALL SELECT MIN(date) FROM food_costing
+        UNION ALL SELECT MIN(created_at) FROM stock_adjustments
+        UNION ALL SELECT MIN(created_at) FROM activity_log
+      )
+    `);
+    res.json({ oldest: results.rows[0]?.oldest || null });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Export all transaction data as JSON (for Excel generation on frontend)
+app.get('/api/admin/export-data', async (req, res) => {
+  try {
+    const before = req.query.before || '9999-12-31';
+    const [movements, dispatches, sales, production_logs, ransa_requests, food_costing, stock_adjustments, activity_log] = await Promise.all([
+      query(`SELECT * FROM movements WHERE date <= ? ORDER BY date`, [before]),
+      query(`SELECT d.*, a.name as agro_name, p.name as product_name FROM dispatches d LEFT JOIN agros a ON d.agro_id = a.id LEFT JOIN products p ON d.product_id = p.id WHERE d.date <= ? ORDER BY d.date`, [before]),
+      query(`SELECT s.*, a.name as agro_name FROM sales s LEFT JOIN agros a ON s.agro_id = a.id WHERE s.date <= ? ORDER BY s.date`, [before]),
+      query(`SELECT * FROM production_logs WHERE date <= ? ORDER BY date`, [before]),
+      query(`SELECT * FROM ransa_requests WHERE date <= ? ORDER BY date`, [before]),
+      query(`SELECT * FROM food_costing WHERE date <= ? ORDER BY date`, [before]),
+      query(`SELECT * FROM stock_adjustments WHERE created_at <= ? ORDER BY created_at`, [before]),
+      query(`SELECT * FROM activity_log WHERE created_at <= ? ORDER BY created_at`, [before])
+    ]);
+    res.json({
+      movements: movements.rows,
+      dispatches: dispatches.rows,
+      sales: sales.rows,
+      production_logs: production_logs.rows,
+      ransa_requests: ransa_requests.rows,
+      food_costing: food_costing.rows,
+      stock_adjustments: stock_adjustments.rows,
+      activity_log: activity_log.rows,
+      before
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Delete all exported transaction data before a given date
+app.post('/api/admin/cleanup-data', async (req, res) => {
+  try {
+    const { before } = req.body;
+    if (!before) return res.status(400).json({ error: 'Se requiere fecha (before)' });
+    const deletes = [
+      query('DELETE FROM movements WHERE date <= ?', [before]),
+      query('DELETE FROM dispatches WHERE date <= ?', [before]),
+      query('DELETE FROM sales WHERE date <= ?', [before]),
+      query('DELETE FROM production_logs WHERE date <= ?', [before]),
+      query('DELETE FROM ransa_requests WHERE date <= ?', [before]),
+      query('DELETE FROM food_costing WHERE date <= ?', [before]),
+      query('DELETE FROM stock_adjustments WHERE created_at <= ?', [before]),
+      query('DELETE FROM activity_log WHERE created_at <= ?', [before])
+    ];
+    const results = await Promise.all(deletes);
+    res.json({ success: true, message: `Datos anteriores a ${before} eliminados correctamente` });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Fallback to index.html for SPA
 app.get('*', (req, res) => {
   res.sendFile(join(__dirname, '../dist/index.html'));
