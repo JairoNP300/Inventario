@@ -48,23 +48,20 @@ app.get('/api/version', (req, res) => {
 });
 
 // --- DATABASE CONFIGURATION ---
-const isProduction = !!process.env.DATABASE_URL; // PostgreSQL if DATABASE_URL is set, else SQLite
+let isProduction = !!process.env.DATABASE_URL;
 let pool;
 let sqliteDb;
 
-if (isProduction) {
-  console.log('🌐 Conectando a PostgreSQL (Producción)...');
-  
+if (process.env.DATABASE_URL) {
+  console.log('🌐 Conectando a PostgreSQL...');
   try {
     pool = new Pool({
       connectionString: process.env.DATABASE_URL,
       ssl: { rejectUnauthorized: false },
-      family: 4, // Force IPv4
+      family: 4,
       connectionTimeoutMillis: 15000,
       idleTimeoutMillis: 30000
     });
-    
-    // Test the connection
     const client = await pool.connect();
     console.log('✅ PostgreSQL conectado exitosamente');
     client.release();
@@ -72,10 +69,10 @@ if (isProduction) {
     console.error('❌ Error conectando PostgreSQL:', e.message);
     console.log('⚠️ Fallback a SQLite...');
     pool = null;
+    isProduction = false;
   }
 }
 
-// Use SQLite if not in production or if PostgreSQL failed
 if (!pool) {
   console.log('📂 Iniciando SQLite...');
   try {
