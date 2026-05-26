@@ -117,6 +117,69 @@ async function query(sql, params = []) {
   }
 }
 
+// Execute multiple SQL updates atomically in a transaction
+async function runTransaction(updates) {
+  if (updates.length === 0) return;
+  if (isProduction) {
+    await query('BEGIN');
+    try {
+      for (const u of updates) {
+        await query(u.sql, u.params);
+      }
+      await query('COMMIT');
+    } catch (e) {
+      await query('ROLLBACK');
+      throw e;
+    }
+  } else {
+    const txn = sqliteDb.transaction(() => {
+      for (const u of updates) {
+        sqliteDb.prepare(u.sql).run(...u.params);
+      }
+    });
+    txn();
+  }
+}
+
+// Validate numeric input, returns parsed float or throws
+function sanitizeNumber(val, fieldName, allowZero = true) {
+  const n = parseFloat(val);
+  if (isNaN(n)) throw new Error(`El campo '${fieldName}' debe ser un número válido`);
+  if (!allowZero && n <= 0) throw new Error(`El campo '${fieldName}' debe ser mayor que 0`);
+  return n;
+}
+
+// Validate that required fields are present
+function validateRequired(body, fields) {
+  for (const f of fields) {
+    if (body[f] === undefined || body[f] === null || body[f] === '') {
+      throw new Error(`El campo '${f}' es requerido`);
+    }
+  }
+}
+
+// Create a timestamped backup of the SQLite database
+async function backupDatabase() {
+  if (isProduction || !sqliteDb) return;
+  try {
+    const src = join(__dirname, '../inventario_oficial.db');
+    const backupDir = join(__dirname, '../backups');
+    await fs.mkdir(backupDir, { recursive: true });
+    const now = new Date();
+    const stamp = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
+    const dst = join(backupDir, `inventario_${stamp}.db`);
+    await fs.cp(src, dst);
+    console.log(`[BACKUP] Database backed up to ${dst}`);
+    // Keep only last 10 backups
+    const files = (await fs.readdir(backupDir)).filter(f => f.startsWith('inventario_')).sort().reverse();
+    for (const oldFile of files.slice(10)) {
+      await fs.rm(join(backupDir, oldFile), { force: true });
+    }
+  } catch (e) {
+    console.warn('[BACKUP] Error:', e.message);
+  }
+}
+
 async function exec(sql) {
   if (isProduction) {
     if (!pool) {
