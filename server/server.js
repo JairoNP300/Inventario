@@ -642,16 +642,22 @@ app.delete('/api/admin/activity', async (req, res) => {
 
 app.get('/api/reports/ransa', async (req, res) => {
   try {
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(200, Math.max(1, parseInt(req.query.limit) || 100));
+    const offset = (page - 1) * limit;
+    const { rows: countRows } = await query('SELECT COUNT(*) as total FROM ransa_requests');
+    const total = countRows[0]?.total || 0;
     const { rows } = await query(`
       SELECT r.*, p.name as product_name 
       FROM ransa_requests r 
       LEFT JOIN products p ON r.product_id = p.id
       ORDER BY r.date DESC
-    `);
-    res.json(rows);
+      LIMIT ? OFFSET ?
+    `, [limit, offset]);
+    res.json({ rows, total, page, limit, pages: Math.ceil(total / limit) });
   } catch (err) {
     console.error('Error fetching ransa logs:', err.message);
-    res.json([]);
+    res.json({ rows: [], total: 0, page: 1, limit: 100, pages: 0 });
   }
 });
 
@@ -1222,15 +1228,21 @@ app.post('/api/production/process', async (req, res) => {
 
 app.get('/api/production/logs', async (req, res) => {
   try {
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(200, Math.max(1, parseInt(req.query.limit) || 100));
+    const offset = (page - 1) * limit;
+    const { rows: countRows } = await query('SELECT COUNT(*) as total FROM production_logs');
+    const total = countRows[0]?.total || 0;
     const { rows } = await query(`
       SELECT l.*, p.name as product_name FROM production_logs l
       LEFT JOIN products p ON l.product_id = p.id
       ORDER BY l.date DESC
-    `);
-    res.json(rows);
+      LIMIT ? OFFSET ?
+    `, [limit, offset]);
+    res.json({ rows, total, page, limit, pages: Math.ceil(total / limit) });
   } catch (err) {
     console.error('Error fetching production logs:', err.message);
-    res.json([]);
+    res.json({ rows: [], total: 0, page: 1, limit: 100, pages: 0 });
   }
 });
 
