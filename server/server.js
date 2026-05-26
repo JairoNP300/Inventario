@@ -654,25 +654,33 @@ app.delete('/api/reports/ransa/:id', async (req, res) => {
   const { id } = req.params;
   try {
     const { rows } = await query('SELECT * FROM ransa_requests WHERE id = ?', [id]);
-    if (rows.length > 0) {
-      const log = rows[0];
-      const scaleKg = parseFloat(log.scale_weight) || 0;
-      const colMap = {
-        'Ransa': { col: 'bodega_1', factor: 1 },
-        'Lomas de San Francisco': { col: 'bodega_4', factor: 2.20462 },
-        'Central de abasto - Soyapango (Cuarto Frío)': { col: 'bodega_2', factor: 2.20462 },
-        'Central de abasto - Usulután (Cuarto Frío)': { col: 'bodega_3', factor: 2.20462 }
-      };
-      const target = colMap[log.distribution_details] || { col: 'bodega_1', factor: 1 };
-      const val = scaleKg * target.factor;
-      if (target.col !== 'bodega_1') {
-        // Restore to Ransa and remove from destination
-        await query(`UPDATE inventory SET bodega_1 = bodega_1 + ?, ${target.col} = ${target.col} - ?, initial_stock = initial_stock - ? WHERE product_id = ?`, [scaleKg, val, val, log.product_id]);
-      } else {
-        await query(`UPDATE inventory SET ${target.col} = ${target.col} - ?, initial_stock = initial_stock - ? WHERE product_id = ?`, [val, val, log.product_id]);
+    if (rows.length === 0) return res.status(404).json({ error: 'Recepción no encontrada' });
+    const log = rows[0];
+    const scaleKg = parseFloat(log.scale_weight) || 0;
+    const colMap = {
+      'Ransa': { col: 'bodega_1', factor: 1 },
+      'Lomas de San Francisco': { col: 'bodega_4', factor: 2.20462 },
+      'Central de abasto - Soyapango (Cuarto Frío)': { col: 'bodega_2', factor: 2.20462 },
+      'Central de abasto - Usulután (Cuarto Frío)': { col: 'bodega_3', factor: 2.20462 }
+    };
+    const target = colMap[log.distribution_details] || { col: 'bodega_1', factor: 1 };
+    const val = scaleKg * target.factor;
+
+    // Verify there's enough stock in destination to remove
+    if (target.col !== 'bodega_1') {
+      const { rows: check } = await query(`SELECT ${target.col} FROM inventory WHERE product_id = ?`, [log.product_id]);
+      const current = parseFloat(check[0]?.[target.col]) || 0;
+      if (current < val) {
+        return res.status(400).json({ error: `Stock insuficiente en destino para revertir: tiene ${current.toFixed(2)} lbs, necesita ${val.toFixed(2)} lbs` });
       }
-      await query('DELETE FROM ransa_requests WHERE id = ?', [id]);
     }
+
+    await runTransaction([
+      ...(target.col !== 'bodega_1'
+        ? [{ sql: `UPDATE inventory SET bodega_1 = bodega_1 + ?, ${target.col} = ${target.col} - ?, initial_stock = initial_stock - ? WHERE product_id = ?`, params: [scaleKg, val, val, log.product_id] }]
+        : [{ sql: `UPDATE inventory SET ${target.col} = ${target.col} - ?, initial_stock = initial_stock - ? WHERE product_id = ?`, params: [val, val, log.product_id] }]),
+      { sql: 'DELETE FROM ransa_requests WHERE id = ?', params: [id] }
+    ]);
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
