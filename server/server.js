@@ -1140,16 +1140,22 @@ app.post('/api/inventory/transfer', async (req, res) => {
 // --- Movements (transfers) CRUD ---
 app.get('/api/movements', async (req, res) => {
   try {
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(200, Math.max(1, parseInt(req.query.limit) || 100));
+    const offset = (page - 1) * limit;
+    const { rows: countRows } = await query('SELECT COUNT(*) as total FROM movements');
+    const total = countRows[0]?.total || 0;
     const { rows } = await query(`
       SELECT m.*, p.name as product_name, p.code as product_code
       FROM movements m
       LEFT JOIN products p ON m.product_id = p.id
       ORDER BY m.date DESC, m.id DESC
-    `);
-    res.json(rows);
+      LIMIT ? OFFSET ?
+    `, [limit, offset]);
+    res.json({ rows, total, page, limit, pages: Math.ceil(total / limit) });
   } catch (err) {
     console.error('Error fetching movements:', err.message);
-    res.json([]);
+    res.json({ rows: [], total: 0, page: 1, limit: 100, pages: 0 });
   }
 });
 
