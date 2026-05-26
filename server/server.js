@@ -984,13 +984,18 @@ app.post('/api/inventory/adjust', async (req, res) => {
 
 app.get('/api/inventory/adjustments', async (req, res) => {
   try {
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(200, Math.max(1, parseInt(req.query.limit) || 50));
+    const offset = (page - 1) * limit;
+    const { rows: countRows } = await query('SELECT COUNT(*) as total FROM stock_adjustments');
+    const total = countRows[0]?.total || 0;
     const { rows } = await query(`
       SELECT sa.*, p.code as product_code, p.name as product_name
       FROM stock_adjustments sa
       LEFT JOIN products p ON sa.product_id = p.id
-      ORDER BY sa.id DESC LIMIT 50
-    `);
-    res.json(rows);
+      ORDER BY sa.id DESC LIMIT ? OFFSET ?
+    `, [limit, offset]);
+    res.json({ rows, total, page, limit, pages: Math.ceil(total / limit) });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
