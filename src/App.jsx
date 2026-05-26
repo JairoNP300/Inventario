@@ -333,7 +333,7 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
   const [editingId, setEditingId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [formData, setFormData] = useState({
-    product_id: '', initial_kg: '', initial_weight: '', raw_weight: '', cut_weight: '', waste: '',
+    product_id: '', initial_kg: '', initial_weight: '', cut_weight: '', waste: '',
     storage_cost: '', transport_cost: '', labor_cost: '', other_costs: '', process_mode: 'ransa', dest_warehouse: 'Soyapango'
   });
 
@@ -359,7 +359,6 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
       product_id: log.product_id,
       initial_kg: log.initial_kg,
       initial_weight: log.initial_weight,
-      raw_weight: log.raw_weight || '',
       cut_weight: log.cut_weight,
       waste: log.waste,
       storage_cost: log.storage_cost || '',
@@ -458,10 +457,6 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
                 }} placeholder="0.00" required={formData.process_mode === 'ransa'} />
               </div>
             )}
-            <div className="form-group">
-              <label>Peso Sin Procesar (Lbs)</label>
-              <input type="number" step="0.01" value={formData.raw_weight} onChange={e => setFormData({ ...formData, raw_weight: e.target.value })} placeholder="0.00" />
-            </div>
             <div className="form-group">
               <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span>{formData.process_mode === 'direct' ? 'Peso Procesado (Lbs)' : 'Salida Limpia (Lbs)'}</span>
