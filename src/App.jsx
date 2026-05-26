@@ -4873,6 +4873,13 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
             );
           })}
 
+          <div className="status-item" style={{ borderColor: 'rgba(249,115,22,0.3)' }}>
+            <div className="status-label">PESO SIN PROCESAR</div>
+            <div className="status-value" style={{ color: '#f97316' }}>
+              {Math.round(inventorySummary.reduce((acc, i) => acc + (parseFloat(i.raw_total) || 0), 0)).toLocaleString()} <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>LBS</span>
+            </div>
+          </div>
+
           <div className="status-item" style={{ borderColor: 'rgba(245,158,11,0.3)' }}>
             <div className="status-label">CAJAS TOTALES</div>
             <div className="status-value" style={{ color: '#f59e0b' }}>
