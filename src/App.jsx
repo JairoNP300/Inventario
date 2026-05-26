@@ -870,14 +870,14 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
     totalLabel.getCell(1).border = { top: { style: 'medium', color: { argb: 'FF38BDF8' } }, bottom: { style: 'double', color: { argb: 'FF38BDF8' } }, left: { style: 'thin', color: { argb: 'FF334155' } }, right: { style: 'thin', color: { argb: 'FF334155' } } };
     totalLabel.height = 26;
 
-    [2,3,4,5,6,7,8].forEach(col => {
+    [2,3,4,5,6,7].forEach(col => {
       const cell = totalLabel.getCell(col);
       const sum = inventoryRows.reduce((acc, i) => {
         const b1 = viewUnit === 'Kg' ? toNum(i.bodega_1) : toNum(i.bodega_1) * factor;
         const b2 = viewUnit === 'Kg' ? toNum(i.bodega_2) / factor : toNum(i.bodega_2);
         const b3 = viewUnit === 'Kg' ? toNum(i.bodega_3) / factor : toNum(i.bodega_3);
         const b4 = viewUnit === 'Kg' ? toNum(i.bodega_4) / factor : toNum(i.bodega_4);
-        const vals = [0, toNum(i.raw_total), viewUnit === 'Kg' ? toNum(i.initial_stock) : toNum(i.initial_stock) * factor, b1, b2, b3, b4, b1 + b2 + b3 + b4];
+        const vals = [0, viewUnit === 'Kg' ? toNum(i.initial_stock) : toNum(i.initial_stock) * factor, b1, b2, b3, b4, b1 + b2 + b3 + b4];
         return acc + vals[col - 1];
       }, 0);
       cell.value = sum;
@@ -1052,7 +1052,7 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
                   </div>
                   <div>
                     <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-main)', lineHeight: 1.2 }}>{p.code}: {p.name.length > 22 ? p.name.slice(0, 22) + '…' : p.name}</div>
-                    <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Ransa: {toNum(inv?.bodega_1).toFixed(1)} kg | Soyapango: {toNum(inv?.bodega_2).toFixed(1)} lbs | Usulután: {toNum(inv?.bodega_3).toFixed(1)} lbs | Lomas: {toNum(inv?.bodega_4).toFixed(1)} lbs | Sin Proc: {toNum(inv?.raw_total).toFixed(1)} lbs | Cajas: {toNum(inv?.stock_cajas ?? inv?.cajas).toFixed(0)}</div>
+                    <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Ransa: {toNum(inv?.bodega_1).toFixed(1)} kg | Soyapango: {toNum(inv?.bodega_2).toFixed(1)} lbs | Usulután: {toNum(inv?.bodega_3).toFixed(1)} lbs | Lomas: {toNum(inv?.bodega_4).toFixed(1)} lbs | Cajas: {toNum(inv?.stock_cajas ?? inv?.cajas).toFixed(0)}</div>
                   </div>
                 </div>
               );
