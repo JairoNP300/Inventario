@@ -1273,7 +1273,7 @@ app.post('/api/production/logs', async (req, res) => {
     const wasteVal = parseFloat(waste) || (initKg > 0 ? initKg * 2.20462 - cutLbs : 0);
 
     const updates = [
-      { sql: 'INSERT INTO production_logs (product_id, initial_weight, cut_weight, waste, storage_cost, transport_cost, labor_cost, other_costs) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', params: [product_id, initKg, cutLbs, wasteVal, storage_cost || 0, transport_cost || 0, labor_cost || 0, other_costs || 0] }
+      { sql: 'INSERT INTO production_logs (product_id, initial_weight, cut_weight, waste, storage_cost, transport_cost, labor_cost, other_costs, dest_warehouse) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', params: [product_id, initKg, cutLbs, wasteVal, storage_cost || 0, transport_cost || 0, labor_cost || 0, other_costs || 0, process_mode === 'direct' ? (dest_warehouse || 'Soyapango') : ''] }
     ];
 
     if (process_mode === 'direct') {
@@ -1344,24 +1344,17 @@ app.delete('/api/production/logs/:id', async (req, res) => {
         { sql: 'DELETE FROM production_logs WHERE id = ?', params: [id] }
       ]);
     } else {
-      // Direct process: find which warehouse it was added to and revert
-      // Since we don't store dest_warehouse in production_logs, check movements
-      const { rows: movs } = await query("SELECT * FROM movements WHERE origin_warehouse = 'Proceso directo' AND weight = ? AND product_id = ? AND type = 'INCOME' ORDER BY id DESC LIMIT 1", [log.cut_weight, log.product_id]);
-      let destCol = 'bodega_2'; // default to Soyapango
-      if (movs.length > 0) {
-        const wh = movs[0].dest_warehouse;
-        if (wh === 'Usulután') destCol = 'bodega_3';
-        else if (wh === 'Lomas de San Francisco') destCol = 'bodega_4';
-        else destCol = 'bodega_2'; // Soyapango
-      }
+      // Direct process: use stored dest_warehouse to revert
+      const wh = log.dest_warehouse || 'Soyapango';
+      const destColMap = { 'Soyapango': 'bodega_2', 'Usulután': 'bodega_3', 'Lomas de San Francisco': 'bodega_4' };
+      const destCol = destColMap[wh] || 'bodega_2';
       const { rows: check } = await query(`SELECT ${destCol} FROM inventory WHERE product_id = ?`, [log.product_id]);
       const current = parseFloat(check[0]?.[destCol]) || 0;
       if (current < log.cut_weight) {
-        return res.status(400).json({ error: `Stock insuficiente para revertir producción directa: tiene ${current.toFixed(2)} lbs, necesita ${log.cut_weight} lbs` });
+        return res.status(400).json({ error: `Stock insuficiente en ${wh} para revertir: tiene ${current.toFixed(2)} lbs, necesita ${log.cut_weight} lbs` });
       }
       await runTransaction([
         { sql: `UPDATE inventory SET ${destCol} = ${destCol} - ? WHERE product_id = ?`, params: [log.cut_weight, log.product_id] },
-        ...(movs.length > 0 ? [{ sql: 'DELETE FROM movements WHERE id = ?', params: [movs[0].id] }] : []),
         { sql: 'DELETE FROM production_logs WHERE id = ?', params: [id] }
       ]);
     }
