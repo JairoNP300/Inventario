@@ -1232,8 +1232,7 @@ app.get('/api/products', async (req, res) => {
            i.bodega_3 as stock_b3,
            i.entradas_cajas,
            i.salidas_cajas,
-           (i.entradas_cajas - i.salidas_cajas) as stock_cajas,
-           (SELECT COALESCE(SUM(pl.raw_weight), 0) FROM production_logs pl WHERE pl.product_id = p.id) as raw_total
+           (i.entradas_cajas - i.salidas_cajas) as stock_cajas
     FROM products p 
     LEFT JOIN inventory i ON p.id = i.product_id 
     ORDER BY CAST(p.code AS INTEGER) ASC
