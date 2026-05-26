@@ -1734,6 +1734,25 @@ initDb().then(() => {
     } catch (err) {
       console.error('[SEED] Error:', err.message);
     }
+
+    // Seed Usulután (bodega_3) stock on fresh database
+    try {
+      const { rows: b3Check } = await query('SELECT COUNT(*) as cnt FROM inventory WHERE bodega_3 > 0');
+      if (parseInt(b3Check[0]?.cnt || 0) === 0) {
+        const b3Seed = { "1618":9468.1,"1619":5948.9,"1624":4808.9,"1626":1072.3,"1628":5595.4 };
+        for (const [code, val] of Object.entries(b3Seed)) {
+          const { rows: pRows } = await query('SELECT id FROM products WHERE code = ?', [code]);
+          if (pRows.length > 0) {
+            await query('UPDATE inventory SET bodega_3 = ? WHERE product_id = ?', [val, pRows[0].id]);
+          }
+        }
+        console.log('[SEED] Usulután bodega_3 seeded successfully');
+      } else {
+        console.log('[SEED] Usulután bodega_3 already has data — no seeding needed');
+      }
+    } catch (err) {
+      console.error('[SEED] Usulután bodega_3 error:', err.message);
+    }
     
     // Auto-backup before starting
     await backupDatabase();
