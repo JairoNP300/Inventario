@@ -834,9 +834,9 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
     };
     const numFmt = '#,##0.0';
 
-    const headers = ['Producto', 'Peso Sin Procesar (Lbs)', `Entradas (${viewUnit})`, `Ransa (${viewUnit})`, `Soyapango (${viewUnit})`, `Usulután (${viewUnit})`, `Lomas (${viewUnit})`, `Stock Actual (${viewUnit})`];
+    const headers = ['Producto', `Entradas (${viewUnit})`, `Ransa (${viewUnit})`, `Soyapango (${viewUnit})`, `Usulután (${viewUnit})`, `Lomas (${viewUnit})`, `Stock Actual (${viewUnit})`];
     ws.getColumn(1).width = 44;
-    [2,3,4,5,6,7,8].forEach(c => { ws.getColumn(c).width = 20; });
+    [2,3,4,5,6,7].forEach(c => { ws.getColumn(c).width = 20; });
 
     const headerRow = ws.addRow(headers);
     headerRow.height = 26;
@@ -851,8 +851,7 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
       const b3 = viewUnit === 'Kg' ? toNum(i.bodega_3) / factor : toNum(i.bodega_3);
       const b4 = viewUnit === 'Kg' ? toNum(i.bodega_4) / factor : toNum(i.bodega_4);
       const total = b1 + b2 + b3 + b4;
-      const rawVal = toNum(i.raw_total);
-      const row = ws.addRow([i.name || `Producto ${i.code}`, rawVal, viewUnit === 'Kg' ? toNum(i.initial_stock) : toNum(i.initial_stock) * factor, b1, b2, b3, b4, total]);
+      const row = ws.addRow([i.name || `Producto ${i.code}`, viewUnit === 'Kg' ? toNum(i.initial_stock) : toNum(i.initial_stock) * factor, b1, b2, b3, b4, total]);
       row.height = 22;
       const rowFill = idx % 2 === 0 ? whiteFill : altFill;
       row.eachCell((cell, col) => {
