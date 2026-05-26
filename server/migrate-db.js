@@ -31,7 +31,7 @@ async function migrateDatabase() {
         await pool.query('INSERT INTO agros (id, name) VALUES ($1, $2)', [id, name]);
       }
 
-      // 2. Update inventory with 100 units per bodega
+      // 2. Update inventory with 100 units per bodega (only for new products)
       console.log('Updating inventory stock levels...');
       const products = await pool.query('SELECT id FROM products');
       
@@ -39,14 +39,7 @@ async function migrateDatabase() {
         await pool.query(`
           INSERT INTO inventory (product_id, bodega_1, bodega_2, bodega_3, bodega_4, initial_stock, current_stock, sold_stock)
           VALUES ($1, 100, 100, 100, 100, 400, 400, 0)
-          ON CONFLICT (product_id) DO UPDATE SET
-            bodega_1 = 100,
-            bodega_2 = 100,
-            bodega_3 = 100,
-            bodega_4 = 100,
-            initial_stock = 400,
-            current_stock = 400,
-            sold_stock = 0
+          ON CONFLICT (product_id) DO NOTHING
         `, [product.id]);
       }
 
@@ -76,23 +69,17 @@ async function migrateDatabase() {
       const insertAgro = db.prepare('INSERT INTO agros (id, name) VALUES (?, ?)');
       agros.forEach(([id, name]) => insertAgro.run(id, name));
 
-      // 2. Update inventory
+      // 2. Update inventory (only insert if not exists, do not overwrite)
       console.log('Updating inventory stock levels...');
       const products = db.prepare('SELECT id FROM products').all();
       
-      const updateInventory = db.prepare(`
-        UPDATE inventory 
-        SET bodega_1 = 100, 
-            bodega_2 = 100, 
-            bodega_3 = 100, 
-            bodega_4 = 100,
-            initial_stock = 400,
-            current_stock = 400,
-            sold_stock = 0
-        WHERE product_id = ?
+      const insertInventory = db.prepare(`
+        INSERT INTO inventory (product_id, bodega_1, bodega_2, bodega_3, bodega_4, initial_stock, current_stock, sold_stock)
+        VALUES (?, 100, 100, 100, 100, 400, 400, 0)
+        ON CONFLICT (product_id) DO NOTHING
       `);
       
-      products.forEach(product => updateInventory.run(product.id));
+      products.forEach(product => insertInventory.run(product.id));
 
       console.log('SQLite migration completed successfully');
     } catch (error) {
