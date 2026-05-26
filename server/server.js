@@ -816,14 +816,11 @@ app.get('/api/reports/dispatches', async (req, res) => {
 
 app.post('/api/dispatches', async (req, res) => {
   const { product_id, agro_id, weight, unit_type, value, origin_warehouse, discount_percent, cajas } = req.body;
-  console.log('DISPATCH RECEIVED:', JSON.stringify({ product_id, agro_id, weight, unit_type, value, origin_warehouse, discount_percent, cajas }));
   try {
-    const info = await query(`
-      INSERT INTO dispatches (product_id, agro_id, weight, unit_type, value, discount_percent)
-      VALUES (?, ?, ?, ?, ?, ?) RETURNING id
-    `, [product_id, agro_id, weight, unit_type || 'Lbs', value, discount_percent || 0]);
+    validateRequired(req.body, ['product_id', 'weight', 'value']);
+    const weightVal = sanitizeNumber(weight, 'weight', false);
+    const valueVal = sanitizeNumber(value, 'value', false);
 
-    // Determine which bodega to deduct from based on origin_warehouse
     const colMap = {
       'Ransa': 'bodega_1',
       'Lomas de San Francisco': 'bodega_4',
@@ -833,57 +830,56 @@ app.post('/api/dispatches', async (req, res) => {
       'Usulután': 'bodega_3'
     };
     const bodegaCol = colMap[origin_warehouse] || 'bodega_2';
-    console.log('DISPATCH bodegaCol:', bodegaCol);
 
-    // bodega_1 (Ransa) is in KG, others in LBS
-    let weightInUnits = parseFloat(weight);
-    console.log('DISPATCH raw weight parse:', weightInUnits);
+    let weightInUnits = weightVal;
+    let updates = [];
 
     if (unit_type === 'Cajas') {
-      // Cajas dispatch: only track via salidas_cajas, don't deduct weight columns
       const boxCount = parseInt(weight) || 0;
       if (boxCount > 0) {
-        await query('UPDATE inventory SET salidas_cajas = salidas_cajas + ? WHERE product_id = ?', [boxCount, product_id]);
-        console.log('DISPATCH cajas tracked (from weight):', boxCount);
+        updates.push({ sql: 'UPDATE inventory SET salidas_cajas = salidas_cajas + ? WHERE product_id = ?', params: [boxCount, product_id] });
       }
     } else {
       if (bodegaCol === 'bodega_1') {
-        // Ransa: convert dispatch weight to KG if it came in Lbs
         if (unit_type === 'Lbs') weightInUnits = weightInUnits / 2.20462;
       } else {
-        // Other bodegas: convert to LBS if came in Kg
         if (unit_type === 'Kg') weightInUnits = weightInUnits * 2.20462;
       }
-      console.log('DISPATCH weightInUnits:', weightInUnits, 'product_id:', product_id);
 
-      const updateResult = await query(`UPDATE inventory SET ${bodegaCol} = ${bodegaCol} - ?, sold_stock = sold_stock + ? WHERE product_id = ?`, [weightInUnits, weightInUnits, product_id]);
-      console.log('DISPATCH update result:', JSON.stringify(updateResult));
+      // Verify sufficient stock
+      const { rows: check } = await query(`SELECT ${bodegaCol} FROM inventory WHERE product_id = ?`, [product_id]);
+      const current = parseFloat(check[0]?.[bodegaCol]) || 0;
+      if (current < weightInUnits) {
+        const unitLabel = bodegaCol === 'bodega_1' ? 'kg' : 'lbs';
+        return res.status(400).json({ error: `Stock insuficiente en ${origin_warehouse || 'bodega'}: tiene ${current.toFixed(2)} ${unitLabel}, necesita ${weightInUnits.toFixed(2)} ${unitLabel}` });
+      }
 
-      // Track cajas dispatched (separate field from weight) — only when NOT already counted via unit_type === 'Cajas'
+      updates.push({ sql: `UPDATE inventory SET ${bodegaCol} = ${bodegaCol} - ?, sold_stock = sold_stock + ? WHERE product_id = ?`, params: [weightInUnits, weightInUnits, product_id] });
+
       const boxCount = parseInt(cajas) || 0;
       if (boxCount > 0) {
-        await query('UPDATE inventory SET salidas_cajas = salidas_cajas + ? WHERE product_id = ?', [boxCount, product_id]);
-        console.log('DISPATCH cajas tracked:', boxCount);
+        updates.push({ sql: 'UPDATE inventory SET salidas_cajas = salidas_cajas + ? WHERE product_id = ?', params: [boxCount, product_id] });
       }
     }
 
-    // Verify the update worked: read back the new value
-    const { rows: checkRows } = await query(`SELECT ${bodegaCol} FROM inventory WHERE product_id = ?`, [product_id]);
-    console.log('DISPATCH verify after update:', JSON.stringify(checkRows));
+    updates.push({ sql: 'INSERT INTO movements (product_id, origin_warehouse, dest_warehouse, weight, type) VALUES (?, ?, ?, ?, ?)', params: [product_id, origin_warehouse || 'Soyapango', 'Despacho', weight, 'DISPATCH'] });
 
-    await query('INSERT INTO movements (product_id, origin_warehouse, dest_warehouse, weight, type) VALUES (?, ?, ?, ?, ?)', [product_id, origin_warehouse || 'Soyapango', 'Despacho', weight, 'DISPATCH']);
+    const info = await query(`
+      INSERT INTO dispatches (product_id, agro_id, weight, unit_type, value, discount_percent)
+      VALUES (?, ?, ?, ?, ?, ?) RETURNING id
+    `, [product_id, agro_id, weight, unit_type || 'Lbs', valueVal, discount_percent || 0]);
 
-    // Log actividad
+    await runTransaction(updates);
+
     const { rows: pRows2 } = await query('SELECT name FROM products WHERE id = ?', [product_id]);
     const pName2 = pRows2[0]?.name || `Producto #${product_id}`;
     const { rows: aRows } = await query('SELECT name FROM agros WHERE id = ?', [agro_id]);
     const aName = aRows[0]?.name || `Destino #${agro_id}`;
     const role2 = req.headers['x-role'] || 'desconocido';
-    await logActivity({ role: role2, action: 'DESPACHO', entity: 'dispatches', product_name: pName2, quantity: parseFloat(weight), unit: unit_type || 'Lbs', location: origin_warehouse || 'Bodega', details: `${weight} ${unit_type} → ${aName} | $${value}` });
+    await logActivity({ role: role2, action: 'DESPACHO', entity: 'dispatches', product_name: pName2, quantity: weightVal, unit: unit_type || 'Lbs', location: origin_warehouse || 'Bodega', details: `${weight} ${unit_type} → ${aName} | $${valueVal}` });
 
     res.json({ id: info.lastInsertRowid });
   } catch (err) {
-    console.error('DISPATCH ERROR:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
