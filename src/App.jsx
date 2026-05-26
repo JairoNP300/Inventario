@@ -332,6 +332,7 @@ const ProductIntelligenceCard = ({ product }) => {
 const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
   const [editingId, setEditingId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [cart, setCart] = useState([]);
   const [formData, setFormData] = useState({
     product_id: '', initial_kg: '', initial_weight: '', cut_weight: '', waste: '',
     storage_cost: '', transport_cost: '', labor_cost: '', other_costs: '', process_mode: 'ransa', dest_warehouse: 'Soyapango'
