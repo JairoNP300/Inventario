@@ -10,6 +10,7 @@ import { resolve4 } from 'dns/promises';
 import { setDefaultResultOrder } from 'dns';
 import pkg from 'pg';
 const { Pool } = pkg;
+import ExcelJS from 'exceljs';
 
 // Force IPv4 DNS resolution globally before any network operations
 setDefaultResultOrder('ipv4first');
@@ -178,6 +179,146 @@ async function backupDatabase() {
   } catch (e) {
     console.warn('[BACKUP] Error:', e.message);
   }
+}
+
+// Archive directory
+const archiveDir = join(__dirname, '../archivos');
+
+// Transactional tables eligible for archiving
+const ARCHIVE_TABLES = [
+  { name: 'ransa_requests', dateCol: 'date', label: 'Recepciones' },
+  { name: 'dispatches',     dateCol: 'date', label: 'Despachos' },
+  { name: 'movements',      dateCol: 'date', label: 'Movimientos' },
+  { name: 'production_logs',dateCol: 'date', label: 'Produccion' },
+  { name: 'food_costing',   dateCol: 'date', label: 'Comida' },
+  { name: 'activity_log',   dateCol: 'created_at', label: 'Actividad' }
+];
+
+// Auto-archive data older than 30 days into Excel files
+async function autoArchiveOldData() {
+  if (!sqliteDb) return; // Only works with SQLite (file-based)
+  try {
+    await fs.mkdir(archiveDir, { recursive: true });
+    const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    
+    // Collect distinct months with data older than cutoff
+    const monthsToArchive = new Set();
+    for (const table of ARCHIVE_TABLES) {
+      try {
+        const data = await query(`SELECT DISTINCT strftime('%Y-%m', ${table.dateCol}) as month FROM ${table.name} WHERE ${table.dateCol} < ? ORDER BY month`, [cutoff]);
+        for (const row of (data.rows || [])) {
+          if (row.month) monthsToArchive.add(row.month);
+        }
+      } catch (e) { /* table might be empty */ }
+    }
+    
+    if (monthsToArchive.size === 0) {
+      console.log('[ARCHIVE] No hay datos anteriores a 30 d├¡as');
+      return;
+    }
+    
+    for (const month of monthsToArchive) {
+      const [year, mon] = month.split('-');
+      const archivePath = join(archiveDir, `Archivo_${year}_${mon}.xlsx`);
+      
+      // Skip if already archived
+      try { await fs.access(archivePath); continue; } catch { /* proceed */ }
+      
+      const startDate = `${month}-01`;
+      const nextM = parseInt(mon) === 12 ? `${parseInt(year)+1}-01` : `${year}-${String(parseInt(mon)+1).padStart(2,'0')}`;
+      const endDate = `${nextM}-01`;
+      
+      const workbook = new ExcelJS.Workbook();
+      workbook.creator = 'Sistema Ventas e Inventario';
+      workbook.created = new Date();
+      let hasData = false;
+      
+      for (const table of ARCHIVE_TABLES) {
+        try {
+          const data = await query(`SELECT * FROM ${table.name} WHERE ${table.dateCol} >= ? AND ${table.dateCol} < ?`, [startDate, endDate]);
+          const rows = data.rows || [];
+          if (rows.length === 0) continue;
+          hasData = true;
+          
+          const ws = workbook.addWorksheet(table.label);
+          const keys = Object.keys(rows[0]);
+          ws.columns = keys.map(k => ({ header: k, key: k, width: 20 }));
+          ws.addRows(rows);
+          ws.getRow(1).font = { bold: true };
+        } catch (e) { /* skip if table query fails */ }
+      }
+      
+      if (!hasData) continue;
+      
+      await workbook.xlsx.writeFile(archivePath);
+      console.log(`[ARCHIVE] Creado: Archivo_${year}_${mon}.xlsx`);
+      
+      // Delete archived data
+      for (const table of ARCHIVE_TABLES) {
+        try {
+          await query(`DELETE FROM ${table.name} WHERE ${table.dateCol} >= ? AND ${table.dateCol} < ?`, [startDate, endDate]);
+        } catch (e) { /* skip if delete fails */ }
+      }
+      
+      // Force VACUUM after each month
+      try { sqliteDb.exec('VACUUM'); } catch { /* ok */ }
+    }
+    console.log('[ARCHIVE] Archivo completado');
+  } catch (e) {
+    console.warn('[ARCHIVE] Error:', e.message);
+  }
+}
+
+// Manual archive: generate Excel for a specific month and return it
+async function generateArchiveExcel(year, month) {
+  const mon = String(month).padStart(2, '0');
+  const startDate = `${year}-${mon}-01`;
+  const nextM = month === 12 ? `${year+1}-01` : `${year}-${String(month+1).padStart(2,'0')}`;
+  const endDate = `${nextM}-01`;
+  
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = 'Sistema Ventas e Inventario';
+  workbook.created = new Date();
+  let hasData = false;
+  
+  for (const table of ARCHIVE_TABLES) {
+    try {
+      const data = await query(`SELECT * FROM ${table.name} WHERE ${table.dateCol} >= ? AND ${table.dateCol} < ?`, [startDate, endDate]);
+      const rows = data.rows || [];
+      if (rows.length === 0) continue;
+      hasData = true;
+      
+      const ws = workbook.addWorksheet(table.label);
+      const keys = Object.keys(rows[0]);
+      ws.columns = keys.map(k => ({ header: k, key: k, width: 20 }));
+      ws.addRows(rows);
+      ws.getRow(1).font = { bold: true };
+    } catch (e) { /* skip */ }
+  }
+  
+  return hasData ? workbook : null;
+}
+
+async function runVacuum() {
+  if (!sqliteDb) return;
+  try {
+    sqliteDb.exec('VACUUM');
+    console.log('[VACUUM] Completado');
+    return true;
+  } catch (e) {
+    console.warn('[VACUUM] Error:', e.message);
+    return false;
+  }
+}
+
+async function getDbSize() {
+  if (sqliteDb) {
+    try {
+      const stat = await fs.stat(join(__dirname, '../inventario_oficial.db'));
+      return stat.size;
+    } catch { return 0; }
+  }
+  return 0;
 }
 
 async function exec(sql) {
@@ -1704,6 +1845,98 @@ app.post('/api/admin/sync-inventory-weights', async (req, res) => {
   }
 });
 
+// ─── ARCHIVE ENDPOINTS ────────────────────────────────────────────────────
+
+// List available archive files
+app.get('/api/admin/archives', async (req, res) => {
+  try {
+    await fs.mkdir(archiveDir, { recursive: true });
+    const files = (await fs.readdir(archiveDir)).filter(f => f.startsWith('Archivo_') && f.endsWith('.xlsx')).sort().reverse();
+    const filesWithSize = await Promise.all(files.map(async (f) => {
+      try {
+        const stat = await fs.stat(join(archiveDir, f));
+        return { name: f, size: stat.size, date: stat.mtime };
+      } catch { return { name: f, size: 0, date: null }; }
+    }));
+    res.json(filesWithSize);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Download an archive file
+app.get('/api/admin/archives/:filename', async (req, res) => {
+  try {
+    const filePath = join(archiveDir, req.params.filename);
+    await fs.access(filePath);
+    res.download(filePath);
+  } catch {
+    res.status(404).json({ error: 'Archivo no encontrado' });
+  }
+});
+
+// Get DB stats (size, record counts)
+app.get('/api/admin/db-stats', async (req, res) => {
+  try {
+    const dbSize = await getDbSize();
+    const stats = { dbSize, tables: {} };
+    for (const table of ARCHIVE_TABLES) {
+      try {
+        const data = await query(`SELECT COUNT(*) as cnt, COALESCE(MIN(${table.dateCol}), '---') as oldest, COALESCE(MAX(${table.dateCol}), '---') as newest FROM ${table.name}`);
+        const row = (data.rows || [])[0] || {};
+        stats.tables[table.name] = { label: table.label, count: row.cnt || 0, oldest: row.oldest, newest: row.newest };
+      } catch { /* skip */ }
+    }
+    res.json(stats);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Manual archive: generate Excel for a month, return as download, optionally delete
+app.post('/api/admin/archive', async (req, res) => {
+  try {
+    const { year, month, deleteAfter } = req.body;
+    if (!year || !month) return res.status(400).json({ error: 'year y month son requeridos' });
+    
+    const workbook = await generateArchiveExcel(parseInt(year), parseInt(month));
+    if (!workbook) return res.status(404).json({ error: 'No hay datos para este mes' });
+    
+    const mon = String(month).padStart(2, '0');
+    const filename = `Archivo_${year}_${mon}.xlsx`;
+    
+    if (deleteAfter && sqliteDb) {
+      // Save to disk and delete from DB
+      await fs.mkdir(archiveDir, { recursive: true });
+      await workbook.xlsx.writeFile(join(archiveDir, filename));
+      
+      const startDate = `${year}-${mon}-01`;
+      const nextM = parseInt(month) === 12 ? `${parseInt(year)+1}-01` : `${year}-${String(parseInt(month)+1).padStart(2,'0')}`;
+      const endDate = `${nextM}-01`;
+      
+      for (const table of ARCHIVE_TABLES) {
+        try { await query(`DELETE FROM ${table.name} WHERE ${table.dateCol} >= ? AND ${table.dateCol} < ?`, [startDate, endDate]); } catch { /* skip */ }
+      }
+      await runVacuum();
+      res.json({ success: true, message: `Datos de ${month}/${year} archivados y eliminados de la BD`, filename });
+    } else {
+      // Stream Excel directly as download
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      await workbook.xlsx.write(res);
+      res.end();
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Manual VACUUM
+app.post('/api/admin/vacuum', async (req, res) => {
+  const ok = await runVacuum();
+  res.json({ success: ok, message: ok ? 'VACUUM completado' : 'Error en VACUUM' });
+});
+
 // Fallback to index.html for SPA
 app.get('*', (req, res) => {
   res.sendFile(join(__dirname, '../dist/index.html'));
@@ -1756,6 +1989,9 @@ initDb().then(() => {
     
     // Auto-backup before starting
     await backupDatabase();
+
+    // Auto-archive data older than 30 days
+    await autoArchiveOldData();
 
     app.listen(port, '0.0.0.0', () => {
       console.log(`Server running at port ${port}`);
