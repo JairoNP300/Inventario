@@ -401,7 +401,7 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
             .then(r => r.json())
             .then(data => {
               if (data.error) { alert('Error: ' + data.error); return; }
-              setFormData({ product_id: '', initial_weight: '', raw_weight: '', cut_weight: '', waste: '', storage_cost: '', transport_cost: '', labor_cost: '', other_costs: '', process_mode: 'ransa', dest_warehouse: 'Soyapango' });
+              setFormData({ product_id: '', initial_weight: '', cut_weight: '', waste: '', storage_cost: '', transport_cost: '', labor_cost: '', other_costs: '', process_mode: 'ransa', dest_warehouse: 'Soyapango' });
               setEditingId(null);
               onUpdate();
             })
@@ -506,7 +506,7 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
           <button type="submit" className="btn-primary" style={{ background: editingId ? 'var(--secondary)' : 'var(--accent)', marginTop: '20px' }}>
             {editingId ? <><Save size={18} /> Actualizar Conversión</> : <><Package size={18} /> Finalizar Producción & Conversión</>}
           </button>
-          {editingId && <button type="button" onClick={() => { setEditingId(null); setFormData({ product_id: '', initial_kg: '', initial_weight: '', raw_weight: '', cut_weight: '', waste: '', storage_cost: '', transport_cost: '', labor_cost: '', other_costs: '' }); }} className="btn-primary" style={{ background: '#64748b', marginTop: '10px' }}>Cancelar Edición</button>}
+          {editingId && <button type="button" onClick={() => { setEditingId(null); setFormData({ product_id: '', initial_kg: '', initial_weight: '', cut_weight: '', waste: '', storage_cost: '', transport_cost: '', labor_cost: '', other_costs: '' }); }} className="btn-primary" style={{ background: '#64748b', marginTop: '10px' }}>Cancelar Edición</button>}
         </form>
 
           <div className="form-card">
