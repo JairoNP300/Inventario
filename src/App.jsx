@@ -1,4 +1,4 @@
-// Render webhook trigger - 2026-04-30 10:57 - Null char fix v2
+﻿// Render webhook trigger - 2026-04-30 10:57 - Null char fix v2
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -56,47 +56,47 @@ const apiFetch = (url, options = {}) => {
   });
 };
 
-// ─── ROLES & CREDENCIALES ────────────────────────────────────────────────────
+// ΓöÇΓöÇΓöÇ ROLES & CREDENCIALES ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 const ROLES = {
-  // ── Administración ──────────────────────────────────────────────────────────
+  // ΓöÇΓöÇ Administraci├│n ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
   admin: {
     label: 'Administrador',
-    group: 'Administración',
+    group: 'Administraci├│n',
     password: 'admin2026',
     tabs: ['income','production','distribution','status','cajas','reports','comida','monitor','config'],
     defaultTab: 'income'
   },
-  // ── Soyapango ───────────────────────────────────────────────────────────────
+  // ΓöÇΓöÇ Soyapango ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
   soyapango_puesto: {
-    label: 'Soyapango — Puesto',
+    label: 'Soyapango ΓÇö Puesto',
     group: 'Soyapango',
     password: 'soyapango',
     tabs: ['distribution'],
     defaultTab: 'distribution'
   },
   soyapango_bodega: {
-    label: 'Soyapango — Bodega',
+    label: 'Soyapango ΓÇö Bodega',
     group: 'Soyapango',
     password: 'soyapangobodega',
     tabs: ['distribution','status'],
     defaultTab: 'distribution'
   },
-  // ── Usulután ────────────────────────────────────────────────────────────────
+  // ΓöÇΓöÇ Usulut├ín ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
   usulutan_puesto: {
-    label: 'Usulután — Puesto',
-    group: 'Usulután',
+    label: 'Usulut├ín ΓÇö Puesto',
+    group: 'Usulut├ín',
     password: 'usulutan',
     tabs: ['distribution'],
     defaultTab: 'distribution'
   },
   usulutan_bodega: {
-    label: 'Usulután — Bodega',
-    group: 'Usulután',
+    label: 'Usulut├ín ΓÇö Bodega',
+    group: 'Usulut├ín',
     password: 'usulutanbodega',
     tabs: ['distribution','status'],
     defaultTab: 'distribution'
   },
-  // ── Agromercados ────────────────────────────────────────────────────────────
+  // ΓöÇΓöÇ Agromercados ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
   agro_quezaltepeque: {
     label: 'Agro Quezaltepeque',
     group: 'Agromercados',
@@ -118,16 +118,16 @@ const ROLES = {
     tabs: ['distribution'],
     defaultTab: 'distribution'
   },
-  // ── Lomas de San Francisco ──────────────────────────────────────────────────
+  // ΓöÇΓöÇ Lomas de San Francisco ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
   lomas_ventas: {
-    label: 'Lomas — Ventas',
+    label: 'Lomas ΓÇö Ventas',
     group: 'Lomas de San Francisco',
     password: 'lomasventas',
     tabs: ['distribution','comida'],
     defaultTab: 'distribution'
   },
   lomas_bodega: {
-    label: 'Lomas — Bodega',
+    label: 'Lomas ΓÇö Bodega',
     group: 'Lomas de San Francisco',
     password: 'lomasbodega',
     tabs: ['status'],
@@ -142,7 +142,7 @@ const ROLE_GROUPS = Object.entries(ROLES).reduce((acc, [key, cfg]) => {
   return acc;
 }, {});
 
-// ─── PANTALLA DE LOGIN ────────────────────────────────────────────────────────
+// ΓöÇΓöÇΓöÇ PANTALLA DE LOGIN ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 const LoginScreen = ({ onLogin }) => {
   const [role, setRole] = useState('');
   const [password, setPassword] = useState('');
@@ -153,8 +153,8 @@ const LoginScreen = ({ onLogin }) => {
     e.preventDefault();
     if (!role) { setError('Selecciona un lugar de acceso'); return; }
     const cfg = ROLES[role];
-    if (!cfg) { setError('Rol inválido'); return; }
-    if (password !== cfg.password) { setError('Contraseña incorrecta'); return; }
+    if (!cfg) { setError('Rol inv├ílido'); return; }
+    if (password !== cfg.password) { setError('Contrase├▒a incorrecta'); return; }
     sessionStorage.setItem('cp_role', role);
     onLogin(role);
   };
@@ -234,17 +234,17 @@ const LoginScreen = ({ onLogin }) => {
             </div>
           </div>
 
-          {/* Contraseña */}
+          {/* Contrase├▒a */}
           <div>
             <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.7rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>
-              <Lock size={11} /> Contraseña
+              <Lock size={11} /> Contrase├▒a
             </label>
             <div style={{ position: 'relative' }}>
               <input
                 type={showPass ? 'text' : 'password'}
                 value={password}
                 onChange={e => { setPassword(e.target.value); setError(''); }}
-                placeholder="Ingresa tu contraseña"
+                placeholder="Ingresa tu contrase├▒a"
                 style={{
                   width: '100%', padding: '0.85rem 3rem 0.85rem 1rem', borderRadius: '12px',
                   background: 'rgba(0,0,0,0.25)', border: '1.5px solid rgba(255,255,255,0.08)',
@@ -264,7 +264,7 @@ const LoginScreen = ({ onLogin }) => {
           {error && (
             <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }}
               style={{ padding: '10px 14px', borderRadius: '10px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#fca5a5', fontSize: '0.82rem', fontWeight: 600 }}>
-              ⚠ {error}
+              ΓÜá {error}
             </motion.div>
           )}
 
@@ -305,12 +305,12 @@ const ProductIntelligenceCard = ({ product }) => {
     >
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(200px, 1.2fr) 1fr', gap: '30px' }}>
         <div>
-          <strong style={{ display: 'block', color: 'var(--accent)', marginBottom: '15px', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '2px' }}>Disponibilidad por Ubicación:</strong>
+          <strong style={{ display: 'block', color: 'var(--accent)', marginBottom: '15px', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '2px' }}>Disponibilidad por Ubicaci├│n:</strong>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', fontSize: '0.85rem' }}>
             <span style={{ color: 'var(--text-muted)' }}>Ransa: <b style={{ color: 'var(--text-main)' }}>{n(product.stock_kg).toFixed(1)}kg</b></span>
             <span style={{ color: 'var(--text-muted)' }}>Lomas: <b style={{ color: 'var(--accent)' }}>{n(product.stock_b4).toFixed(1)}lbs</b></span>
             <span style={{ color: 'var(--text-muted)' }}>Soyapango: <b style={{ color: 'var(--accent)' }}>{n(product.stock_b2).toFixed(1)}lbs</b></span>
-            <span style={{ color: 'var(--text-muted)' }}>Usulután: <b style={{ color: 'var(--accent)' }}>{n(product.stock_b3).toFixed(1)}lbs</b></span>
+            <span style={{ color: 'var(--text-muted)' }}>Usulut├ín: <b style={{ color: 'var(--accent)' }}>{n(product.stock_b3).toFixed(1)}lbs</b></span>
             <span style={{ color: 'var(--text-muted)' }}>Stock Cajas: <b style={{ color: '#f59e0b' }}>{n(product.stock_cajas).toFixed(0)}</b></span>
           </div>
         </div>
@@ -385,7 +385,7 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
     <div className="report-content">
       <div style={{ background: 'rgba(6, 182, 212, 0.1)', padding: '15px', borderRadius: '14px', marginBottom: '20px', border: '1px solid rgba(6, 182, 212, 0.3)', fontSize: '0.85rem', color: 'var(--accent)' }}>
         <Activity size={16} style={{ verticalAlign: 'middle', marginRight: '8px' }} />
-        <strong>Monitor de Producción:</strong> Seguimiento integral de mermas y rendimiento directo en Libras.
+        <strong>Monitor de Producci├│n:</strong> Seguimiento integral de mermas y rendimiento directo en Libras.
       </div>
 
       <div className="card-grid">
@@ -403,9 +403,9 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
               setEditingId(null);
               onUpdate();
             })
-            .catch(err => { console.error('Error producción:', err); alert('Error de conexión'); });
+            .catch(err => { console.error('Error producci├│n:', err); alert('Error de conexi├│n'); });
         }} className="form-card">
-          <h3>Panel de Conversión & Proceso</h3>
+          <h3>Panel de Conversi├│n & Proceso</h3>
 
           <div className="form-group">
             <label>Producto a Procesar</label>
@@ -440,7 +440,7 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
             return (
               <div style={{ padding: '8px 12px', borderRadius: '8px', background: ransaKg > 0 ? 'rgba(56,189,248,0.06)' : 'rgba(239,68,68,0.06)', border: `1px solid ${ransaKg > 0 ? 'rgba(56,189,248,0.2)' : 'rgba(239,68,68,0.2)'}`, marginBottom: '0.8rem', fontSize: '0.8rem' }}>
                 Stock actual en Ransa: <strong style={{ color: ransaKg > 0 ? 'var(--accent)' : 'var(--danger)' }}>{ransaKg.toFixed(1)} kg</strong>
-                {ransaKg <= 0 && <span style={{ color: 'var(--danger)', marginLeft: '8px' }}>— No hay existencias. Cambie a "Peso Procesado Directo" o reciba producto primero.</span>}
+                {ransaKg <= 0 && <span style={{ color: 'var(--danger)', marginLeft: '8px' }}>ΓÇö No hay existencias. Cambie a "Peso Procesado Directo" o reciba producto primero.</span>}
               </div>
             );
           })()}
@@ -477,14 +477,14 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
               <label>Almacenar en Bodega</label>
               <select value={formData.dest_warehouse || 'Soyapango'} onChange={e => setFormData({ ...formData, dest_warehouse: e.target.value })} required>
                 <option value="Soyapango">Soyapango (Lbs)</option>
-                <option value="Usulután">Usulután (Lbs)</option>
+                <option value="Usulut├ín">Usulut├ín (Lbs)</option>
                 <option value="Lomas de San Francisco">Lomas de San Francisco (Lbs)</option>
               </select>
             </div>
           )}
 
           <div style={{ marginTop: '1.5rem', background: 'rgba(255, 255, 255, 0.02)', padding: '2rem', borderRadius: '24px', border: '1px solid var(--glass-border)' }}>
-            <h4 style={{ fontSize: '0.75rem', color: 'var(--aurora-1)', marginBottom: '1.5rem', textTransform: 'uppercase', letterSpacing: '1px', border: 'none' }}>Estimación de Costos Operativos</h4>
+            <h4 style={{ fontSize: '0.75rem', color: 'var(--aurora-1)', marginBottom: '1.5rem', textTransform: 'uppercase', letterSpacing: '1px', border: 'none' }}>Estimaci├│n de Costos Operativos</h4>
             <div className="form-row three-col">
               <div className="form-group">
                 <label>Almacenaje ($)</label>
@@ -502,9 +502,9 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
           </div>
 
           <button type="submit" className="btn-primary" style={{ background: editingId ? 'var(--secondary)' : 'var(--accent)', marginTop: '20px' }}>
-            {editingId ? <><Save size={18} /> Actualizar Conversión</> : <><Package size={18} /> Finalizar Producción & Conversión</>}
+            {editingId ? <><Save size={18} /> Actualizar Conversi├│n</> : <><Package size={18} /> Finalizar Producci├│n & Conversi├│n</>}
           </button>
-          {editingId && <button type="button" onClick={() => { setEditingId(null); setFormData({ product_id: '', initial_kg: '', initial_weight: '', cut_weight: '', waste: '', storage_cost: '', transport_cost: '', labor_cost: '', other_costs: '' }); }} className="btn-primary" style={{ background: '#64748b', marginTop: '10px' }}>Cancelar Edición</button>}
+          {editingId && <button type="button" onClick={() => { setEditingId(null); setFormData({ product_id: '', initial_kg: '', initial_weight: '', cut_weight: '', waste: '', storage_cost: '', transport_cost: '', labor_cost: '', other_costs: '' }); }} className="btn-primary" style={{ background: '#64748b', marginTop: '10px' }}>Cancelar Edici├│n</button>}
         </form>
 
           <div className="form-card">
@@ -513,7 +513,7 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
             <motion.input
               whileFocus={{ width: '250px', borderColor: 'var(--accent)' }}
               type="text"
-              placeholder="🔍 Buscar..."
+              placeholder="≡ƒöì Buscar..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               style={{ width: '200px', padding: '10px 18px', fontSize: '0.8rem', borderRadius: '25px', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', color: '#fff' }}
@@ -553,7 +553,7 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
       </div>
 
       <div className="form-card" style={{ marginTop: '2.5rem' }}>
-        <h3 style={{ marginBottom: '1.5rem' }}>Historial de Producción</h3>
+        <h3 style={{ marginBottom: '1.5rem' }}>Historial de Producci├│n</h3>
         <div className="grid-table-container">
           <table>
             <thead>
@@ -568,12 +568,12 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
             </thead>
             <tbody>
               {productionLogs.length === 0 ? (
-                <tr><td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '20px' }}>Sin registros de producción</td></tr>
+                <tr><td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '20px' }}>Sin registros de producci├│n</td></tr>
               ) : (
                 productionLogs.slice().reverse().map(log => (
                   <tr key={log.id} className="fade-in">
                     <td className="col-date" style={{ color: 'var(--text-muted)' }}>{new Date(log.date).toLocaleDateString()}</td>
-                    <td className="col-carne" style={{ fontWeight: 700, color: 'var(--text-main)' }}>{log.product_name || '—'}</td>
+                    <td className="col-carne" style={{ fontWeight: 700, color: 'var(--text-main)' }}>{log.product_name || 'ΓÇö'}</td>
                     <td className="col-qty" style={{ color: 'var(--accent)' }}>{parseFloat(log.initial_weight || 0).toFixed(2)} <small>kg</small></td>
                     <td className="col-qty" style={{ color: 'var(--secondary)', fontWeight: 800 }}>{parseFloat(log.cut_weight || 0).toFixed(2)} <small>lbs</small></td>
                     <td className="col-qty" style={{ color: 'var(--danger)', fontWeight: 700 }}>-{parseFloat(log.waste || 0).toFixed(2)} <small>lbs</small></td>
@@ -589,7 +589,7 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
                         <motion.button
                           whileHover={{ scale: 1.2 }}
                           onClick={() => {
-                            if (confirm('¿Eliminar registro y revertir inventario?')) {
+                            if (confirm('┬┐Eliminar registro y revertir inventario?')) {
                               fetch(`${API_BASE}/production/logs/${log.id}`, { method: 'DELETE' }).then(onUpdate);
                             }
                           }}
@@ -652,30 +652,30 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
   const inventoryRows = Array.isArray(inventory) ? inventory : [];
   const warehouseOptions = [
     { label: 'Ransa (KG)', value: 'Ransa' },
-    { label: 'Soyapango (Lbs)', value: 'Central de abasto - Soyapango (Cuarto Frío)' },
-    { label: 'Usulután (Lbs)', value: 'Central de abasto - Usulután (Cuarto Frío)' },
+    { label: 'Soyapango (Lbs)', value: 'Central de abasto - Soyapango (Cuarto Fr├¡o)' },
+    { label: 'Usulut├ín (Lbs)', value: 'Central de abasto - Usulut├ín (Cuarto Fr├¡o)' },
     { label: 'Lomas de San Francisco (Lbs)', value: 'Lomas de San Francisco' }
   ];
 
-  // Función para obtener datos de stock desde productWeightData
-  // Integra los totales EXACTOS de KG por ubicación según las imágenes
+  // Funci├│n para obtener datos de stock desde productWeightData
+  // Integra los totales EXACTOS de KG por ubicaci├│n seg├║n las im├ígenes
   const getWeightDataRows = () => {
     if (!productWeightData?.weightTotals) return [];
     
     const weightTotals = productWeightData.weightTotals;
     
-    // Crear filas de inventario con los totales EXACTOS de KG por ubicación
+    // Crear filas de inventario con los totales EXACTOS de KG por ubicaci├│n
     return Object.entries(weightTotals).map(([code, data]) => {
       // Mostrar todos los productos, incluso si tienen 0 KG
       
-      // bodega_1 = Ransa (KG), bodega_2 = Soyapango (LBS), bodega_3 = Usulután (LBS), bodega_4 = Lomas (LBS)
+      // bodega_1 = Ransa (KG), bodega_2 = Soyapango (LBS), bodega_3 = Usulut├ín (LBS), bodega_4 = Lomas (LBS)
       return {
         name: data.name,
-        // Ransa: las cajas quedan pero no tienen datos de peso en las imágenes = 0 KG
+        // Ransa: las cajas quedan pero no tienen datos de peso en las im├ígenes = 0 KG
         bodega_1: data.ransaKg || 0,
         // Soyapango: no hay datos
         bodega_2: 0,
-        // Usulután: tiene el peso total de las cajas que salen (convertir KG a LBS para mostrar)
+        // Usulut├ín: tiene el peso total de las cajas que salen (convertir KG a LBS para mostrar)
         bodega_3: (data.usulutanKg || data.totalKg) * 2.20462,
         // Lomas: no hay datos
         bodega_4: 0
@@ -686,7 +686,7 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
   // Estado para ordenamiento
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
 
-  // Función para ordenar datos
+  // Funci├│n para ordenar datos
   const sortData = (data) => {
     if (!sortConfig.key) return data;
     
@@ -751,7 +751,7 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
     })
     .then(r => r.json())
     .then(d => { if (d.error) { alert('Error: ' + d.error); return; } onUpdate(); setAdjData({ product_id: '', current_stock: '', cajas: '', warehouse: 'Ransa', mode: 'add' }); alert('Ajuste guardado'); })
-    .catch(err => alert('Error de conexión: ' + err.message));
+    .catch(err => alert('Error de conexi├│n: ' + err.message));
   };
 
   const toggleProduct = (id) => setSelectedProducts(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
@@ -759,7 +759,7 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
 
   const handleQuickLoad = async () => {
     const val = parseFloat(quickKg);
-    if (isNaN(val) || val <= 0) { alert('Ingresa una cantidad válida'); return; }
+    if (isNaN(val) || val <= 0) { alert('Ingresa una cantidad v├ílida'); return; }
     if (selectedProducts.length === 0) { alert('Selecciona al menos un producto'); return; }
     setQuickLoading(true);
     try {
@@ -779,14 +779,14 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
         if (d.error) throw new Error(d.error);
       }
       onUpdate(); setSelectedProducts([]);
-      alert(`✅ ${selectedProducts.length} producto(s) actualizados con ${val} ${quickType === 'cajas' ? 'cajas' : 'KG'}`);
+      alert(`Γ£à ${selectedProducts.length} producto(s) actualizados con ${val} ${quickType === 'cajas' ? 'cajas' : 'KG'}`);
     } catch (err) { alert('Error: ' + err.message); }
     setQuickLoading(false);
   };
 
   const exportBalanceExcel = async () => {
     const wb = new ExcelJS.Workbook();
-    wb.creator = 'Sistema de Logística y Control de Inventario';
+    wb.creator = 'Sistema de Log├¡stica y Control de Inventario';
     wb.created = new Date();
     const ws = wb.addWorksheet('Balance Bodegas', {
       pageSetup: { orientation: 'landscape', fitToPage: true, margins: { left: 0.3, right: 0.3, top: 0.4, bottom: 0.4, header: 0.2, footer: 0.2 } }
@@ -827,7 +827,7 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
     };
     const numFmt = '#,##0.0';
 
-    const headers = ['Producto', `Entradas (${viewUnit})`, `Ransa (${viewUnit})`, `Soyapango (${viewUnit})`, `Usulután (${viewUnit})`, `Lomas (${viewUnit})`, `Stock Actual (${viewUnit})`];
+    const headers = ['Producto', `Entradas (${viewUnit})`, `Ransa (${viewUnit})`, `Soyapango (${viewUnit})`, `Usulut├ín (${viewUnit})`, `Lomas (${viewUnit})`, `Stock Actual (${viewUnit})`];
     ws.getColumn(1).width = 44;
     [2,3,4,5,6,7].forEach(c => { ws.getColumn(c).width = 20; });
 
@@ -890,7 +890,7 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
 
   const exportCajasExcel = async () => {
     const wb = new ExcelJS.Workbook();
-    wb.creator = 'Sistema de Logística y Control de Inventario';
+    wb.creator = 'Sistema de Log├¡stica y Control de Inventario';
     wb.created = new Date();
     const ws = wb.addWorksheet('Control Cajas', {
       pageSetup: { orientation: 'landscape', fitToPage: true, margins: { left: 0.3, right: 0.3, top: 0.4, bottom: 0.4, header: 0.2, footer: 0.2 } }
@@ -995,10 +995,10 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
     <div>
       <h3>Ajustes y Consolidado de Inventario</h3>
 
-      {/* === CARGA RÁPIDA === */}
+      {/* === CARGA R├üPIDA === */}
       <div className="form-card" style={{ marginBottom: '2rem', background: 'rgba(56,189,248,0.05)', border: '1px solid rgba(56,189,248,0.2)' }}>
         <h4 style={{ color: 'var(--accent)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Package size={18} /> Carga Rápida por Lotes
+          <Package size={18} /> Carga R├ípida por Lotes
         </h4>
         <div className="grid-3col" style={{ marginBottom: '1rem' }}>
           <div className="form-group">
@@ -1041,11 +1041,11 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
               return (
                 <div key={p.id} onClick={() => toggleProduct(p.id)} style={{ padding: '10px 12px', borderRadius: '10px', cursor: 'pointer', border: `1px solid ${isSelected ? 'var(--accent)' : 'var(--border-light)'}`, background: isSelected ? 'rgba(56,189,248,0.1)' : 'rgba(255,255,255,0.02)', display: 'flex', alignItems: 'center', gap: '8px', transition: 'all 0.2s' }}>
                   <div style={{ width: '16px', height: '16px', borderRadius: '4px', border: `2px solid ${isSelected ? 'var(--accent)' : 'var(--border-light)'}`, background: isSelected ? 'var(--accent)' : 'transparent', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    {isSelected && <span style={{ color: '#020617', fontSize: '10px', fontWeight: 900 }}>✓</span>}
+                    {isSelected && <span style={{ color: '#020617', fontSize: '10px', fontWeight: 900 }}>Γ£ô</span>}
                   </div>
                   <div>
-                    <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-main)', lineHeight: 1.2 }}>{p.code}: {p.name.length > 22 ? p.name.slice(0, 22) + '…' : p.name}</div>
-                    <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Ransa: {toNum(inv?.bodega_1).toFixed(1)} kg | Soyapango: {toNum(inv?.bodega_2).toFixed(1)} lbs | Usulután: {toNum(inv?.bodega_3).toFixed(1)} lbs | Lomas: {toNum(inv?.bodega_4).toFixed(1)} lbs | Cajas: {toNum(inv?.stock_cajas ?? inv?.cajas).toFixed(0)}</div>
+                    <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-main)', lineHeight: 1.2 }}>{p.code}: {p.name.length > 22 ? p.name.slice(0, 22) + 'ΓÇª' : p.name}</div>
+                    <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Ransa: {toNum(inv?.bodega_1).toFixed(1)} kg | Soyapango: {toNum(inv?.bodega_2).toFixed(1)} lbs | Usulut├ín: {toNum(inv?.bodega_3).toFixed(1)} lbs | Lomas: {toNum(inv?.bodega_4).toFixed(1)} lbs | Cajas: {toNum(inv?.stock_cajas ?? inv?.cajas).toFixed(0)}</div>
                   </div>
                 </div>
               );
@@ -1064,7 +1064,7 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
               <option value="">Seleccione Producto...</option>
               {productRows.map(p => {
                 const inv = inventoryRows.find(i => i.name === p.name);
-                return <option key={p.id} value={p.id}>{p.code}: {p.name} — Ransa: {toNum(inv?.bodega_1).toFixed(1)} kg | Soyapango: {toNum(inv?.bodega_2).toFixed(1)} lbs | Usulután: {toNum(inv?.bodega_3).toFixed(1)} lbs | Lomas: {toNum(inv?.bodega_4).toFixed(1)} lbs | Cajas: {toNum(inv?.stock_cajas ?? inv?.cajas).toFixed(0)}</option>;
+                return <option key={p.id} value={p.id}>{p.code}: {p.name} ΓÇö Ransa: {toNum(inv?.bodega_1).toFixed(1)} kg | Soyapango: {toNum(inv?.bodega_2).toFixed(1)} lbs | Usulut├ín: {toNum(inv?.bodega_3).toFixed(1)} lbs | Lomas: {toNum(inv?.bodega_4).toFixed(1)} lbs | Cajas: {toNum(inv?.stock_cajas ?? inv?.cajas).toFixed(0)}</option>;
               })}
             </select>
           </div>
@@ -1108,14 +1108,14 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
                 <option value="">Ordenar por...</option>
                 <option value="name">Producto (A-Z)</option>
                 <option value="total">Total (cantidad)</option>
-                <option value="usulutan">Usulután</option>
+                <option value="usulutan">Usulut├ín</option>
                 <option value="ransa">Ransa</option>
               </select>
               <button
                 onClick={() => setSortConfig({ ...sortConfig, direction: sortConfig.direction === 'asc' ? 'desc' : 'asc' })}
                 style={{ padding: '0.4rem 0.8rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--surface)', cursor: 'pointer' }}
               >
-                {sortConfig.direction === 'asc' ? '↑ Menor a Mayor' : '↓ Mayor a Menor'}
+                {sortConfig.direction === 'asc' ? 'Γåæ Menor a Mayor' : 'Γåô Mayor a Menor'}
               </button>
               <div style={{ width: '200px' }}><UnitSelector value={viewUnit} onChange={setViewUnit} /></div>
             </div>
@@ -1128,7 +1128,7 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
                     <th className="col-qty" style={{ background: 'linear-gradient(135deg, #0f172a, #1e293b)', color: '#06b6d4', fontWeight: 700, fontSize: '0.82rem', padding: '12px 10px', letterSpacing: '0.5px' }}>Entradas ({viewUnit})</th>
                     <th className="col-qty" style={{ background: 'linear-gradient(135deg, #0f172a, #1e293b)', color: '#38bdf8', fontWeight: 700, fontSize: '0.82rem', padding: '12px 10px', letterSpacing: '0.5px' }}>Ransa ({viewUnit})</th>
                     <th className="col-qty" style={{ background: 'linear-gradient(135deg, #0f172a, #1e293b)', color: '#4ade80', fontWeight: 700, fontSize: '0.82rem', padding: '12px 10px', letterSpacing: '0.5px' }}>Soyapango ({viewUnit})</th>
-                    <th className="col-qty" style={{ background: 'linear-gradient(135deg, #0f172a, #1e293b)', color: '#4ade80', fontWeight: 700, fontSize: '0.82rem', padding: '12px 10px', letterSpacing: '0.5px' }}>Usulután ({viewUnit})</th>
+                    <th className="col-qty" style={{ background: 'linear-gradient(135deg, #0f172a, #1e293b)', color: '#4ade80', fontWeight: 700, fontSize: '0.82rem', padding: '12px 10px', letterSpacing: '0.5px' }}>Usulut├ín ({viewUnit})</th>
                     <th className="col-qty" style={{ background: 'linear-gradient(135deg, #0f172a, #1e293b)', color: '#c084fc', fontWeight: 700, fontSize: '0.82rem', padding: '12px 10px', letterSpacing: '0.5px' }}>Lomas ({viewUnit})</th>
                     <th className="col-qty" style={{ background: 'linear-gradient(135deg, #0f172a, #1e293b)', color: '#ffa94d', fontWeight: 800, fontSize: '0.85rem', padding: '12px 10px', letterSpacing: '0.5px' }}>Stock Actual ({viewUnit})</th>
                   </tr>
@@ -1203,7 +1203,7 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
       </div>
 
       <div className="form-card" style={{ marginTop: '2rem' }}>
-        <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Clock size={16} /> Últimos Ajustes</h4>
+        <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Clock size={16} /> ├Ültimos Ajustes</h4>
         {adjustments.length === 0 ? (
           <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No hay ajustes recientes.</p>
         ) : (
@@ -1234,21 +1234,21 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
 
       <div style={{ marginTop: '3.5rem', padding: '2.5rem', background: 'rgba(239, 68, 68, 0.05)', borderRadius: '24px', border: '1px solid rgba(239, 68, 68, 0.2)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h4 style={{ color: '#ef4444', margin: 0, border: 'none', fontSize: '1.2rem' }}>Protocolo de Reinicio Crítico</h4>
-          <p style={{ margin: '8px 0 0 0', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Esta acción vaciará todas las existencias y logs del sistema. Actúe con precaución.</p>
+          <h4 style={{ color: '#ef4444', margin: 0, border: 'none', fontSize: '1.2rem' }}>Protocolo de Reinicio Cr├¡tico</h4>
+          <p style={{ margin: '8px 0 0 0', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Esta acci├│n vaciar├í todas las existencias y logs del sistema. Act├║e con precauci├│n.</p>
         </div>
         <button
           onClick={() => {
-            if (displayRows.length === 0) { alert('El inventario ya está en cero.'); return; }
-            if (confirm('⚠️ ¿Deseas poner todas las existencias en CERO?')) {
-              if (confirm('❌ ESTA ACCIÓN ES IRREVERSIBLE. ¿Continuar?')) {
+            if (displayRows.length === 0) { alert('El inventario ya est├í en cero.'); return; }
+            if (confirm('ΓÜá∩╕Å ┬┐Deseas poner todas las existencias en CERO?')) {
+              if (confirm('Γ¥î ESTA ACCI├ôN ES IRREVERSIBLE. ┬┐Continuar?')) {
                 fetch(`${API_BASE}/admin/clear-inventory`, { method: 'POST' })
                   .then(r => r.json())
                   .then(d => {
                     if (d.success) { onUpdate(); alert('Inventario Vaciado'); }
                     else { alert('Error: ' + (d.error || 'Desconocido')); }
                   })
-                  .catch(err => alert('Error de conexión: ' + err.message));
+                  .catch(err => alert('Error de conexi├│n: ' + err.message));
               }
             }
           }}
@@ -1265,8 +1265,8 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
 const numeroALetras = (num) => {
   const unidades = ['', 'UN', 'DOS', 'TRES', 'CUATRO', 'CINCO', 'SEIS', 'SIETE', 'OCHO', 'NUEVE'];
   const decenas = ['DIEZ', 'VEINTE', 'TREINTA', 'CUARENTA', 'CINCUENTA', 'SESENTA', 'SETENTA', 'OCHENTA', 'NOVENTA'];
-  // Implementación básica para mostrar el concepto
-  return `${num.toFixed(2)} DÓLARES`;
+  // Implementaci├│n b├ísica para mostrar el concepto
+  return `${num.toFixed(2)} D├ôLARES`;
 };
 
 // --- InvoicingSystem (Paso 4) ---
@@ -1278,19 +1278,19 @@ const InvoicingSystem = ({ products, agros, productWeightData, onUpdate }) => {
   const [qty, setQty] = useState('');
   const [unit, setUnit] = useState('Lbs');
   const [discountPercent, setDiscountPercent] = useState(0);
-  const [originWarehouse, setOriginWarehouse] = useState('Central de abasto - Usulután (Cuarto Frío)');
+  const [originWarehouse, setOriginWarehouse] = useState('Central de abasto - Usulut├ín (Cuarto Fr├¡o)');
   const [client, setClient] = useState({ 
     name: '', nrc: '', nit: '', address: '', activity: '',
     deliverer: '',      // Nombre Entrega
     receiver: '',       // Nombre Recibe
     observations: '',   // Observaciones
-    paymentCondition: 'CONTADO'  // Condición de operación
+    paymentCondition: 'CONTADO'  // Condici├│n de operaci├│n
   });
 
   const warehouses = [
     'Ransa',
-    'Central de abasto - Soyapango (Cuarto Frío)',
-    'Central de abasto - Usulután (Cuarto Frío)',
+    'Central de abasto - Soyapango (Cuarto Fr├¡o)',
+    'Central de abasto - Usulut├ín (Cuarto Fr├¡o)',
     'Lomas de San Francisco'
   ];
 
@@ -1352,7 +1352,7 @@ const InvoicingSystem = ({ products, agros, productWeightData, onUpdate }) => {
 
   const addToCart = () => {
     const p = products.find(prod => String(prod.id) === String(selectedProduct));
-    if (!p || !qty || !agroId) return alert('Complete los datos: Producto, Cantidad y Ubicación');
+    if (!p || !qty || !agroId) return alert('Complete los datos: Producto, Cantidad y Ubicaci├│n');
     let price = unit === 'Lbs' ? p.price_per_lb : p.price_per_kg;
     const subtotal = parseFloat(qty) * (price || 0);
     const discount = parseFloat(discountPercent) || 0;
@@ -1369,7 +1369,7 @@ const InvoicingSystem = ({ products, agros, productWeightData, onUpdate }) => {
   const sumatoriaVentas = cart.reduce((acc, i) => acc + i.subtotal, 0);
   const cartDiscountPercent = cart.length > 0 ? (cart[0].discount_percent || 0) : 0;
   const totalPagar = cart.reduce((acc, i) => acc + i.total, 0);
-  const printableItems = cart.map(ci => ({ qty: ci.qty, unit: ci.unit, name: ci.name, description: ci.name || 'Sin descripción', unitPrice: ci.price, total: ci.total, subtotal: ci.subtotal }));
+  const printableItems = cart.map(ci => ({ qty: ci.qty, unit: ci.unit, name: ci.name, description: ci.name || 'Sin descripci├│n', unitPrice: ci.price, total: ci.total, subtotal: ci.subtotal }));
   const saveAndPrint = () => {
     if (!client.name || cart.length === 0) {
       alert('Datos incompletos');
@@ -1397,7 +1397,7 @@ const InvoicingSystem = ({ products, agros, productWeightData, onUpdate }) => {
       });
     })).then(results => {
       console.log('All dispatches saved:', results);
-      alert('Venta guardada exitosamente. Abriendo vista de impresión...');
+      alert('Venta guardada exitosamente. Abriendo vista de impresi├│n...');
       window.print();
       setCart([]);
       onUpdate();
@@ -1419,9 +1419,9 @@ const InvoicingSystem = ({ products, agros, productWeightData, onUpdate }) => {
     <div className="report-content">
       <div className="card-grid no-print">
         <div className="form-card">
-          <h3>Panel de Facturación Electrónica</h3>
+          <h3>Panel de Facturaci├│n Electr├│nica</h3>
           <div className="form-group">
-            <label>Razón Social / Nombre Cliente</label>
+            <label>Raz├│n Social / Nombre Cliente</label>
             <input type="text" placeholder="Ej: INDUSTRIAS BENDEK S.A DE C.V" value={client.name} onChange={e => setClient({ ...client, name: e.target.value })} />
           </div>
           <div className="form-row two-col" style={{ marginTop: '10px' }}>
@@ -1435,25 +1435,25 @@ const InvoicingSystem = ({ products, agros, productWeightData, onUpdate }) => {
             </div>
           </div>
           <div className="form-group" style={{ marginTop: '10px' }}>
-            <label>Dirección Completa</label>
+            <label>Direcci├│n Completa</label>
             <input type="text" placeholder="Colonia San Benito..." value={client.address} onChange={e => setClient({ ...client, address: e.target.value })} />
           </div>
 
-          {/* Campos de Extensión de Factura */}
+          {/* Campos de Extensi├│n de Factura */}
           <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'rgba(56, 189, 248, 0.05)', borderRadius: '8px', border: '1px solid rgba(56, 189, 248, 0.2)' }}>
             <h4 style={{ margin: '0 0 12px 0', fontSize: '0.9rem', color: 'var(--accent)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <FileText size={16} /> Datos de Extensión de Factura
+              <FileText size={16} /> Datos de Extensi├│n de Factura
             </h4>
             <div className="form-row two-col" style={{ marginBottom: '10px' }}>
               <div className="form-group" style={{ margin: 0 }}>
-                <label>Condición de Operación</label>
+                <label>Condici├│n de Operaci├│n</label>
                 <select 
                   value={client.paymentCondition} 
                   onChange={e => setClient({ ...client, paymentCondition: e.target.value })}
                   style={{ width: '100%' }}
                 >
                   <option value="CONTADO">CONTADO</option>
-                  <option value="CREDITO">CRÉDITO</option>
+                  <option value="CREDITO">CR├ëDITO</option>
                 </select>
               </div>
               <div className="form-group" style={{ margin: 0 }}>
@@ -1471,7 +1471,7 @@ const InvoicingSystem = ({ products, agros, productWeightData, onUpdate }) => {
                 <label>Nombre Entrega</label>
                 <input 
                   type="text" 
-                  placeholder="Persona que entrega la mercancía" 
+                  placeholder="Persona que entrega la mercanc├¡a" 
                   value={client.deliverer} 
                   onChange={e => setClient({ ...client, deliverer: e.target.value })} 
                 />
@@ -1480,7 +1480,7 @@ const InvoicingSystem = ({ products, agros, productWeightData, onUpdate }) => {
                 <label>Nombre Recibe</label>
                 <input 
                   type="text" 
-                  placeholder="Persona que recibe la mercancía" 
+                  placeholder="Persona que recibe la mercanc├¡a" 
                   value={client.receiver} 
                   onChange={e => setClient({ ...client, receiver: e.target.value })} 
                 />
@@ -1529,7 +1529,7 @@ const InvoicingSystem = ({ products, agros, productWeightData, onUpdate }) => {
               <UnitSelector value={unit} onChange={setUnit} />
             </div>
             <div className="form-group">
-              <label>Ubicación Origen</label>
+              <label>Ubicaci├│n Origen</label>
               <select value={originWarehouse} onChange={e => setOriginWarehouse(e.target.value)}>
                 {warehouses.map(w => <option key={w} value={w}>{w}</option>)}
               </select>
@@ -1574,7 +1574,7 @@ const InvoicingSystem = ({ products, agros, productWeightData, onUpdate }) => {
                     <th style={{ textAlign: 'right', padding: '8px', color: '#10b981' }}>Precio</th>
                     <th style={{ textAlign: 'center', padding: '8px', color: '#10b981' }}>Dto %</th>
                     <th style={{ textAlign: 'right', padding: '8px', color: '#10b981' }}>Total</th>
-                    <th style={{ textAlign: 'center', padding: '8px', color: '#10b981' }}>Acción</th>
+                    <th style={{ textAlign: 'center', padding: '8px', color: '#10b981' }}>Acci├│n</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1719,7 +1719,7 @@ const FoodReport = ({ data, products = [], onBack }) => {
     >
       <div className="no-print report-actions-bar">
         <button onClick={onBack} className="btn-back">
-          <ShieldCheck size={20} /> Salir de Auditoría
+          <ShieldCheck size={20} /> Salir de Auditor├¡a
         </button>
         <button onClick={handleDownloadPDF} disabled={isCapturing} className="btn-print-action">
           <Download size={20} /> {isCapturing ? 'Generando PDF...' : 'Descargar como PDF'}
@@ -1729,14 +1729,14 @@ const FoodReport = ({ data, products = [], onBack }) => {
       <div id="audit-print-zone" className="audit-dashboard-container" style={{ padding: '20px', borderRadius: '16px' }}>
         {/* Header Elegante */}
         <div className="audit-header">
-          <div className="header-badge">DOCUMENTO DE AUDITORÍA OPERACIONAL</div>
+          <div className="header-badge">DOCUMENTO DE AUDITOR├ìA OPERACIONAL</div>
           <h1 className="header-company">CARNES DEL PARAGUAY</h1>
-          <p className="header-subtitle">Control de Rendimiento Técnico y Rentabilidad Financiera</p>
+          <p className="header-subtitle">Control de Rendimiento T├⌐cnico y Rentabilidad Financiera</p>
           <div className="header-meta">
             <div className="meta-item"><span>Destino:</span> <strong>{details.event_name || 'Sin Asignar'}</strong></div>
             <div className="meta-item"><span>Fecha:</span> <strong>{new Date(data.date).toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })}</strong></div>
             <div className="meta-item"><span>Pago/Estado:</span> <strong>{details.payment_status || 'Por defecto'}</strong></div>
-            <div className="meta-item"><span>Propósito:</span> <strong>{details.batch_purpose || 'General'}</strong></div>
+            <div className="meta-item"><span>Prop├│sito:</span> <strong>{details.batch_purpose || 'General'}</strong></div>
           </div>
         </div>
 
@@ -1774,7 +1774,7 @@ const FoodReport = ({ data, products = [], onBack }) => {
 
         {/* Utility Hero Card */}
         <div className={`utility-badge ${isLoss ? 'loss' : 'profit'}`}>
-          <div className="utility-label">{isLoss ? 'PÉRDIDA OPERACIONAL' : 'UTILIDAD TOTAL DEL LOTE'}</div>
+          <div className="utility-label">{isLoss ? 'P├ëRDIDA OPERACIONAL' : 'UTILIDAD TOTAL DEL LOTE'}</div>
           <div className="utility-value">${Math.abs(netUtility).toFixed(2)}</div>
           <div className="utility-progress">
             <div className="progress-fill" style={{ width: `${Math.min(100, Math.max(0, marginPercent))}%` }}></div>
@@ -1784,7 +1784,7 @@ const FoodReport = ({ data, products = [], onBack }) => {
         {/* Tables Section */}
         <div className="two-column-audit">
           <div className="audit-section">
-            <h3 className="section-title">Análisis de Costos Directos</h3>
+            <h3 className="section-title">An├ílisis de Costos Directos</h3>
             <table className="audit-table">
               <thead>
                 <tr><th>Detalle Materia Prima</th><th className="right">Lbs</th><th className="right">Costo</th></tr>
@@ -1832,11 +1832,11 @@ const FoodReport = ({ data, products = [], onBack }) => {
             <h3 className="section-title">Resumen Financiero</h3>
             <div className="summary-card">
               <div className="summary-item">
-                <span>Costo Total de Operación:</span>
+                <span>Costo Total de Operaci├│n:</span>
                 <span className="val-red">-${totalOperationalCost.toFixed(2)}</span>
               </div>
               <div className="summary-item">
-                <span>Ingresos por Venta / Crédito:</span>
+                <span>Ingresos por Venta / Cr├⌐dito:</span>
                 <span className="val-green">+${salePrice.toFixed(2)}</span>
               </div>
               <div className="summary-item">
@@ -1853,8 +1853,8 @@ const FoodReport = ({ data, products = [], onBack }) => {
             </div>
 
             <div className="notes-box">
-              <strong>NOTAS DE AUDITORÍA:</strong>
-              <p>{details.notes || 'No se registraron observaciones adicionales para este lote específico.'}</p>
+              <strong>NOTAS DE AUDITOR├ìA:</strong>
+              <p>{details.notes || 'No se registraron observaciones adicionales para este lote espec├¡fico.'}</p>
             </div>
           </div>
         </div>
@@ -1888,7 +1888,7 @@ const initialFormState = {
   payment_condition: 'CONTADO',
   observations: '',
   receiver_name: '',
-  transfer_destination: 'Usulután'
+  transfer_destination: 'Usulut├ín'
 };
 const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUpdate, forceMode, incomeLogs = [], dispatchLogs = [], movements = [] }) => {
   const [activeSubTab, setActiveSubTab] = useState(forceMode === 'unified' ? 'unified' : (forceMode === 'distribution' ? 'dispatch' : 'income'));
@@ -1951,8 +1951,8 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
   const warehouses = [
     'Ransa',
     'Lomas de San Francisco',
-    'Central de abasto - Soyapango (Cuarto Frío)',
-    'Central de abasto - Usulután (Cuarto Frío)'
+    'Central de abasto - Soyapango (Cuarto Fr├¡o)',
+    'Central de abasto - Usulut├ín (Cuarto Fr├¡o)'
   ];
 
   const handleAction = (e) => {
@@ -1968,7 +1968,7 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
       const payload = {
         product_id: formData.product_id,
         origin: formData.origin,
-        destination: formData.transfer_destination || 'Usulután',
+        destination: formData.transfer_destination || 'Usulut├ín',
         origin_weight: cajas,
         dest_weight: cajas,
         weight: cajas,
@@ -1985,7 +1985,7 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
         onUpdate();
         alert(editingId ? 'Traslado actualizado correctamente.' : 'Traslado realizado exitosamente.');
       })
-      .catch(err => { console.error('Error saving transfer:', err); alert('Error de conexión: ' + err.message); });
+      .catch(err => { console.error('Error saving transfer:', err); alert('Error de conexi├│n: ' + err.message); });
       return;
     }
     
@@ -2019,7 +2019,7 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
         if (isIncome) window.dispatchEvent(new CustomEvent('changeTab', { detail: 'production' }));
       }
     })
-    .catch(err => { console.error('Error en handleAction:', err); alert('Error de conexión: ' + err.message); });
+    .catch(err => { console.error('Error en handleAction:', err); alert('Error de conexi├│n: ' + err.message); });
   };
 
   const confirmAndSave = () => {
@@ -2047,10 +2047,10 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
       setShowCartPreview(false);
       setDispatchCart([]);
       onUpdate();
-      alert(`Venta guardada exitosamente (${results.length} producto(s)). Abriendo vista de impresión...`);
+      alert(`Venta guardada exitosamente (${results.length} producto(s)). Abriendo vista de impresi├│n...`);
       window.print();
     })
-    .catch(err => { console.error('Error saving dispatch:', err); alert('Error de conexión: ' + err.message); });
+    .catch(err => { console.error('Error saving dispatch:', err); alert('Error de conexi├│n: ' + err.message); });
   };
 
   const handleEdit = (log) => {
@@ -2077,7 +2077,7 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
       weight: mov.weight || '',
       unit_type: 'Cajas',
       origin: mov.origin_warehouse || 'Ransa',
-      transfer_destination: mov.dest_warehouse || 'Usulután',
+      transfer_destination: mov.dest_warehouse || 'Usulut├ín',
       agro_id: 'TRASLADO',
       value: '',
       discount_percent: 0,
@@ -2095,16 +2095,16 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
       {forceMode === 'distribution' && (
         <div style={{ display: 'flex', gap: '10px', marginBottom: '2rem', justifyContent: 'center' }}>
           <button onClick={() => setActiveSubTab('dispatch')} style={{ padding: '10px 20px', borderRadius: '10px', border: 'none', background: activeSubTab === 'dispatch' ? '#1e3a8a' : '#f1f5f9', color: activeSubTab === 'dispatch' ? 'white' : '#64748b', fontWeight: 700, cursor: 'pointer' }}>Despacho Individual</button>
-          <button onClick={() => setActiveSubTab('mass')} style={{ padding: '10px 20px', borderRadius: '10px', border: 'none', background: activeSubTab === 'mass' ? '#1e3a8a' : '#f1f5f9', color: activeSubTab === 'mass' ? 'white' : '#64748b', fontWeight: 700, cursor: 'pointer' }}>Distribución Masiva</button>
+          <button onClick={() => setActiveSubTab('mass')} style={{ padding: '10px 20px', borderRadius: '10px', border: 'none', background: activeSubTab === 'mass' ? '#1e3a8a' : '#f1f5f9', color: activeSubTab === 'mass' ? 'white' : '#64748b', fontWeight: 700, cursor: 'pointer' }}>Distribuci├│n Masiva</button>
         </div>
       )}
 
       <form className="form-card" onSubmit={handleAction}>
         <h3>
-          {activeSubTab === 'unified' ? 'Paso 1: Recepción & Traslado Inmediato' :
+          {activeSubTab === 'unified' ? 'Paso 1: Recepci├│n & Traslado Inmediato' :
             activeSubTab === 'dispatch' ? 'Paso 3: Despacho Individual' :
-              activeSubTab === 'mass' ? 'Paso 3: Distribución Masiva' :
-                'Paso 3: Distribución y Venta Final'}
+              activeSubTab === 'mass' ? 'Paso 3: Distribuci├│n Masiva' :
+                'Paso 3: Distribuci├│n y Venta Final'}
         </h3>
 
         <div className="form-group">
@@ -2120,11 +2120,11 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
           <div>
             <div className="grid-3col">
               <div className="form-group">
-                <label>Peso según Viñeta (Kg)</label>
+                <label>Peso seg├║n Vi├▒eta (Kg)</label>
                 <input type="number" step="0.01" value={formData.tag_weight} onChange={e => setFormData({ ...formData, tag_weight: e.target.value })} />
               </div>
               <div className="form-group">
-                <label>Peso según Báscula (Kg)</label>
+                <label>Peso seg├║n B├íscula (Kg)</label>
                 <input type="number" step="0.01" value={formData.scale_weight} onChange={e => setFormData({ ...formData, scale_weight: e.target.value })} />
               </div>
               <div className="form-group">
@@ -2174,14 +2174,14 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
                 <select value={formData.origin} onChange={e => setFormData({ ...formData, origin: e.target.value })} required style={{ border: '2px solid var(--border)', background: 'rgba(0,0,0,0.2)', padding: '8px', borderRadius: '8px', color: 'white', width: '100%' }}>
                   <option value="Ransa">Ransa</option>
                   <option value="Soyapango">Soyapango</option>
-                  <option value="Usulután">Usulután</option>
+                  <option value="Usulut├ín">Usulut├ín</option>
                   <option value="Lomas de San Francisco">Lomas de San Francisco</option>
                 </select>
               </div>
               <div className="form-group">
                 <label>Bodega Destino</label>
                 <select value={formData.transfer_destination} onChange={e => setFormData({ ...formData, transfer_destination: e.target.value })} required style={{ border: '2px solid var(--accent)', background: 'rgba(0,0,0,0.2)', padding: '8px', borderRadius: '8px', color: 'white', width: '100%' }}>
-                  <option value="Usulután">Usulután</option>
+                  <option value="Usulut├ín">Usulut├ín</option>
                   <option value="Soyapango">Soyapango</option>
                   <option value="Lomas de San Francisco">Lomas de San Francisco</option>
                   <option value="Ransa">Ransa</option>
@@ -2204,13 +2204,13 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
               <select value={formData.origin} onChange={e => setFormData({ ...formData, origin: e.target.value })} required style={{ border: '2px solid var(--border)', background: 'rgba(0,0,0,0.2)', padding: '8px', borderRadius: '8px', color: 'white', width: '100%' }}>
                 <option value="Ransa">Ransa</option>
                 <option value="Soyapango">Soyapango</option>
-                <option value="Usulután">Usulután</option>
+                <option value="Usulut├ín">Usulut├ín</option>
                 <option value="Lomas de San Francisco">Lomas de San Francisco</option>
               </select>
             </div>
           )}
 
-          {/* Cantidad: visible para todos menos vacío */}
+          {/* Cantidad: visible para todos menos vac├¡o */}
           {formData.agro_id && (
             <div className="form-group">
               <label>{formData.agro_id === 'TRASLADO' ? 'Cantidad de Cajas a Trasladar' : 'Cantidad a Despachar'}</label>
@@ -2254,7 +2254,7 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
                 </div>
               ) : (
                 <>
-                  <h4 style={{ color: 'var(--accent)', marginBottom: '1rem' }}>Extensión de Factura</h4>
+                  <h4 style={{ color: 'var(--accent)', marginBottom: '1rem' }}>Extensi├│n de Factura</h4>
                   <div className="form-row two-col">
                     <div className="form-group">
                       <label>NIT / DUI</label>
@@ -2267,14 +2267,14 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
                   </div>
                   <div className="form-row two-col">
                     <div className="form-group">
-                      <label>Dirección</label>
-                      <input type="text" placeholder="Dirección completa" value={formData.client_address} onChange={e => setFormData({ ...formData, client_address: e.target.value })} />
+                      <label>Direcci├│n</label>
+                      <input type="text" placeholder="Direcci├│n completa" value={formData.client_address} onChange={e => setFormData({ ...formData, client_address: e.target.value })} />
                     </div>
                     <div className="form-group">
-                      <label>Condición de la Operación</label>
+                      <label>Condici├│n de la Operaci├│n</label>
                       <select value={formData.payment_condition} onChange={e => setFormData({ ...formData, payment_condition: e.target.value })}>
                         <option value="CONTADO">CONTADO</option>
-                        <option value="CREDITO">CRÉDITO</option>
+                        <option value="CREDITO">CR├ëDITO</option>
                       </select>
                     </div>
                   </div>
@@ -2308,7 +2308,7 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
               <input type="number" value={formData.total_to_distribute} onChange={e => setFormData({ ...formData, total_to_distribute: e.target.value })} placeholder="Ej: 500" />
             </div>
             <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>Asignación por Destino</label>
+              <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>Asignaci├│n por Destino</label>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '10px' }}>
                 {agros.filter(a => a.name !== 'Ransa').map(a => {
                   const currentVal = formData.distributions?.[a.id] || '';
@@ -2336,8 +2336,8 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
         )}
 
         <button type="submit" className="btn-primary" disabled={activeSubTab === 'mass' && (parseFloat(Object.values(formData.distributions || {}).reduce((acc, v) => acc + (parseFloat(v) || 0), 0)) > (parseFloat(formData.total_to_distribute) || 0))}>
-          {activeSubTab === 'mass' ? 'Confirmar Distribución Masiva' :
-            activeSubTab === 'unified' ? 'Recepción -> Ir a Procesos' :
+          {activeSubTab === 'mass' ? 'Confirmar Distribuci├│n Masiva' :
+            activeSubTab === 'unified' ? 'Recepci├│n -> Ir a Procesos' :
               activeSubTab === 'dispatch' ? (formData.agro_id === 'TRASLADO' ? 'Realizar Traslado' : 'Agregar al Carrito') : 'Ejecutar Paso'}
         </button>
       </form>
@@ -2357,7 +2357,7 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
                 <th style={{ textAlign: 'right', padding: '8px', color: '#10b981' }}>Precio U.</th>
                 <th style={{ textAlign: 'center', padding: '8px', color: '#10b981' }}>Dto %</th>
                 <th style={{ textAlign: 'right', padding: '8px', color: '#10b981' }}>Total</th>
-                <th style={{ textAlign: 'center', padding: '8px', color: '#10b981' }}>Acción</th>
+                <th style={{ textAlign: 'center', padding: '8px', color: '#10b981' }}>Acci├│n</th>
               </tr>
             </thead>
             <tbody>
@@ -2440,7 +2440,7 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
       )}
 
       <div className="form-card" style={{ marginTop: '20px' }}>
-        <h3 style={{ marginBottom: '1.5rem' }}>Trazabilidad: Últimos Movimientos</h3>
+        <h3 style={{ marginBottom: '1.5rem' }}>Trazabilidad: ├Ültimos Movimientos</h3>
         <div className="grid-table-container">
           <table>
             <thead>
@@ -2448,9 +2448,9 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
                 <th className="col-date">Fecha</th>
                 <th className="col-carne">Producto</th>
                 <th className="col-carne">Tipo</th>
-                <th className="col-carne">Origen → Destino</th>
+                <th className="col-carne">Origen ΓåÆ Destino</th>
                 <th className="col-qty">Cantidad</th>
-                {activeSubTab === 'unified' && <><th className="col-qty">Viñeta</th><th className="col-qty">Báscula</th></>}
+                {activeSubTab === 'unified' && <><th className="col-qty">Vi├▒eta</th><th className="col-qty">B├íscula</th></>}
                 {activeSubTab !== 'unified' && <th className="col-qty">Valor</th>}
                 <th className="col-actions">Acciones</th>
               </tr>
@@ -2477,11 +2477,11 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
                   const isIncome = log._type === 'income';
                   const isMovement = log._type === 'movement';
                   const isDispatch = log._type === 'dispatch';
-                  const typeLabel = isIncome ? 'Recepción' : isMovement ? 'Traslado' : 'Despacho';
+                  const typeLabel = isIncome ? 'Recepci├│n' : isMovement ? 'Traslado' : 'Despacho';
                   const typeColor = isIncome ? '#06b6d4' : isMovement ? '#f59e0b' : '#10b981';
-                  const productName = log.product_name || log.name || '—';
-                  const origin = log.origin_warehouse || (isIncome ? 'Ransa' : '—');
-                  const dest = log.dest_warehouse || log.distribution_details || log.agro_name || log.destination || '—';
+                  const productName = log.product_name || log.name || 'ΓÇö';
+                  const origin = log.origin_warehouse || (isIncome ? 'Ransa' : 'ΓÇö');
+                  const dest = log.dest_warehouse || log.distribution_details || log.agro_name || log.destination || 'ΓÇö';
                   const qty = isIncome ? (parseFloat(log.scale_weight || 0).toFixed(1) + ' Kg') : (parseFloat(log.weight || 0).toFixed(1) + ' ' + (log.unit_type || 'Lbs'));
                   return (
                     <tr key={`${log._type}-${log.id}`} className="fade-in">
@@ -2489,7 +2489,7 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
                       <td className="col-carne" style={{ fontWeight: 700 }}>{productName}</td>
                       <td className="col-carne"><span style={{ color: typeColor, fontWeight: 700, fontSize: '0.75rem', background: `${typeColor}15`, padding: '2px 8px', borderRadius: '4px' }}>{typeLabel}</span></td>
                       <td className="col-carne" style={{ color: 'var(--accent)', fontWeight: 600, fontSize: '0.8rem' }}>
-                        {origin} <small style={{ color: 'var(--text-muted)' }}>→</small> {dest}
+                        {origin} <small style={{ color: 'var(--text-muted)' }}>ΓåÆ</small> {dest}
                       </td>
                       <td className="col-qty" style={{ fontWeight: 700 }}>{qty}</td>
                       {activeSubTab === 'unified' && isIncome && (
@@ -2499,11 +2499,11 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
                         </>
                       )}
                       {activeSubTab === 'unified' && !isIncome && (
-                        <><td className="col-qty" style={{ color: 'var(--text-muted)' }}>—</td><td className="col-qty" style={{ color: 'var(--text-muted)' }}>—</td></>
+                        <><td className="col-qty" style={{ color: 'var(--text-muted)' }}>ΓÇö</td><td className="col-qty" style={{ color: 'var(--text-muted)' }}>ΓÇö</td></>
                       )}
                       {activeSubTab !== 'unified' && (
                         <td className="col-qty" style={{ color: isMovement ? 'var(--text-muted)' : 'var(--accent)' }}>
-                          {isMovement ? '—' : `$${parseFloat(log.value || 0).toFixed(2)}`}
+                          {isMovement ? 'ΓÇö' : `$${parseFloat(log.value || 0).toFixed(2)}`}
                         </td>
                       )}
                       <td className="col-actions">
@@ -2515,7 +2515,7 @@ const LogisticsHub = ({ products, agros, productWeightData, refreshTrigger, onUp
                             <motion.button whileHover={{ scale: 1.2 }} onClick={() => handleEditMovement(log)} style={{ background: 'none', border: 'none', color: '#f59e0b', cursor: 'pointer' }}><Edit2 size={14} /></motion.button>
                           )}
                           <motion.button whileHover={{ scale: 1.2 }} onClick={() => {
-                            if (!confirm('¿Eliminar este movimiento?')) return;
+                            if (!confirm('┬┐Eliminar este movimiento?')) return;
                             const ep = isIncome ? 'reports/ransa' : isMovement ? 'movements' : 'dispatches';
                             fetch(`${API_BASE}/${ep}/${log.id}`, { method: 'DELETE' }).then(onUpdate);
                           }} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer' }}><Trash2 size={14} /></motion.button>
@@ -2563,15 +2563,15 @@ const ConfigPanel = ({ products, onUpdate }) => {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', gap: '10px' }}>
-        <h3>Configuración de Productos y Precios</h3>
+        <h3>Configuraci├│n de Productos y Precios</h3>
         <button onClick={() => fetch(`${API_BASE}/admin/sync-catalog`, { method: 'POST' }).then(() => { onUpdate(); alert('Sincronizado'); })} className="btn-primary" style={{ background: '#059669', width: 'auto' }}>
-          🔄 Sincronizar Catálogo
+          ≡ƒöä Sincronizar Cat├ílogo
         </button>
       </div>
       <div className="form-card grid-table-container">
         <table>
           <thead>
-            <tr><th>Cod</th><th>Producto</th><th>$/Libras</th><th>$/Kg</th><th>Acción</th></tr>
+            <tr><th>Cod</th><th>Producto</th><th>$/Libras</th><th>$/Kg</th><th>Acci├│n</th></tr>
           </thead>
           <tbody>
             {productRows.map(p => (
@@ -2616,9 +2616,9 @@ class TabErrorBoundary extends React.Component {
     if (this.state.hasError) {
       return (
         <div className="form-card" style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.4)' }}>
-          <h3 style={{ color: '#ef4444' }}>Error al abrir esta pestaña</h3>
+          <h3 style={{ color: '#ef4444' }}>Error al abrir esta pesta├▒a</h3>
           <p style={{ color: 'var(--text-muted)' }}>
-            Ocurrió un error inesperado en el renderizado. Presiona refrescar y vuelve a intentar.
+            Ocurri├│ un error inesperado en el renderizado. Presiona refrescar y vuelve a intentar.
           </p>
           <pre style={{ color: '#ef4444', fontSize: '0.75rem', background: 'rgba(0,0,0,0.3)', padding: '10px', borderRadius: '8px', maxHeight: '200px', overflow: 'auto', whiteSpace: 'pre-wrap' }}>
             {this.state.error?.message}
@@ -2688,7 +2688,7 @@ const HelpRequestModalComponent = ({
             }}
           >
             <option value="">Seleccione un tipo...</option>
-            <option value="correccion_registro">Corrección de Registro</option>
+            <option value="correccion_registro">Correcci├│n de Registro</option>
             <option value="error_sistema">Error del Sistema</option>
             <option value="acceso_denegado">Acceso Denegado</option>
             <option value="datos_incorrectos">Datos Incorrectos</option>
@@ -2717,7 +2717,7 @@ const HelpRequestModalComponent = ({
 
         <div style={{ marginBottom: '15px' }}>
           <label style={{ color: 'var(--text-main)', display: 'block', marginBottom: '5px' }}>
-            Descripción Detallada:
+            Descripci├│n Detallada:
           </label>
           <textarea
             value={helpRequestData.description}
@@ -2739,13 +2739,13 @@ const HelpRequestModalComponent = ({
 
         <div style={{ marginBottom: '15px' }}>
           <label style={{ color: 'var(--text-main)', display: 'block', marginBottom: '5px' }}>
-            Información de Contacto:
+            Informaci├│n de Contacto:
           </label>
           <input
             type="text"
             value={helpRequestData.contactInfo}
             onChange={(e) => setHelpRequestData({ ...helpRequestData, contactInfo: e.target.value })}
-            placeholder="Teléfono, email o forma de contacto preferida"
+            placeholder="Tel├⌐fono, email o forma de contacto preferida"
             style={{
               width: '100%',
               padding: '8px',
@@ -2776,7 +2776,7 @@ const HelpRequestModalComponent = ({
             <option value="baja">Baja</option>
             <option value="normal">Normal</option>
             <option value="alta">Alta</option>
-            <option value="critica">Crítica</option>
+            <option value="critica">Cr├¡tica</option>
           </select>
         </div>
 
@@ -2825,7 +2825,7 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
     unit_price_per_sale: '',
     leftover_weight: '',
     quantity_sold: '', // Cantidad de unidades vendidas (ej: 1000 pinchos)
-    payment_status: 'Crédito',
+    payment_status: 'Cr├⌐dito',
     notes: ''
   });
   const [selectedReport, setSelectedReport] = useState(null);
@@ -2888,7 +2888,7 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
       leftover_value: details.leftover_value || '',
       unit_price_per_sale: details.unit_price_per_sale || '',
       leftover_weight: details.leftover_weight || '',
-      payment_status: details.payment_status || 'Crédito',
+      payment_status: details.payment_status || 'Cr├⌐dito',
       notes: details.notes || ''
     });
     
@@ -2974,7 +2974,7 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
     // Check if user is admin
     const currentRole = sessionStorage.getItem('cp_role');
     if (currentRole !== 'admin') {
-      alert('Función de PDF disponible solo para administradores');
+      alert('Funci├│n de PDF disponible solo para administradores');
       return;
     }
 
@@ -3020,11 +3020,11 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
       // Main information
       doc.setFontSize(14);
       doc.setTextColor(0);
-      doc.text('Información General', 20, 65);
+      doc.text('Informaci├│n General', 20, 65);
       
       doc.setFontSize(11);
-      doc.text(`Destino/Institución: ${details.event_name || 'N/A'}`, 20, 80);
-      doc.text(`Propósito: ${details.batch_purpose || 'N/A'}`, 20, 90);
+      doc.text(`Destino/Instituci├│n: ${details.event_name || 'N/A'}`, 20, 80);
+      doc.text(`Prop├│sito: ${details.batch_purpose || 'N/A'}`, 20, 90);
       if (details.payment_status) {
         doc.text(`Estado de Pago: ${details.payment_status}`, 20, 100);
       }
@@ -3168,9 +3168,9 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
     alert(`Solicitud de ayuda enviada exitosamente:\n\n` +
           `ID Registro: ${helpRequestData.recordId}\n` +
           `Tipo: ${helpRequestData.issueType}\n` +
-          `Descripción: ${helpRequestData.description}\n` +
+          `Descripci├│n: ${helpRequestData.description}\n` +
           `Urgencia: ${helpRequestData.urgency}\n\n` +
-          `El administrador será notificado y responderá a la brevedad.`);
+          `El administrador ser├í notificado y responder├í a la brevedad.`);
 
     // Reset modal
     setHelpRequestModal(false);
@@ -3440,7 +3440,7 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
       
       // Simple success message with ID validation
       const savedId = saved?.id || 'N/A';
-      alert(`¡Lote guardado exitosamente! ID: ${savedId}`);
+      alert(`┬íLote guardado exitosamente! ID: ${savedId}`);
       
       // Scroll to history section to see the saved data
       setTimeout(() => {
@@ -3497,7 +3497,7 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
             onClick={() => {
               const pendingRequests = helpRequests.filter(r => r.status === 'pending');
               const message = pendingRequests.map(r => 
-                `ID: ${r.id} | Registro: ${r.recordId} | Tipo: ${r.issueType} | Urgencia: ${r.urgency}\nDescripción: ${r.description}`
+                `ID: ${r.id} | Registro: ${r.recordId} | Tipo: ${r.issueType} | Urgencia: ${r.urgency}\nDescripci├│n: ${r.description}`
               ).join('\n\n');
               alert(`Solicitudes de Ayuda Pendientes:\n\n${message}`);
             }}
@@ -3530,14 +3530,14 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
             </h3>
             {editingRecord && (
               <span style={{ background: 'rgba(5, 150, 105, 0.1)', color: '#059669', padding: '4px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 600 }}>
-                MODO EDICIÓN - ID: {editingRecord.id}
+                MODO EDICI├ôN - ID: {editingRecord.id}
               </span>
             )}
           </div>
 
           <div className="form-row two-col">
             <div className="form-group">
-              <label>Destino de Venta (Cliente/Institución)</label>
+              <label>Destino de Venta (Cliente/Instituci├│n)</label>
               <input
                 type="text"
                 value={extraData.event_name}
@@ -3547,7 +3547,7 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
               />
             </div>
             <div className="form-group">
-              <label>Cantidad Producida y Propósito del Lote</label>
+              <label>Cantidad Producida y Prop├│sito del Lote</label>
               <input
                 type="text"
                 value={extraData.batch_purpose}
@@ -3561,7 +3561,7 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
           <div className="grid-food-sections">
             {/* SECTION: MEATS */}
             <div>
-              <h4 style={{ borderBottom: '1px solid var(--border)', paddingBottom: '8px', fontSize: '1rem' }}>🛒 Materia Prima (Carnes)</h4>
+              <h4 style={{ borderBottom: '1px solid var(--border)', paddingBottom: '8px', fontSize: '1rem' }}>≡ƒ¢Æ Materia Prima (Carnes)</h4>
               {meats.map((m, idx) => (
                 <div key={`meat-${idx}`} style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
                   <select value={m.product_id} onChange={e => updateMeat(idx, 'product_id', e.target.value)} required style={{ flex: 2 }}>
@@ -3577,7 +3577,7 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
 
             {/* SECTION: INPUTS */}
             <div>
-              <h4 style={{ borderBottom: '1px solid var(--border)', paddingBottom: '8px', fontSize: '1rem' }}>🥗 Insumos y Verduras</h4>
+              <h4 style={{ borderBottom: '1px solid var(--border)', paddingBottom: '8px', fontSize: '1rem' }}>≡ƒÑù Insumos y Verduras</h4>
               {inputs.map((inp, idx) => (
                 <div key={`input-${idx}`} style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
                   <input 
@@ -3609,7 +3609,7 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
               <h4 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <Coins size={20} color="var(--accent)" />
-                Análisis de Rentabilidad
+                An├ílisis de Rentabilidad
               </h4>
             </div>
 
@@ -3671,7 +3671,7 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
                   style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--accent)' }} 
                 />
                 <small style={{ color: 'var(--accent)', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>
-                  Calculado: {extraData.quantity_sold || '0'} × ${extraData.unit_price_per_sale || '0.00'} = ${extraData.sale_price || '0.00'}
+                  Calculado: {extraData.quantity_sold || '0'} ├ù ${extraData.unit_price_per_sale || '0.00'} = ${extraData.sale_price || '0.00'}
                 </small>
               </div>
             </div>
@@ -3690,10 +3690,10 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
                 }} placeholder="Ej: 2.10" style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-main)' }} />
               </div>
               <div className="form-group">
-                <label>Valor de comida que sobró ($)</label>
+                <label>Valor de comida que sobr├│ ($)</label>
                 <input type="number" step="0.01" value={extraData.leftover_value} onChange={e => setExtraData({ ...extraData, leftover_value: e.target.value })} placeholder="0.00" style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--success)' }} />
                 <small style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>
-                  Calculado automáticamente: {extraData.leftover_weight} lbs × ${extraData.unit_price_per_sale || '0.00'} = ${extraData.leftover_value || '0.00'}
+                  Calculado autom├íticamente: {extraData.leftover_weight} lbs ├ù ${extraData.unit_price_per_sale || '0.00'} = ${extraData.leftover_value || '0.00'}
                 </small>
               </div>
               <div className="form-group" style={{ textAlign: 'center' }}>
@@ -3724,7 +3724,7 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
                 <b style={{ color: yieldPercent > 50 ? 'var(--success)' : 'var(--warning)' }}>{yieldPercent.toFixed(1)}%</b>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'right' }}>
-                <span style={{ color: 'var(--text-muted)' }}>COSTO TOTAL DE OPERACIÓN:</span>
+                <span style={{ color: 'var(--text-muted)' }}>COSTO TOTAL DE OPERACI├ôN:</span>
                 <b style={{ color: 'var(--accent)', fontSize: '1.2rem' }}>${totalCost.toFixed(2)}</b>
                 {producedQty > 0 && <span style={{ fontSize: '0.7rem' }}>Costo unitario: <b>${unitCost.toFixed(2)}/lb fina</b></span>}
               </div>
@@ -3736,7 +3736,7 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
             <textarea
               value={extraData.notes}
               onChange={e => setExtraData({ ...extraData, notes: e.target.value })}
-              placeholder="Escribe aquí cualquier detalle adicional, variaciones en costos o notas sobre la entrega..."
+              placeholder="Escribe aqu├¡ cualquier detalle adicional, variaciones en costos o notas sobre la entrega..."
               style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', borderRadius: '16px', padding: '15px', color: 'white', minHeight: '80px', resize: 'vertical', marginTop: '8px' }}
             />
           </div>
@@ -3749,7 +3749,7 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
                 className="btn-primary" 
                 style={{ padding: '18px', fontSize: '1rem', background: '#ef4444', flex: 1 }}
               >
-                Cancelar Edición
+                Cancelar Edici├│n
               </button>
             )}
             <button 
@@ -3770,8 +3770,8 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
             <thead>
               <tr>
                 <th>Fecha</th>
-                <th>Propósito / Cantidad</th>
-                <th>Destino / Institución</th>
+                <th>Prop├│sito / Cantidad</th>
+                <th>Destino / Instituci├│n</th>
                 <th>Costo Op. ($)</th>
                 <th>Venta ($)</th>
                 <th>Precio Unitario ($)</th>
@@ -3779,7 +3779,7 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
                 <th>Valor Sobrante ($)</th>
                 <th>Rend. %</th>
                 <th>Utilidad ($)</th>
-                <th>Acción</th>
+                <th>Acci├│n</th>
               </tr>
             </thead>
             <tbody>
@@ -3788,8 +3788,8 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
               ) : (
                 logs.slice().reverse().map(lg => {
                   let details = {
-                    event_name: lg.event_name || '—',
-                    batch_purpose: lg.details || '—',
+                    event_name: lg.event_name || 'ΓÇö',
+                    batch_purpose: lg.details || 'ΓÇö',
                     total_cost: parseFloat(lg.gross_cost) || 0,
                     sale_price: 0,
                     leftover_value: 0,
@@ -3932,7 +3932,7 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
                             <motion.button
                               whileHover={{ scale: 1.2 }}
                               onClick={() => {
-                                if (confirm('¿Eliminar este registro de lote?')) {
+                                if (confirm('┬┐Eliminar este registro de lote?')) {
                                   handleDeleteRow(lg.id);
                                 }
                               }}
@@ -3967,24 +3967,24 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
 
 // --- AdminMonitor Component ---
 const ACTION_COLORS = {
-  'RECEPCIÓN':   { bg: 'rgba(56,189,248,0.12)',  border: 'rgba(56,189,248,0.35)',  text: '#38bdf8'  },
+  'RECEPCI├ôN':   { bg: 'rgba(56,189,248,0.12)',  border: 'rgba(56,189,248,0.35)',  text: '#38bdf8'  },
   'DESPACHO':    { bg: 'rgba(167,139,250,0.12)', border: 'rgba(167,139,250,0.35)', text: '#a78bfa'  },
-  'PRODUCCIÓN':  { bg: 'rgba(251,191,36,0.12)',  border: 'rgba(251,191,36,0.35)',  text: '#fbbf24'  },
+  'PRODUCCI├ôN':  { bg: 'rgba(251,191,36,0.12)',  border: 'rgba(251,191,36,0.35)',  text: '#fbbf24'  },
   'AJUSTE STOCK':{ bg: 'rgba(16,185,129,0.12)',  border: 'rgba(16,185,129,0.35)',  text: '#10b981'  },
   'LOTE COMIDA': { bg: 'rgba(244,114,182,0.12)', border: 'rgba(244,114,182,0.35)', text: '#f472b6'  },
 };
 
 const ROLE_LABELS = {
   admin: 'Administrador',
-  soyapango_puesto: 'Soyapango — Puesto',
-  soyapango_bodega: 'Soyapango — Bodega',
-  usulutan_puesto: 'Usulután — Puesto',
-  usulutan_bodega: 'Usulután — Bodega',
+  soyapango_puesto: 'Soyapango ΓÇö Puesto',
+  soyapango_bodega: 'Soyapango ΓÇö Bodega',
+  usulutan_puesto: 'Usulut├ín ΓÇö Puesto',
+  usulutan_bodega: 'Usulut├ín ΓÇö Bodega',
   agro_quezaltepeque: 'Agro Quezaltepeque',
   agro_aguilares: 'Agro Aguilares',
   agro_opico: 'Agro Opico',
-  lomas_ventas: 'Lomas — Ventas',
-  lomas_bodega: 'Lomas — Bodega',
+  lomas_ventas: 'Lomas ΓÇö Ventas',
+  lomas_bodega: 'Lomas ΓÇö Bodega',
 };
 
 const AdminMonitor = () => {
@@ -4011,7 +4011,7 @@ const AdminMonitor = () => {
   }, []);
 
   const handleClear = async () => {
-    if (!confirm('¿Limpiar todo el historial de actividad?')) return;
+    if (!confirm('┬┐Limpiar todo el historial de actividad?')) return;
     await fetch(`${API_BASE}/admin/activity`, { method: 'DELETE' });
     setLogs([]); setNewCount(0);
   };
@@ -4026,7 +4026,7 @@ const AdminMonitor = () => {
   const roles = [...new Set(logs.map(l => l.role))];
 
   const formatTime = (ts) => {
-    if (!ts) return '—';
+    if (!ts) return 'ΓÇö';
     const d = new Date(ts);
     return d.toLocaleString('es-SV', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
   };
@@ -4046,7 +4046,7 @@ const AdminMonitor = () => {
             )}
           </h3>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', margin: '4px 0 0 0' }}>
-            Todos los movimientos registrados en tiempo real — {logs.length} eventos
+            Todos los movimientos registrados en tiempo real ΓÇö {logs.length} eventos
           </p>
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
@@ -4086,8 +4086,8 @@ const AdminMonitor = () => {
       {filtered.length === 0 ? (
         <div className="form-card" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
           <Activity size={40} style={{ opacity: 0.2, marginBottom: '1rem' }} />
-          <p>Sin actividad registrada aún.</p>
-          <p style={{ fontSize: '0.8rem', marginTop: '8px' }}>Los movimientos aparecerán aquí en tiempo real.</p>
+          <p>Sin actividad registrada a├║n.</p>
+          <p style={{ fontSize: '0.8rem', marginTop: '8px' }}>Los movimientos aparecer├ín aqu├¡ en tiempo real.</p>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -4095,7 +4095,7 @@ const AdminMonitor = () => {
             const c = ACTION_COLORS[log.action] || { bg: 'rgba(255,255,255,0.04)', border: 'rgba(255,255,255,0.08)', text: 'var(--text-muted)' };
             return (
               <div key={log.id} style={{ background: 'var(--glass-surface)', border: `1px solid var(--border-light)`, borderLeft: `3px solid ${c.text}`, borderRadius: '14px', padding: '14px 18px', display: 'grid', gridTemplateColumns: 'auto 1fr auto', gap: '14px', alignItems: 'center' }}>
-                {/* Badge acción */}
+                {/* Badge acci├│n */}
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', minWidth: '80px' }}>
                   <span style={{ padding: '4px 10px', borderRadius: '8px', background: c.bg, border: `1px solid ${c.border}`, color: c.text, fontSize: '0.65rem', fontWeight: 900, letterSpacing: '1px', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
                     {log.action}
@@ -4108,11 +4108,11 @@ const AdminMonitor = () => {
                 {/* Contenido */}
                 <div>
                   <div style={{ fontWeight: 800, color: 'var(--text-main)', fontSize: '0.9rem', marginBottom: '3px' }}>
-                    {log.product_name || '—'}
+                    {log.product_name || 'ΓÇö'}
                     {log.quantity && <span style={{ color: c.text, marginLeft: '8px', fontWeight: 900 }}>{parseFloat(log.quantity).toFixed(1)} {log.unit}</span>}
                   </div>
                   <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                    {log.location && <span style={{ marginRight: '10px' }}>📍 {log.location}</span>}
+                    {log.location && <span style={{ marginRight: '10px' }}>≡ƒôì {log.location}</span>}
                     {log.details && <span>{log.details}</span>}
                   </div>
                 </div>
@@ -4133,7 +4133,7 @@ const AdminMonitor = () => {
 // --- Process Stepper Component ---
 const ProcessStepper = ({ currentTab }) => {
   const steps = [
-    { id: 'income', label: 'Recepción', icon: <Store size={16} /> },
+    { id: 'income', label: 'Recepci├│n', icon: <Store size={16} /> },
     { id: 'production', label: 'Procesamiento', icon: <Cpu size={16} /> },
     { id: 'distribution', label: 'Despacho / Factura', icon: <Truck size={16} /> }
   ];
@@ -4185,7 +4185,7 @@ const ProcessStepper = ({ currentTab }) => {
 };
 
 const App = () => {
-  // ── Sesión ──────────────────────────────────────────────────────────────────
+  // ΓöÇΓöÇ Sesi├│n ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
   const [currentRole, setCurrentRole] = useState(() => sessionStorage.getItem('cp_role') || null);
 
   const handleLogin = (role) => setCurrentRole(role);
@@ -4198,7 +4198,7 @@ const App = () => {
   return <AppShell role={currentRole} roleCfg={roleCfg} onLogout={handleLogout} />;
 };
 
-// ─── APP SHELL (contenido principal) ─────────────────────────────────────────
+// ΓöÇΓöÇΓöÇ APP SHELL (contenido principal) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 const AppShell = ({ role, roleCfg, onLogout }) => {
   const [publicUrl, setPublicUrl] = useState(null);
   useEffect(() => {
@@ -4211,13 +4211,13 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
 
   // Datos de pesos promedio por producto (cajas Ransa) - NO son valores fijos, son referencia
   const PRODUCT_WEIGHT_DATA = useMemo(() => ({
-    // Datos extraídos del inventario físico Ransa (500+ páginas)
-    // Última actualización: Abril 2026
+    // Datos extra├¡dos del inventario f├¡sico Ransa (500+ p├íginas)
+    // ├Ültima actualizaci├│n: Abril 2026
     
-    // STOCK POR UBICACIÓN (según imagen inicial)
+    // STOCK POR UBICACI├ôN (seg├║n imagen inicial)
     stockByLocation: {
       usulutan_warehouse: {
-        name: "Bodega Usulután",
+        name: "Bodega Usulut├ín",
         totalBoxes: 583, // Saldo inicial (Cajas Salen)
         products: {
           "1618": { boxes: 222, name: "Sin Hueso Nalga Adentro" },
@@ -4227,7 +4227,7 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
           "1622": { boxes: 0, name: "Recorte 80.20" },
           "1623": { boxes: 0, name: "Recorte 50.50" },
           "1624": { boxes: 102, name: "Aguja" },
-          "1625": { boxes: 0, name: "Corazón Cuadril" },
+          "1625": { boxes: 0, name: "Coraz├│n Cuadril" },
           "1626": { boxes: 44, name: "Sin Hueso Delantero" },
           "1627": { boxes: 0, name: "Sin Hueso Tapa Cuadril" },
           "1628": { boxes: 104, name: "Sin Hueso Recorte de Carne" }
@@ -4244,7 +4244,7 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
           "1622": { boxes: 21, name: "Recorte 80.20" },
           "1623": { boxes: 23, name: "Recorte 50.50" },
           "1624": { boxes: 0, name: "Aguja" },
-          "1625": { boxes: 0, name: "Corazón Cuadril" },
+          "1625": { boxes: 0, name: "Coraz├│n Cuadril" },
           "1626": { boxes: 0, name: "Sin Hueso Delantero" },
           "1627": { boxes: 34, name: "Sin Hueso Tapa Cuadril" },
           "1628": { boxes: 59, name: "Sin Hueso Recorte de Carne" }
@@ -4253,20 +4253,20 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
     },
     
     // PESOS TOTALES POR PRODUCTO (suma exacta de KG de todas las cajas)
-    // Datos extraídos de las imágenes del inventario físico Ransa
+    // Datos extra├¡dos de las im├ígenes del inventario f├¡sico Ransa
     weightTotals: {
       "1618": { 
         name: "Sin Hueso Nalga Adentro",
-        // 222 cajas con datos de peso en KG (las que salen de Usulután)
-        // Suma exacta de todas las cajas que tienen peso registrado en las imágenes
+        // 222 cajas con datos de peso en KG (las que salen de Usulut├ín)
+        // Suma exacta de todas las cajas que tienen peso registrado en las im├ígenes
         totalBoxesWithWeight: 222,
         totalKg: 1517.28, // Suma de todas las cajas 1-222
         avgKg: 6.84,
         avgLbs: 15.08,
-        // Distribución por ubicación según imagen de totales
-        usulutanBoxes: 222, // Cajas Salen → Usulután
-        ransaBoxes: 0,      // Cajas Quedan → Ransa
-        usulutanKg: 1517.28, // Todo el peso va a Usulután
+        // Distribuci├│n por ubicaci├│n seg├║n imagen de totales
+        usulutanBoxes: 222, // Cajas Salen ΓåÆ Usulut├ín
+        ransaBoxes: 0,      // Cajas Quedan ΓåÆ Ransa
+        usulutanKg: 1517.28, // Todo el peso va a Usulut├ín
         ransaKg: 0
       },
       "1619": { 
@@ -4309,11 +4309,11 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
         avgKg: 21.05,
         avgLbs: 46.41,
         usulutanBoxes: 104, // Salen
-        ransaBoxes: 59,     // Quedan en Ransa (sin peso en imágenes)
+        ransaBoxes: 59,     // Quedan en Ransa (sin peso en im├ígenes)
         usulutanKg: 2189.20,
         ransaKg: 0
       },
-      // Productos que quedan en Ransa (330 cajas sin datos de peso en imágenes)
+      // Productos que quedan en Ransa (330 cajas sin datos de peso en im├ígenes)
       "1620": {
         name: "Con Hueso Cogote",
         totalBoxesWithWeight: 0,
@@ -4371,11 +4371,11 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
       }
     },
     
-    // Función para obtener stock por ubicación con totales exactos
+    // Funci├│n para obtener stock por ubicaci├│n con totales exactos
     getStockByLocationWithTotals: function() {
       return {
         usulutan_warehouse: {
-          name: "Bodega Usulután",
+          name: "Bodega Usulut├ín",
           totalBoxes: 583,
           totalKg: 8022.38, // Suma de todos los KG que salen
           products: [
@@ -4389,7 +4389,7 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
         ransa: {
           name: "Ransa",
           totalBoxes: 330,
-          totalKg: 0, // Las cajas que quedan en Ransa no tienen datos de peso en las imágenes
+          totalKg: 0, // Las cajas que quedan en Ransa no tienen datos de peso en las im├ígenes
           products: [
             { code: "1618", name: "Sin Hueso Nalga Adentro", boxes: 63, totalKg: 0 },
             { code: "1619", name: "Sin Hueso Tortuguita", boxes: 63, totalKg: 0 },
@@ -4404,7 +4404,7 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
       };
     },
     
-    // Función para obtener totales exactos por producto
+    // Funci├│n para obtener totales exactos por producto
     getTotalWeight: function(productCode) {
       const data = this.weightTotals[productCode];
       if (!data) return null;
@@ -4419,12 +4419,12 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
       };
     },
     
-    // Función para obtener suma total de KG de todos los productos
+    // Funci├│n para obtener suma total de KG de todos los productos
     getGrandTotalKg: function() {
       return Object.values(this.weightTotals).reduce((sum, product) => sum + product.totalKg, 0);
     },
     
-    // Función para obtener lista de totales por producto
+    // Funci├│n para obtener lista de totales por producto
     getAllTotals: function() {
       return Object.entries(this.weightTotals).map(([code, data]) => ({
         code,
@@ -4437,7 +4437,7 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
       }));
     },
     
-    // Función para obtener resumen de inventario con totales por ubicación
+    // Funci├│n para obtener resumen de inventario con totales por ubicaci├│n
     getInventorySummaryWithTotals: function() {
       const stock = this.getStockByLocationWithTotals();
       return {
@@ -4472,7 +4472,7 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
       };
     },
     
-    // Función para obtener stock por ubicación
+    // Funci├│n para obtener stock por ubicaci├│n
     getStockByLocation: function(location, productCode = null) {
       const locationData = this.stockByLocation[location];
       if (!locationData) return null;
@@ -4489,7 +4489,7 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
         };
       }
       
-      // Retorna todo el stock de la ubicación
+      // Retorna todo el stock de la ubicaci├│n
       return {
         location: locationData.name,
         totalBoxes: locationData.totalBoxes,
@@ -4503,7 +4503,7 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
       };
     },
     
-    // Función para obtener peso promedio por código de producto
+    // Funci├│n para obtener peso promedio por c├│digo de producto
     getAverageWeight: function(productCode) {
       const data = this.weightAverages[productCode];
       if (!data) return null;
@@ -4514,7 +4514,7 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
       };
     },
     
-    // Función para calcular peso estimado por cantidad de cajas
+    // Funci├│n para calcular peso estimado por cantidad de cajas
     calculateEstimatedWeight: function(productCode, boxCount, unit = 'Lbs') {
       const avg = this.getAverageWeight(productCode);
       if (!avg) return null;
@@ -4522,12 +4522,12 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
       return {
         estimatedWeight: weight,
         unit: unit,
-        basedOn: `${boxCount} cajas × ${unit === 'Lbs' ? avg.lbs : avg.kg} ${unit}/caja`,
+        basedOn: `${boxCount} cajas ├ù ${unit === 'Lbs' ? avg.lbs : avg.kg} ${unit}/caja`,
         referenceTotalBoxes: avg.totalBoxes
       };
     },
     
-    // Función para obtener resumen completo de inventario
+    // Funci├│n para obtener resumen completo de inventario
     getInventorySummary: function() {
       return {
         grandTotal: {
@@ -4641,9 +4641,9 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
 
   const triggerRefresh = () => setRefresh(prev => prev + 1);
 
-  // Definición de todas las tabs disponibles
+  // Definici├│n de todas las tabs disponibles
   const allTabs = [
-    { id: 'income',       label: 'Recepción',  icon: <Store size={18} /> },
+    { id: 'income',       label: 'Recepci├│n',  icon: <Store size={18} /> },
     { id: 'production',   label: 'Procesos',   icon: <Cpu size={18} /> },
     { id: 'distribution', label: 'Despacho / Factura',   icon: <Truck size={18} /> },
     { id: 'status',       label: 'Stock',      icon: <BarChart3 size={18} /> },
@@ -4663,8 +4663,8 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
       `}</style>
       <header>
         <div className="subtitle">Carnes del Paraguay</div>
-        <h1>Logística & Control de Inventario</h1>
-        {/* Badge de sesión */}
+        <h1>Log├¡stica & Control de Inventario</h1>
+        {/* Badge de sesi├│n */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginTop: '12px' }}>
           <div style={{ padding: '5px 14px', borderRadius: '20px', background: 'rgba(56,189,248,0.12)', border: '1px solid rgba(56,189,248,0.25)', fontSize: '0.72rem', fontWeight: 800, color: '#38bdf8', letterSpacing: '1px', textTransform: 'uppercase' }}>
             {roleCfg.label}
@@ -4679,7 +4679,7 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
           {[
             { label: 'Ransa', col: 'bodega_1' },
             { label: 'Soyapango', col: 'bodega_2' },
-            { label: 'Usulután', col: 'bodega_3' },
+            { label: 'Usulut├ín', col: 'bodega_3' },
             { label: 'Lomas', col: 'bodega_4' }
           ].map((w) => {
             const val = inventorySummary.reduce((acc, i) => acc + (parseFloat(i[w.col]) || 0), 0);
@@ -4739,7 +4739,7 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
       </main>
 
       <footer className="no-print">
-        <p>&copy; 2026 Carnes del Paraguay - Sistema de Logística Propio</p>
+        <p>&copy; 2026 Carnes del Paraguay - Sistema de Log├¡stica Propio</p>
       </footer>
     </div>
   );
