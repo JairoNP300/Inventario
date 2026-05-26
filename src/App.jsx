@@ -731,7 +731,7 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
       .catch(err => { console.error('Error loading inventory status', err); if (!cancelled) setInventory([]); });
     fetch(`${API_BASE}/inventory/adjustments`)
       .then(r => r.json())
-      .then(data => { if (!cancelled) setAdjustments(Array.isArray(data) ? data : []); })
+      .then(data => { const arr = Array.isArray(data) ? data : (data?.rows || []); if (!cancelled) setAdjustments(arr); })
       .catch(err => console.error('Error loading adjustments', err));
     return () => { cancelled = true; };
   }, [refreshTrigger]);
