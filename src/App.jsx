@@ -532,19 +532,14 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
 
           {formData.process_mode === 'direct' && formData.product_id && (() => {
             const prod = products.find(p => String(p.id) === String(formData.product_id));
-            const destWh = formData.dest_warehouse || 'Lomas de San Francisco';
-            const whMap = {
-              'Lomas de San Francisco': { label: 'Lomas de San Francisco', stockKey: 'stock_b4', stockAlt: 'bodega_4' },
-              'Central de abasto - Soyapango (Cuarto Frío)': { label: 'Soyapango', stockKey: 'stock_b2', stockAlt: 'bodega_2' },
-              'Central de abasto - Usulután (Cuarto Frío)': { label: 'Usulután', stockKey: 'stock_b3', stockAlt: 'bodega_3' }
-            };
-            const wh = whMap[destWh] || whMap['Lomas de San Francisco'];
-            const stockLbs = parseFloat(prod?.[wh.stockKey] || prod?.[wh.stockAlt] || 0);
+            const selectedWarehouse = formData.dest_warehouse || 'Soyapango';
+            const warehouseLbs = parseFloat(prod?.[`stock_b${selectedWarehouse === 'Soyapango' ? '2' : selectedWarehouse === 'Usulután' ? '3' : '4`}] || 0);
+            const warehouseLabel = selectedWarehouse === 'Soyapango' ? 'Soyapango (Lbs)' : selectedWarehouse === 'Usulután' ? 'Usulután (Lbs)' : 'Lomas de San Francisco (Lbs)';
             return (
               <div style={{ padding: '8px 12px', borderRadius: '8px', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)', marginBottom: '0.8rem', fontSize: '0.8rem' }}>
-                <span style={{ color: '#f59e0b' }}>Los pesos se agregarán directamente a <strong>{wh.label} (Lbs)</strong></span>
-                <div style={{ marginTop: '4px', color: stockLbs > 0 ? '#f59e0b' : 'var(--text-muted)' }}>
-                  Stock actual en {wh.label}: <strong>{stockLbs.toFixed(1)} lbs</strong>
+                <span style={{ color: '#f59e0b' }}>Los pesos se agregarán a <strong>{warehouseLabel}</strong></span>
+                <div style={{ marginTop: '4px', color: warehouseLbs > 0 ? '#f59e0b' : 'var(--text-muted)' }}>
+                  Stock actual en {warehouseLabel}: <strong>{warehouseLbs.toFixed(1)} lbs</strong>
                 </div>
               </div>
             );
