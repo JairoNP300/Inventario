@@ -854,7 +854,8 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
       const b3 = viewUnit === 'Kg' ? toNum(i.bodega_3) / factor : toNum(i.bodega_3);
       const b4 = viewUnit === 'Kg' ? toNum(i.bodega_4) / factor : toNum(i.bodega_4);
       const total = b1 + b2 + b3 + b4;
-      const row = ws.addRow([i.name || `Producto ${i.code}`, viewUnit === 'Kg' ? toNum(i.initial_stock) : toNum(i.initial_stock) * factor, b1, b2, b3, b4, total]);
+      const rawVal = toNum(i.raw_total);
+      const row = ws.addRow([i.name || `Producto ${i.code}`, rawVal, viewUnit === 'Kg' ? toNum(i.initial_stock) : toNum(i.initial_stock) * factor, b1, b2, b3, b4, total]);
       row.height = 22;
       const rowFill = idx % 2 === 0 ? whiteFill : altFill;
       row.eachCell((cell, col) => {
@@ -873,7 +874,7 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
     totalLabel.getCell(1).border = { top: { style: 'medium', color: { argb: 'FF38BDF8' } }, bottom: { style: 'double', color: { argb: 'FF38BDF8' } }, left: { style: 'thin', color: { argb: 'FF334155' } }, right: { style: 'thin', color: { argb: 'FF334155' } } };
     totalLabel.height = 26;
 
-    [2,3,4,5,6,7].forEach(col => {
+    [2,3,4,5,6,7,8].forEach(col => {
       const cell = totalLabel.getCell(col);
       const sum = inventoryRows.reduce((acc, i) => {
         const b1 = viewUnit === 'Kg' ? toNum(i.bodega_1) : toNum(i.bodega_1) * factor;
