@@ -495,11 +495,18 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
             </div>
           </div>
 
-          {formData.process_mode === 'direct' && (
-            <div style={{ padding: '8px 12px', borderRadius: '8px', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)', marginBottom: '0.8rem', fontSize: '0.8rem', color: '#f59e0b' }}>
-              Los pesos se agregarán directamente a <strong>Lomas de San Francisco (Lbs)</strong>
-            </div>
-          )}
+          {formData.process_mode === 'direct' && formData.product_id && (() => {
+            const prod = products.find(p => String(p.id) === String(formData.product_id));
+            const lomasLbs = parseFloat(prod?.bodega_4 || 0);
+            return (
+              <div style={{ padding: '8px 12px', borderRadius: '8px', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)', marginBottom: '0.8rem', fontSize: '0.8rem' }}>
+                <span style={{ color: '#f59e0b' }}>Los pesos se agregarán directamente a <strong>Lomas de San Francisco (Lbs)</strong></span>
+                <div style={{ marginTop: '4px', color: lomasLbs > 0 ? '#f59e0b' : 'var(--text-muted)' }}>
+                  Stock actual en Lomas: <strong>{lomasLbs.toFixed(1)} lbs</strong>
+                </div>
+              </div>
+            );
+          })()}
 
           <div style={{ marginTop: '1.5rem', background: 'rgba(255, 255, 255, 0.02)', padding: '2rem', borderRadius: '24px', border: '1px solid var(--glass-border)' }}>
             <h4 style={{ fontSize: '0.75rem', color: 'var(--aurora-1)', marginBottom: '1.5rem', textTransform: 'uppercase', letterSpacing: '1px', border: 'none' }}>Estimación de Costos Operativos</h4>
