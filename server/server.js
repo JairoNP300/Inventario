@@ -1873,7 +1873,7 @@ initDb().then(() => {
         const { rows: pCount } = await query('SELECT COUNT(*) as cnt FROM products');
         if (pCount[0].cnt > 0) {
           const cajasSeed = { "1618":326,"1619":200,"1620":114,"1621":45,"1622":43,"1623":45,"1624":105,"1625":55,"1626":46,"1627":53,"1628":186 };
-          const salidasSeed = { "1618":103,"1619":41,"1620":105,"1621":32,"1622":20,"1623":34,"1624":1,"1625":55,"1626":2,"1627":21,"1628":33 };
+          const salidasSeed = { "1618":325,"1619":152,"1620":105,"1621":32,"1622":20,"1623":34,"1624":103,"1625":55,"1626":46,"1627":21,"1628":137 };
           for (const [code, cajas] of Object.entries(cajasSeed)) {
             const { rows: pRows } = await query('SELECT id FROM products WHERE code = ?', [code]);
             if (pRows.length > 0) {
@@ -1887,6 +1887,25 @@ initDb().then(() => {
       }
     } catch (err) {
       console.error('[SEED] Error:', err.message);
+    }
+
+    // Seed Usulután (bodega_3) stock solo si está en cero (migración única)
+    try {
+      const { rows: b3Check } = await query('SELECT COUNT(*) as cnt FROM inventory WHERE bodega_3 > 0');
+      if (parseInt(b3Check[0]?.cnt || 0) === 0) {
+        const b3Seed = { "1618":9468.1,"1619":5948.9,"1624":4808.9,"1626":1072.3,"1628":5595.4 };
+        for (const [code, val] of Object.entries(b3Seed)) {
+          const { rows: pRows } = await query('SELECT id FROM products WHERE code = ?', [code]);
+          if (pRows.length > 0) {
+            await query('UPDATE inventory SET bodega_3 = ? WHERE product_id = ?', [val, pRows[0].id]);
+          }
+        }
+        console.log('[SEED] Usulután bodega_3 seeded successfully');
+      } else {
+        console.log('[SEED] Usulután bodega_3 already has data — no seeding needed');
+      }
+    } catch (err) {
+      console.error('[SEED] Usulután bodega_3 error:', err.message);
     }
     
     // Auto-backup before starting
