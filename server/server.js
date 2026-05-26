@@ -982,22 +982,32 @@ app.get('/api/inventory/adjustments', async (req, res) => {
 app.post('/api/inventory/undo-adjustment', async (req, res) => {
   const { id } = req.body;
   try {
+    validateRequired(req.body, ['id']);
     const { rows } = await query('SELECT * FROM stock_adjustments WHERE id = ?', [id]);
     if (rows.length === 0) return res.status(404).json({ error: 'Ajuste no encontrado' });
     const adj = rows[0];
     const weightChange = parseFloat(adj.weight_change) || 0;
     const cajasChange = parseInt(adj.cajas_change) || 0;
 
-    // Reverse: subtract what was added
+    // Verify sufficient stock to reverse
     if (weightChange > 0) {
-      await query(`UPDATE inventory SET ${adj.bodega_col} = ${adj.bodega_col} - ? WHERE product_id = ?`, [weightChange, adj.product_id]);
-    }
-    if (cajasChange > 0) {
-      await query(`UPDATE inventory SET entradas_cajas = GREATEST(entradas_cajas - ?, 0) WHERE product_id = ?`, [cajasChange, adj.product_id]);
+      const { rows: check } = await query(`SELECT ${adj.bodega_col} FROM inventory WHERE product_id = ?`, [adj.product_id]);
+      const current = parseFloat(check[0]?.[adj.bodega_col]) || 0;
+      if (current < weightChange) {
+        return res.status(400).json({ error: `Stock insuficiente para revertir ajuste: tiene ${current.toFixed(2)}, necesita ${weightChange.toFixed(2)}` });
+      }
     }
 
-    // Delete the adjustment record
-    await query('DELETE FROM stock_adjustments WHERE id = ?', [id]);
+    const updates = [];
+    if (weightChange > 0) {
+      updates.push({ sql: `UPDATE inventory SET ${adj.bodega_col} = ${adj.bodega_col} - ? WHERE product_id = ?`, params: [weightChange, adj.product_id] });
+    }
+    if (cajasChange > 0) {
+      updates.push({ sql: 'UPDATE inventory SET entradas_cajas = GREATEST(entradas_cajas - ?, 0) WHERE product_id = ?', params: [cajasChange, adj.product_id] });
+    }
+    updates.push({ sql: 'DELETE FROM stock_adjustments WHERE id = ?', params: [id] });
+
+    await runTransaction(updates);
 
     const { rows: pRows } = await query('SELECT name FROM products WHERE id = ?', [adj.product_id]);
     const pName = pRows[0]?.name || `Producto #${adj.product_id}`;
