@@ -377,7 +377,7 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
       body: JSON.stringify(formData)
     }).then(() => {
       onUpdate();
-      setFormData({ product_id: '', initial_kg: '', initial_weight: '', raw_weight: '', cut_weight: '', waste: '', storage_cost: '', transport_cost: '', labor_cost: '', other_costs: '' });
+      setFormData({ product_id: '', initial_kg: '', initial_weight: '', cut_weight: '', waste: '', storage_cost: '', transport_cost: '', labor_cost: '', other_costs: '' });
       setEditingId(null);
       alert(editingId ? 'Cambios guardados correctamente' : 'Proceso registrado');
     });
