@@ -4359,6 +4359,18 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
   useEffect(() => {
     fetch('/api/public-url').then(r => r.json()).then(d => setPublicUrl(d?.url ?? null)).catch(() => setPublicUrl(null));
   }, []);
+
+  // Prevent scroll-to-change on all number inputs
+  useEffect(() => {
+    const preventWheelOnNumber = (e) => {
+      if (e.target && e.target.type === 'number') {
+        e.preventDefault();
+        e.target.blur();
+      }
+    };
+    document.addEventListener('wheel', preventWheelOnNumber, { passive: false });
+    return () => document.removeEventListener('wheel', preventWheelOnNumber);
+  }, []);
   const [activeTab, setActiveTab] = useState(roleCfg.defaultTab);
   const [products, setProducts] = useState([]);
   const [agros, setAgros] = useState([]);
@@ -4814,6 +4826,15 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
         /* Print handled by InvoiceLayout component */
         @media print {
           @page { size: A4 portrait; margin: 4mm; }
+        }
+        /* Hide number input spinners globally */
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+        input[type="number"] {
+          -moz-appearance: textfield;
         }
       `}</style>
       <header>

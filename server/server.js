@@ -1997,16 +1997,22 @@ initDb().then(() => {
       console.log(`Server running at port ${port}`);
       console.log('All changes applied: New locations, stock levels, and deduction logic');
 
-      // Auto-deploy watcher: starts automatically when running locally
+      // Auto-deploy watcher: always active, auto-restarts on failure
       if (!process.env.RENDER) {
-        console.log('👀 Iniciando auto-deploy watcher (local)...');
-        const watcher = spawn('node', [join(__dirname, '../scripts/watch-deploy.js')], {
-          cwd: join(__dirname, '..'),
-          stdio: 'inherit',
-          env: { ...process.env }
-        });
-        watcher.on('error', (err) => console.error('⚠️ Auto-deploy watcher error:', err.message));
-        watcher.on('exit', (code) => console.log(`Auto-deploy watcher exited with code ${code}`));
+        const startWatcher = () => {
+          console.log('👀 Iniciando auto-deploy watcher...');
+          const w = spawn('node', [join(__dirname, '../scripts/watch-deploy.js')], {
+            cwd: join(__dirname, '..'),
+            stdio: 'inherit',
+            env: { ...process.env }
+          });
+          w.on('error', (err) => console.error('⚠️ Auto-deploy watcher error:', err.message));
+          w.on('exit', (code) => {
+            console.log(`⚠️ Auto-deploy watcher exited (code ${code}). Reiniciando en 3s...`);
+            setTimeout(startWatcher, 3000);
+          });
+        };
+        startWatcher();
       }
     });
   }).catch(err => {
