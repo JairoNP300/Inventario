@@ -46,14 +46,9 @@ app.get('/api/version', (req, res) => {
   res.send(version);
 });
 
-// Health check for Render (render.yaml healthCheckPath: /api)
-app.get('/api', (req, res) => {
-  res.json({ status: 'ok', time: new Date().toISOString() });
-});
-
 // --- DATABASE CONFIGURATION ---
-// Auto-detect: PostgreSQL if DATABASE_URL is set, else SQLite
-const isProduction = !!process.env.DATABASE_URL;
+// TEMPORARY: Force SQLite to restore functionality while PostgreSQL issues are investigated
+const isProduction = false; // Force SQLite for now
 let pool;
 let sqliteDb;
 
@@ -98,7 +93,11 @@ if (!pool) {
 
 // Unified Query Helper
 async function query(sql, params = []) {
-  if (pool) {
+  if (isProduction) {
+    if (!pool) {
+      console.warn('⚠️ Query intentada sin conexión a base de datos (DATABASE_URL faltante).');
+      return { rows: [], lastInsertRowid: null };
+    }
     // Convert ? to $1, $2, etc for PostgreSQL
     let index = 1;
     const pgSqlFixed = sql.replace(/\?/g, () => `$${index++}`);
@@ -107,7 +106,7 @@ async function query(sql, params = []) {
       rows: res.rows,
       lastInsertRowid: res.rows[0]?.id || null
     };
-  } else if (sqliteDb) {
+  } else {
     const stmt = sqliteDb.prepare(sql);
     if (sql.trim().toUpperCase().startsWith('SELECT')) {
       return { rows: stmt.all(...params) };
@@ -115,32 +114,24 @@ async function query(sql, params = []) {
       const info = stmt.run(...params);
       return { lastInsertRowid: info.lastInsertRowid, rows: [] };
     }
-  } else {
-    console.warn('⚠️ Query intentada sin conexión a base de datos.');
-    return { rows: [], lastInsertRowid: null };
   }
 }
 
 // Execute multiple SQL updates atomically in a transaction
 async function runTransaction(updates) {
   if (updates.length === 0) return;
-  if (pool) {
-    const client = await pool.connect();
+  if (isProduction) {
+    await query('BEGIN');
     try {
-      await client.query('BEGIN');
       for (const u of updates) {
-        let index = 1;
-        const pgSql = u.sql.replace(/\?/g, () => `$${index++}`);
-        await client.query(pgSql, u.params);
+        await query(u.sql, u.params);
       }
-      await client.query('COMMIT');
+      await query('COMMIT');
     } catch (e) {
-      await client.query('ROLLBACK');
+      await query('ROLLBACK');
       throw e;
-    } finally {
-      client.release();
     }
-  } else if (sqliteDb) {
+  } else {
     const txn = sqliteDb.transaction(() => {
       for (const u of updates) {
         sqliteDb.prepare(u.sql).run(...u.params);
@@ -169,7 +160,7 @@ function validateRequired(body, fields) {
 
 // Create a timestamped backup of the SQLite database
 async function backupDatabase() {
-  if (!sqliteDb) return;
+  if (isProduction || !sqliteDb) return;
   try {
     const src = join(__dirname, '../inventario_oficial.db');
     const backupDir = join(__dirname, '../backups');
@@ -190,18 +181,18 @@ async function backupDatabase() {
 }
 
 async function exec(sql) {
-  if (pool) {
-    const adapted = sql
+  if (isProduction) {
+    if (!pool) {
+      console.warn('⚠️ Exec intentada sin conexión a base de datos.');
+      return { rows: [] };
+    }
+    // Postgres uses SERIAL or IDENTITY instead of AUTOINCREMENT
+    const pgSql = sql
       .replace(/INTEGER PRIMARY KEY AUTOINCREMENT/gi, 'SERIAL PRIMARY KEY')
       .replace(/strftime\('%Y-%m', s.date\)/gi, "to_char(s.date, 'YYYY-MM')");
-    const statements = adapted.split(';').map(s => s.trim()).filter(s => s.length > 0);
-    for (const stmt of statements) {
-      await pool.query(stmt);
-    }
-  } else if (sqliteDb) {
-    return sqliteDb.exec(sql);
+    return pool.query(pgSql);
   } else {
-    console.warn('⚠️ Exec intentada sin conexión a base de datos.');
+    return sqliteDb.exec(sql);
   }
 }
 
@@ -233,7 +224,7 @@ const migrateDatabase = async () => {
 
   for (const [id, name] of agros) {
     try {
-        if (pool) {
+      if (isProduction) {
         await query('INSERT INTO agros (id, name) VALUES (?, ?) ON CONFLICT (id) DO NOTHING', [id, name]);
       } else {
         await query('INSERT OR IGNORE INTO agros (id, name) VALUES (?, ?)', [id, name]);
@@ -247,7 +238,7 @@ const migrateDatabase = async () => {
   // Ensure inventory rows exist for all products — NEVER overwrite existing data
   const products = await query('SELECT id FROM products');
   for (const product of products.rows) {
-    if (pool) {
+    if (isProduction) {
       await query(`
         INSERT INTO inventory (product_id, bodega_1, bodega_2, bodega_3, bodega_4, initial_stock, current_stock, sold_stock)
         VALUES (?, 0, 0, 0, 0, 0, 0, 0)
@@ -275,7 +266,7 @@ const migrateDatabase = async () => {
   try {
     await exec(`
       CREATE TABLE IF NOT EXISTS activity_log (
-        id ${pool ? 'SERIAL' : 'INTEGER'} PRIMARY KEY ${pool ? '' : 'AUTOINCREMENT'},
+        id ${isProduction ? 'SERIAL' : 'INTEGER'} PRIMARY KEY ${isProduction ? '' : 'AUTOINCREMENT'},
         role TEXT,
         action TEXT,
         entity TEXT,
@@ -293,9 +284,9 @@ const migrateDatabase = async () => {
 
   // Add discount_percent column to dispatches if not exists
   try {
-    if (pool) {
+    if (isProduction) {
       await query(`ALTER TABLE dispatches ADD COLUMN discount_percent DECIMAL(5,2) DEFAULT 0`);
-    } else if (sqliteDb) {
+    } else {
       sqliteDb.prepare('ALTER TABLE dispatches ADD COLUMN discount_percent DECIMAL(5,2) DEFAULT 0').run();
     }
     console.log('discount_percent column added to dispatches');
@@ -305,9 +296,9 @@ const migrateDatabase = async () => {
 
   // Add cajas column to inventory if not exists
   try {
-    if (pool) {
+    if (isProduction) {
       await query(`ALTER TABLE inventory ADD COLUMN cajas DECIMAL(10,2) DEFAULT 0`);
-    } else if (sqliteDb) {
+    } else {
       sqliteDb.prepare('ALTER TABLE inventory ADD COLUMN cajas DECIMAL(10,2) DEFAULT 0').run();
     }
     console.log('cajas column added to inventory');
@@ -317,7 +308,7 @@ const migrateDatabase = async () => {
 
   // Add entradas_cajas and salidas_cajas columns to inventory if not exists
   try {
-    if (pool) {
+    if (isProduction) {
       await query(`ALTER TABLE inventory ADD COLUMN entradas_cajas DECIMAL(10,2) DEFAULT 0`);
       await query(`ALTER TABLE inventory ADD COLUMN salidas_cajas DECIMAL(10,2) DEFAULT 0`);
     } else {
@@ -333,10 +324,10 @@ const migrateDatabase = async () => {
 
   // Add origin_weight and dest_weight to movements if not exists
   try {
-    if (pool) {
+    if (isProduction) {
       await query(`ALTER TABLE movements ADD COLUMN origin_weight DECIMAL(10,2) DEFAULT 0`);
       await query(`ALTER TABLE movements ADD COLUMN dest_weight DECIMAL(10,2) DEFAULT 0`);
-    } else if (sqliteDb) {
+    } else {
       sqliteDb.prepare('ALTER TABLE movements ADD COLUMN origin_weight DECIMAL(10,2) DEFAULT 0').run();
       sqliteDb.prepare('ALTER TABLE movements ADD COLUMN dest_weight DECIMAL(10,2) DEFAULT 0').run();
     }
@@ -347,9 +338,9 @@ const migrateDatabase = async () => {
 
   // Add unit_type to movements if not exists
   try {
-    if (pool) {
+    if (isProduction) {
       await query(`ALTER TABLE movements ADD COLUMN unit_type TEXT DEFAULT 'Lbs'`);
-    } else if (sqliteDb) {
+    } else {
       sqliteDb.prepare("ALTER TABLE movements ADD COLUMN unit_type TEXT DEFAULT 'Lbs'").run();
     }
     console.log('unit_type column added to movements');
@@ -359,9 +350,9 @@ const migrateDatabase = async () => {
 
   // Add dest_warehouse column to production_logs if not exists
   try {
-    if (pool) {
+    if (isProduction) {
       await query(`ALTER TABLE production_logs ADD COLUMN dest_warehouse TEXT DEFAULT ''`);
-    } else if (sqliteDb) {
+    } else {
       sqliteDb.prepare("ALTER TABLE production_logs ADD COLUMN dest_warehouse TEXT DEFAULT ''").run();
     }
     console.log('dest_warehouse column added to production_logs');
@@ -372,8 +363,8 @@ const migrateDatabase = async () => {
 
 // --- INITIALIZATION ---
 const initDb = async () => {
-  const idType = pool ? 'SERIAL' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
-  const dateDefault = pool ? 'CURRENT_DATE' : "(date('now'))";
+  const idType = isProduction ? 'SERIAL' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
+  const dateDefault = isProduction ? 'CURRENT_DATE' : "(date('now'))";
 
   await exec(`
     CREATE TABLE IF NOT EXISTS products (
@@ -501,7 +492,7 @@ const initDb = async () => {
     );
   `);
 
-  if (sqliteDb) {
+  if (!isProduction) {
     try {
       sqliteDb.prepare('ALTER TABLE products ADD COLUMN code TEXT').run();
     } catch (e) { }
@@ -547,7 +538,7 @@ const initDb = async () => {
 
   console.log('🔄 Automatizando sincronización de catálogo oficial...');
   for (const p of products) {
-    if (pool) {
+    if (isProduction) {
       await query('INSERT INTO products (code, name, category, price_per_lb, price_per_kg, price_per_box) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(name) DO UPDATE SET price_per_lb = excluded.price_per_lb, price_per_kg = excluded.price_per_kg, price_per_box = excluded.price_per_box, code = excluded.code', p);
     } else {
       try {
@@ -560,7 +551,7 @@ const initDb = async () => {
   // Ensure inventory exists for all products — only insert if not exists, NEVER overwrite existing data
   const { rows: prods } = await query('SELECT id FROM products');
   for (const p of prods) {
-    if (pool) {
+    if (isProduction) {
       await query(`
         INSERT INTO inventory (product_id, bodega_1, bodega_2, bodega_3, bodega_4, initial_stock, sold_stock) 
         VALUES (?, 0, 0, 0, 0, 0, 0)
@@ -588,7 +579,7 @@ const initDb = async () => {
   ];
   // Sync destinations
   for (const a of agros) {
-    if (pool) {
+    if (isProduction) {
       await query('INSERT INTO agros (name) VALUES (?) ON CONFLICT(name) DO NOTHING', [a]);
     } else {
       await query('INSERT OR IGNORE INTO agros (name) VALUES (?)', [a]);
@@ -1086,7 +1077,7 @@ app.get('/api/reports/inventory-status', async (req, res) => {
 });
 
 app.get('/api/reports/agro-sales', async (req, res) => {
-  const dateFunc = pool ? "to_char(s.date, 'YYYY-MM')" : "strftime('%Y-%m', s.date)";
+  const dateFunc = isProduction ? "to_char(s.date, 'YYYY-MM')" : "strftime('%Y-%m', s.date)";
   const { rows } = await query(`
     SELECT a.name as agro_name, 
            SUM(s.amount_received) as total_sales,
@@ -1490,9 +1481,10 @@ app.get('/api/food-costing', async (req, res) => {
 app.post('/api/food-costing', async (req, res) => {
   const { product_id, gross_weight, gross_cost, cooked_weight, json_data } = req.body;
   try {
-    // Use different queries for PG (RETURNING) vs SQLite (lastInsertRowid)
+    // Use different queries for SQLite vs PostgreSQL
     let info;
-    if (pool) {
+    if (isProduction) {
+      // PostgreSQL supports RETURNING
       info = await query(`
         INSERT INTO food_costing (product_id, gross_weight, gross_cost, cooked_weight, json_data, date)
         VALUES (?, ?, ?, ?, ?, ?) RETURNING id
@@ -1712,80 +1704,6 @@ app.post('/api/admin/sync-inventory-weights', async (req, res) => {
   }
 });
 
-// --- DATA EXPORT & CLEANUP ---
-// Returns the oldest record date across all transaction tables (for reminders)
-app.get('/api/admin/data-age', async (req, res) => {
-  try {
-    const results = await query(`
-      SELECT MIN(mindate) as oldest FROM (
-        SELECT MIN(date) as mindate FROM movements
-        UNION ALL SELECT MIN(date) FROM dispatches
-        UNION ALL SELECT MIN(date) FROM sales
-        UNION ALL SELECT MIN(date) FROM production_logs
-        UNION ALL SELECT MIN(date) FROM ransa_requests
-        UNION ALL SELECT MIN(date) FROM food_costing
-        UNION ALL SELECT MIN(created_at) FROM stock_adjustments
-        UNION ALL SELECT MIN(created_at) FROM activity_log
-      )
-    `);
-    res.json({ oldest: results.rows[0]?.oldest || null });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Export all transaction data as JSON (for Excel generation on frontend)
-app.get('/api/admin/export-data', async (req, res) => {
-  try {
-    const before = req.query.before || '9999-12-31';
-    const [movements, dispatches, sales, production_logs, ransa_requests, food_costing, stock_adjustments, activity_log] = await Promise.all([
-      query(`SELECT * FROM movements WHERE date <= ? ORDER BY date`, [before]),
-      query(`SELECT d.*, a.name as agro_name, p.name as product_name FROM dispatches d LEFT JOIN agros a ON d.agro_id = a.id LEFT JOIN products p ON d.product_id = p.id WHERE d.date <= ? ORDER BY d.date`, [before]),
-      query(`SELECT s.*, a.name as agro_name FROM sales s LEFT JOIN agros a ON s.agro_id = a.id WHERE s.date <= ? ORDER BY s.date`, [before]),
-      query(`SELECT * FROM production_logs WHERE date <= ? ORDER BY date`, [before]),
-      query(`SELECT * FROM ransa_requests WHERE date <= ? ORDER BY date`, [before]),
-      query(`SELECT * FROM food_costing WHERE date <= ? ORDER BY date`, [before]),
-      query(`SELECT * FROM stock_adjustments WHERE created_at <= ? ORDER BY created_at`, [before]),
-      query(`SELECT * FROM activity_log WHERE created_at <= ? ORDER BY created_at`, [before])
-    ]);
-    res.json({
-      movements: movements.rows,
-      dispatches: dispatches.rows,
-      sales: sales.rows,
-      production_logs: production_logs.rows,
-      ransa_requests: ransa_requests.rows,
-      food_costing: food_costing.rows,
-      stock_adjustments: stock_adjustments.rows,
-      activity_log: activity_log.rows,
-      before
-    });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Delete all exported transaction data before a given date
-app.post('/api/admin/cleanup-data', async (req, res) => {
-  try {
-    const { before } = req.body;
-    if (!before) return res.status(400).json({ error: 'Se requiere fecha (before)' });
-    const deletes = [
-      query('DELETE FROM movements WHERE date <= ?', [before]),
-      query('DELETE FROM dispatches WHERE date <= ?', [before]),
-      query('DELETE FROM sales WHERE date <= ?', [before]),
-      query('DELETE FROM production_logs WHERE date <= ?', [before]),
-      query('DELETE FROM ransa_requests WHERE date <= ?', [before]),
-      query('DELETE FROM food_costing WHERE date <= ?', [before]),
-      query('DELETE FROM stock_adjustments WHERE created_at <= ?', [before]),
-      query('DELETE FROM activity_log WHERE created_at <= ?', [before])
-    ];
-    const results = await Promise.all(deletes);
-    res.json({ success: true, message: `Datos anteriores a ${before} eliminados correctamente` });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
 // Fallback to index.html for SPA
 app.get('*', (req, res) => {
   res.sendFile(join(__dirname, '../dist/index.html'));
@@ -1794,13 +1712,12 @@ app.get('*', (req, res) => {
 // Initialize database and run migration
 initDb().then(() => {
   migrateDatabase().then(async () => {
-    // Seed initial data only when inventory is completely fresh (no product rows)
+    // Seed cajas on first startup (inventory empty)
     try {
-      const { rows: invCheck } = await query('SELECT COUNT(*) as cnt FROM inventory WHERE initial_stock > 0');
-      if (parseInt(invCheck[0]?.cnt || 0) === 0) {
+      const { rows: countRows } = await query('SELECT COUNT(*) as cnt FROM inventory WHERE salidas_cajas > 0');
+      if (countRows[0].cnt === 0) {
         const { rows: pCount } = await query('SELECT COUNT(*) as cnt FROM products');
         if (pCount[0].cnt > 0) {
-          // Seed cajas (entradas and salidas)
           const cajasSeed = { "1618":326,"1619":200,"1620":114,"1621":45,"1622":43,"1623":45,"1624":105,"1625":55,"1626":46,"1627":53,"1628":186 };
           const salidasSeed = { "1618":103,"1619":41,"1620":105,"1621":32,"1622":20,"1623":34,"1624":1,"1625":55,"1626":2,"1627":21,"1628":33 };
           for (const [code, cajas] of Object.entries(cajasSeed)) {
@@ -1809,23 +1726,32 @@ initDb().then(() => {
               await query('UPDATE inventory SET entradas_cajas = ?, salidas_cajas = ? WHERE product_id = ?', [cajas, salidasSeed[code] || 0, pRows[0].id]);
             }
           }
-
-          // Seed Usulután (bodega_3)
-          const b3Seed = { "1618":9468.1,"1619":5948.9,"1624":4808.9,"1626":1072.3,"1628":5595.4 };
-          for (const [code, val] of Object.entries(b3Seed)) {
-            const { rows: pRows } = await query('SELECT id FROM products WHERE code = ?', [code]);
-            if (pRows.length > 0) {
-              await query('UPDATE inventory SET bodega_3 = ? WHERE product_id = ?', [val, pRows[0].id]);
-            }
-          }
-
-          console.log('[SEED] Initial data seeded successfully');
+          console.log('[SEED] Cajas seeded successfully');
         }
       } else {
-        console.log('[SEED] Inventory already has data — no seeding needed');
+        console.log('[SEED] Cajas already have data — no seeding needed');
       }
     } catch (err) {
       console.error('[SEED] Error:', err.message);
+    }
+
+    // Seed Usulután (bodega_3) stock on fresh database
+    try {
+      const { rows: b3Check } = await query('SELECT COUNT(*) as cnt FROM inventory WHERE bodega_3 > 0');
+      if (parseInt(b3Check[0]?.cnt || 0) === 0) {
+        const b3Seed = { "1618":9468.1,"1619":5948.9,"1624":4808.9,"1626":1072.3,"1628":5595.4 };
+        for (const [code, val] of Object.entries(b3Seed)) {
+          const { rows: pRows } = await query('SELECT id FROM products WHERE code = ?', [code]);
+          if (pRows.length > 0) {
+            await query('UPDATE inventory SET bodega_3 = ? WHERE product_id = ?', [val, pRows[0].id]);
+          }
+        }
+        console.log('[SEED] Usulután bodega_3 seeded successfully');
+      } else {
+        console.log('[SEED] Usulután bodega_3 already has data — no seeding needed');
+      }
+    } catch (err) {
+      console.error('[SEED] Usulután bodega_3 error:', err.message);
     }
     
     // Auto-backup before starting

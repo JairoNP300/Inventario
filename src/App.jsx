@@ -1,4 +1,4 @@
-// Render webhook trigger - 2026-05-26 09:10 - Data export + banner fix
+// Render webhook trigger - 2026-04-30 10:57 - Null char fix v2
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -28,8 +28,7 @@ import {
   Lock,
   MapPin,
   Bell,
-  Clock,
-  TrendingUp
+  Clock
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import ExcelJS from 'exceljs';
@@ -2538,9 +2537,6 @@ const ConfigPanel = ({ products, onUpdate }) => {
   const productRows = Array.isArray(products) ? products : [];
   const [editing, setEditing] = useState(null);
   const [formData, setFormData] = useState({ code: '', name: '', category: '', price_per_lb: '' });
-  const [exportBefore, setExportBefore] = useState('');
-  const [exporting, setExporting] = useState(false);
-  const [cleaning, setCleaning] = useState(false);
 
   const handleEdit = (p) => {
     setEditing(p.id);
@@ -2591,139 +2587,6 @@ const ConfigPanel = ({ products, onUpdate }) => {
           </tbody>
         </table>
       </div>
-
-      <div className="form-card" style={{ marginTop: '2rem' }}>
-        <h3>Exportar y Limpiar Datos Antiguos</h3>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '1rem' }}>
-          Exporta transacciones antiguas a Excel y elimínalas de la base de datos para mantener el sistema rápido.
-          Los datos maestros (productos, inventario, agro) no se ven afectados.
-        </p>
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
-          <label style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Exportar datos anteriores a:</label>
-          <input
-            type="date"
-            value={exportBefore}
-            onChange={e => setExportBefore(e.target.value)}
-            style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', borderRadius: '8px', padding: '8px 12px', color: 'white' }}
-          />
-          <button
-            onClick={async () => {
-              if (!exportBefore && !confirm('¿Exportar TODOS los datos? Esta acción generará un respaldo completo.')) return;
-              setExporting(true);
-              try {
-                const exportUrl = exportBefore ? `${API_BASE}/admin/export-data?before=${exportBefore}` : `${API_BASE}/admin/export-data`;
-                const r = await fetch(exportUrl);
-                const data = await r.json();
-                if (!data.movements?.length && !data.dispatches?.length && !data.sales?.length && !data.production_logs?.length && !data.ransa_requests?.length && !data.food_costing?.length && !data.stock_adjustments?.length && !data.activity_log?.length) {
-                  alert('No hay datos que exportar en el rango seleccionado.');
-                  setExporting(false);
-                  return;
-                }
-                const wb = new ExcelJS.Workbook();
-                wb.creator = 'Sistema de Logística y Control de Inventario';
-                wb.created = new Date();
-                const headerStyle = { font: { bold: true, color: { argb: 'FFFFFFFF' }, size: 10, name: 'Calibri' }, fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F172A' } }, alignment: { horizontal: 'center', vertical: 'middle', wrapText: true } };
-                const cellStyle = { font: { size: 9, name: 'Calibri', color: { argb: 'FF1E293B' } }, alignment: { horizontal: 'center', vertical: 'middle' } };
-                const addSheet = (name, rows, cols) => {
-                  if (!rows?.length) return;
-                  const ws = wb.addWorksheet(name, { pageSetup: { orientation: 'landscape', fitToPage: true } });
-                  ws.mergeCells(`A1:${String.fromCharCode(64 + cols.length)}1`);
-                  ws.getCell('A1').value = name;
-                  ws.getCell('A1').font = { bold: true, size: 14, color: { argb: 'FFFFFFFF' }, name: 'Calibri' };
-                  ws.getCell('A1').alignment = { horizontal: 'center', vertical: 'middle' };
-                  ws.getCell('A1').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F172A' } };
-                  ws.getRow(1).height = 32;
-                  const hRow = ws.addRow(cols.map(c => c.label));
-                  hRow.height = 22;
-                  hRow.eachCell(c => Object.assign(c, headerStyle));
-                  cols.forEach((c, i) => { ws.getColumn(i + 1).width = c.width; });
-                  rows.forEach((r, ri) => {
-                    const row = ws.addRow(cols.map(c => c.accessor ? c.accessor(r) : r[c.field] ?? ''));
-                    row.height = 18;
-                    row.eachCell(cell => Object.assign(cell, cellStyle));
-                  });
-                  ws.views = [{ state: 'frozen', ySplit: 3 }];
-                };
-                addSheet('Movimientos', data.movements, [
-                  { label: 'ID', field: 'id', width: 6 }, { label: 'Producto ID', field: 'product_id', width: 10 },
-                  { label: 'Origen', field: 'origin_warehouse', width: 16 }, { label: 'Destino', field: 'dest_warehouse', width: 16 },
-                  { label: 'Peso (Lbs)', field: 'weight', width: 12 }, { label: 'Tipo', field: 'type', width: 14 },
-                  { label: 'Fecha', field: 'date', width: 14 }
-                ]);
-                addSheet('Despachos', data.dispatches, [
-                  { label: 'ID', field: 'id', width: 6 }, { label: 'Producto', field: 'product_name', width: 36 },
-                  { label: 'Agro', field: 'agro_name', width: 24 }, { label: 'Peso (Lbs)', field: 'weight', width: 12 },
-                  { label: 'Valor ($)', field: 'value', width: 12 }, { label: 'Unidad', field: 'unit_type', width: 8 },
-                  { label: 'Descuento %', field: 'discount_percent', width: 10 }, { label: 'Fecha', field: 'date', width: 14 }
-                ]);
-                addSheet('Ventas', data.sales, [
-                  { label: 'ID', field: 'id', width: 6 }, { label: 'Agro', field: 'agro_name', width: 24 },
-                  { label: 'Monto ($)', field: 'amount_received', width: 14 }, { label: 'Fecha', field: 'date', width: 14 }
-                ]);
-                addSheet('Producción', data.production_logs, [
-                  { label: 'ID', field: 'id', width: 6 }, { label: 'Producto ID', field: 'product_id', width: 10 },
-                  { label: 'Peso Inicial', field: 'initial_weight', width: 14 }, { label: 'Corte', field: 'cut_weight', width: 12 },
-                  { label: 'Desperdicio', field: 'waste', width: 12 }, { label: 'Bodega', field: 'warehouse', width: 14 },
-                  { label: 'Fecha', field: 'date', width: 14 }
-                ]);
-                addSheet('Ransa', data.ransa_requests, [
-                  { label: 'ID', field: 'id', width: 6 }, { label: 'Producto ID', field: 'product_id', width: 10 },
-                  { label: 'Peso Tag', field: 'tag_weight', width: 12 }, { label: 'Peso Báscula', field: 'scale_weight', width: 14 },
-                  { label: 'Unidades/Caja', field: 'units_per_box', width: 12 }, { label: 'Unidad', field: 'unit_type', width: 8 },
-                  { label: 'Fecha', field: 'date', width: 14 }
-                ]);
-                addSheet('Food Costing', data.food_costing, [
-                  { label: 'ID', field: 'id', width: 6 }, { label: 'Evento', field: 'event_name', width: 30 },
-                  { label: 'Detalles', field: 'details', width: 30 }, { label: 'Peso Bruto', field: 'gross_weight', width: 12 },
-                  { label: 'Costo Bruto', field: 'gross_cost', width: 12 }, { label: 'Peso Cocido', field: 'cooked_weight', width: 12 },
-                  { label: 'Fecha', field: 'date', width: 14 }
-                ]);
-                addSheet('Ajustes Stock', data.stock_adjustments, [
-                  { label: 'ID', field: 'id', width: 6 }, { label: 'Producto ID', field: 'product_id', width: 10 },
-                  { label: 'Bodega', field: 'warehouse', width: 16 }, { label: 'Columna', field: 'bodega_col', width: 12 },
-                  { label: 'Cambio Peso', field: 'weight_change', width: 12 }, { label: 'Cambio Cajas', field: 'cajas_change', width: 12 },
-                  { label: 'Rol', field: 'role', width: 14 }, { label: 'Creado', field: 'created_at', width: 18 }
-                ]);
-                addSheet('Bitácora', data.activity_log, [
-                  { label: 'ID', field: 'id', width: 6 }, { label: 'Rol', field: 'role', width: 14 },
-                  { label: 'Acción', field: 'action', width: 16 }, { label: 'Entidad', field: 'entity', width: 14 },
-                  { label: 'Producto', field: 'product_name', width: 30 }, { label: 'Cantidad', field: 'quantity', width: 10 },
-                  { label: 'Unidad', field: 'unit', width: 8 }, { label: 'Ubicación', field: 'location', width: 16 },
-                  { label: 'Detalles', field: 'details', width: 40 }, { label: 'Fecha', field: 'created_at', width: 18 }
-                ]);
-                const buf = await wb.xlsx.writeBuffer();
-                const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-                const dlUrl = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = dlUrl;
-                a.download = `respaldo_${new Date().toISOString().split('T')[0]}.xlsx`;
-                a.click();
-                URL.revokeObjectURL(url);
-                if (confirm('¿Eliminar estos datos de la base de datos después de exportarlos? Se liberará espacio.')) {
-                  setCleaning(true);
-                  const cleanBefore = exportBefore || new Date().toISOString().split('T')[0];
-                  await fetch(`${API_BASE}/admin/cleanup-data`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ before: cleanBefore })
-                  });
-                  alert('Datos exportados y limpiados correctamente.');
-                  onUpdate();
-                }
-              } catch (e) {
-                alert('Error al exportar: ' + e.message);
-              }
-              setExporting(false);
-              setCleaning(false);
-            }}
-            className="btn-primary"
-            style={{ background: '#059669', width: 'auto' }}
-            disabled={exporting}
-          >
-            {exporting ? (cleaning ? 'Limpiando...' : 'Exportando...') : '📥 Exportar y Limpiar'}
-          </button>
-        </div>
-      </div>
     </div>
   );
 };
@@ -2736,10 +2599,6 @@ class TabErrorBoundary extends React.Component {
 
   static getDerivedStateFromError(error) {
     return { hasError: true, error };
-  }
-
-  componentDidCatch(error, info) {
-    console.error('TabErrorBoundary caught:', error, info);
   }
 
   componentDidUpdate(prevProps) {
@@ -2756,9 +2615,6 @@ class TabErrorBoundary extends React.Component {
           <p style={{ color: 'var(--text-muted)' }}>
             Ocurrió un error inesperado en el renderizado. Presiona refrescar y vuelve a intentar.
           </p>
-          <pre style={{ color: '#ef4444', fontSize: '0.75rem', background: 'rgba(0,0,0,0.3)', padding: '10px', borderRadius: '8px', maxHeight: '200px', overflow: 'auto', whiteSpace: 'pre-wrap' }}>
-            {this.state.error?.message}
-          </pre>
           <button className="btn-primary" onClick={this.props.onRetry} style={{ width: 'auto' }}>
             Reintentar
           </button>
@@ -2970,7 +2826,6 @@ const FoodCostingSystem = ({ products, onUpdate, logs = [] }) => {
   const [inlineEditing, setInlineEditing] = useState({});
   const [editingData, setEditingData] = useState({});
   const [helpRequestModal, setHelpRequestModal] = useState(false);
-  const [dataAge, setDataAge] = useState(null);
   const [helpRequestData, setHelpRequestData] = useState({
     recordId: null,
     issueType: '',
@@ -4742,10 +4597,6 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
         .then(r => r.json())
         .then(d => setMovements(extractRows(d)))
         .catch(() => setMovements([]));
-      fetch(`${API_BASE}/admin/data-age`)
-        .then(r => r.json())
-        .then(d => setDataAge(d.oldest))
-        .catch(() => setDataAge(null));
     };
     fetchData();
     const inv = setInterval(fetchData, 8000);
@@ -4793,24 +4644,6 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
     { id: 'config',       label: 'Admin',      icon: <ShieldCheck size={18} /> },
   ];
   const visibleTabs = allTabs.filter(t => roleCfg.tabs.includes(t.id));
-
-  let dataAgeBanner = null;
-  if (dataAge) {
-    try {
-      const d = Math.floor((Date.now() - new Date(dataAge).getTime()) / 86400000);
-      if (d >= 30) {
-        dataAgeBanner = (
-          <div style={{ background: 'linear-gradient(135deg, rgba(245,158,11,0.15), rgba(239,68,68,0.1))', border: '1px solid rgba(245,158,11,0.3)', borderRadius: '12px', padding: '10px 16px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.85rem' }}>
-            <span style={{ fontSize: '1.2rem' }}>⚠️</span>
-            <span>Hay datos desde hace <strong>{d} días</strong> ({new Date(dataAge).toLocaleDateString('es-SV')}). </span>
-            <button onClick={() => safeSetTab('config')} className="btn-primary" style={{ background: '#d97706', width: 'auto', padding: '6px 14px', fontSize: '0.8rem', marginLeft: 'auto', flexShrink: 0 }}>
-              Exportar ahora
-            </button>
-          </div>
-        );
-      }
-    } catch(e) { /* ignore date errors */ }
-  }
 
   return (
     <div className="app-container">
@@ -4864,8 +4697,6 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
           </div>
         </div>
       </div>
-
-      {dataAgeBanner}
 
       <nav className="nav-tabs">
         {visibleTabs.map(t => (
