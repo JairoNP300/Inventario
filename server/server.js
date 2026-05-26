@@ -1174,18 +1174,23 @@ app.put('/api/movements/:id', async (req, res) => {
 app.post('/api/production/process', async (req, res) => {
   const { product_id, initial_kg, cut_weight, waste, storage_cost, transport_cost, labor_cost, other_costs } = req.body;
   try {
-    await query(`
-        INSERT INTO production_logs (product_id, initial_weight, cut_weight, waste, storage_cost, transport_cost, labor_cost, other_costs)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-      `, [product_id, initial_kg, cut_weight, waste, storage_cost || 0, transport_cost || 0, labor_cost || 0, other_costs || 0]);
+    validateRequired(req.body, ['product_id', 'initial_kg', 'cut_weight']);
+    const initKg = sanitizeNumber(initial_kg, 'initial_kg', false);
+    const cutLbs = sanitizeNumber(cut_weight, 'cut_weight', false);
 
-    // bodega_1 (Ransa) stores KG → deduct initial_kg in KG
-    // bodega_2 (Soyapango) stores LBS → add cut_weight in LBS
-    await query('UPDATE inventory SET bodega_1 = bodega_1 - ? WHERE product_id = ?', [initial_kg, product_id]);
-    await query('UPDATE inventory SET bodega_2 = bodega_2 + ? WHERE product_id = ?', [cut_weight, product_id]);
+    // Verify sufficient stock in Ransa
+    const { rows: check } = await query('SELECT bodega_1 FROM inventory WHERE product_id = ?', [product_id]);
+    const current = parseFloat(check[0]?.bodega_1) || 0;
+    if (current < initKg) {
+      return res.status(400).json({ error: `Stock insuficiente en Ransa: tiene ${current.toFixed(2)} kg, necesita ${initKg.toFixed(2)} kg` });
+    }
 
-    await query('INSERT INTO movements (product_id, origin_warehouse, dest_warehouse, weight, type) VALUES (?, ?, ?, ?, ?)', [product_id, 'Ransa (KG)', 'Soyapango (Lbs)', cut_weight, 'TRANSFER']);
-
+    await runTransaction([
+      { sql: 'INSERT INTO production_logs (product_id, initial_weight, cut_weight, waste, storage_cost, transport_cost, labor_cost, other_costs) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', params: [product_id, initKg, cutLbs, waste || 0, storage_cost || 0, transport_cost || 0, labor_cost || 0, other_costs || 0] },
+      { sql: 'UPDATE inventory SET bodega_1 = bodega_1 - ? WHERE product_id = ?', params: [initKg, product_id] },
+      { sql: 'UPDATE inventory SET bodega_2 = bodega_2 + ? WHERE product_id = ?', params: [cutLbs, product_id] },
+      { sql: 'INSERT INTO movements (product_id, origin_warehouse, dest_warehouse, weight, type) VALUES (?, ?, ?, ?, ?)', params: [product_id, 'Ransa (KG)', 'Soyapango (Lbs)', cutLbs, 'TRANSFER'] }
+    ]);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
