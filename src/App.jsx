@@ -533,13 +533,12 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
                   <th className="col-cod">Cod</th>
                   <th className="col-carne">Carne / Producto</th>
                   <th className="col-qty">Stock Disponible (Lbs)</th>
-                  <th className="col-qty">Peso Sin Procesar</th>
                   <th className="col-qty">Ref. Kg</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredProducts.length === 0 ? (
-                  <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>Sin stock disponible</td></tr>
+                  <tr><td colSpan={4} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>Sin stock disponible</td></tr>
                 ) : (
                   filteredProducts.map(p => {
                     const totalLbs = ((p.stock_kg || 0) * 2.20462) + (p.stock_b2 || 0) + (p.stock_b3 || 0) + (p.stock_b4 || 0);
@@ -549,7 +548,6 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
                       <td className="col-cod" style={{ fontWeight: 800, color: 'var(--text-muted)' }}>{p.code}</td>
                       <td className="col-carne" style={{ fontWeight: 700, color: 'var(--text-main)' }}>{p.name}</td>
                       <td className="col-qty" style={{ color: totalLbs > 0 ? 'var(--success)' : 'var(--danger)', fontWeight: 800, fontSize: '1.1rem' }}>{totalLbs.toFixed(2)} <small>lbs</small></td>
-                      <td className="col-qty" style={{ color: '#f97316', fontWeight: 700 }}>{(Number(p.raw_total) || 0).toFixed(1)} <small>lbs</small></td>
                       <td className="col-qty" style={{ fontWeight: 600, color: 'rgba(255,255,255,0.3)' }}>{totalKg.toFixed(2)} <small>kg</small></td>
                     </tr>
                     );
@@ -802,7 +800,7 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
     });
 
     // Dark professional title bar
-    ws.mergeCells('A1:H1');
+    ws.mergeCells('A1:G1');
     const titleCell = ws.getCell('A1');
     titleCell.value = 'BALANCE CONSOLIDADO POR BODEGA';
     titleCell.font = { bold: true, size: 16, color: { argb: 'FFFFFFFF' }, name: 'Calibri' };
@@ -810,7 +808,7 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
     titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F172A' } };
     ws.getRow(1).height = 38;
 
-    ws.mergeCells('A2:H2');
+    ws.mergeCells('A2:G2');
     const subCell = ws.getCell('A2');
     subCell.value = `Generado: ${new Date().toLocaleString('es-SV', { timeZone: 'America/El_Salvador', dateStyle: 'long', timeStyle: 'short' })} | Unidad: ${viewUnit}`;
     subCell.font = { size: 9, color: { argb: 'FF94A3B8' }, italic: true, name: 'Calibri' };
