@@ -687,48 +687,63 @@ app.delete('/api/reports/ransa/:id', async (req, res) => {
 
 app.put('/api/reports/ransa/:id', async (req, res) => {
   const { id } = req.params;
-  const { product_id, tag_weight, scale_weight, units_per_box, unit_type, distribution_details } = req.body;
+  const { product_id, tag_weight, scale_weight, units_per_box, distribution_details } = req.body;
   try {
+    validateRequired(req.body, ['product_id', 'scale_weight', 'distribution_details']);
     const { rows } = await query('SELECT * FROM ransa_requests WHERE id = ?', [id]);
-    if (rows.length > 0) {
-      const old = rows[0];
+    if (rows.length === 0) return res.status(404).json({ error: 'Recepción no encontrada' });
+    const old = rows[0];
 
-      // bodega_1 (Ransa) = KG, bodega_2/3/4 = LBS
-      const oldKg = parseFloat(old.scale_weight) || 0;
-      const newKg = parseFloat(scale_weight) || 0;
-      const unitsPerBox = (units_per_box !== '' && units_per_box != null) ? parseInt(units_per_box) : null;
+    const oldKg = parseFloat(old.scale_weight) || 0;
+    const newKg = sanitizeNumber(scale_weight, 'scale_weight', false);
+    const tagKg = sanitizeNumber(tag_weight, 'tag_weight');
+    const unitsPerBox = (units_per_box !== '' && units_per_box != null) ? parseInt(units_per_box) : null;
 
-      const colMap = {
-        'Ransa': { col: 'bodega_1', factor: 1 },
-        'Lomas de San Francisco': { col: 'bodega_4', factor: 2.20462 },
-        'Central de abasto - Soyapango (Cuarto Frío)': { col: 'bodega_2', factor: 2.20462 },
-        'Central de abasto - Usulután (Cuarto Frío)': { col: 'bodega_3', factor: 2.20462 }
-      };
+    const colMap = {
+      'Ransa': { col: 'bodega_1', factor: 1 },
+      'Lomas de San Francisco': { col: 'bodega_4', factor: 2.20462 },
+      'Central de abasto - Soyapango (Cuarto Frío)': { col: 'bodega_2', factor: 2.20462 },
+      'Central de abasto - Usulután (Cuarto Frío)': { col: 'bodega_3', factor: 2.20462 }
+    };
 
-      // 1. Revert OLD stock
-      const oldTarget = colMap[old.distribution_details] || { col: 'bodega_1', factor: 1 };
-      const oldVal = oldKg * oldTarget.factor;
-      if (oldTarget.col !== 'bodega_1') {
-        await query(`UPDATE inventory SET bodega_1 = bodega_1 + ?, ${oldTarget.col} = ${oldTarget.col} - ?, initial_stock = initial_stock - ? WHERE product_id = ?`, [oldKg, oldVal, oldVal, old.product_id]);
-      } else {
-        await query(`UPDATE inventory SET ${oldTarget.col} = ${oldTarget.col} - ?, initial_stock = initial_stock - ? WHERE product_id = ?`, [oldVal, oldVal, old.product_id]);
+    const oldTarget = colMap[old.distribution_details] || { col: 'bodega_1', factor: 1 };
+    const oldVal = oldKg * oldTarget.factor;
+    const newTarget = colMap[distribution_details] || { col: 'bodega_1', factor: 1 };
+    const newVal = newKg * newTarget.factor;
+
+    // Verify sufficient stock before reverting
+    if (oldTarget.col !== 'bodega_1') {
+      const { rows: check } = await query(`SELECT ${oldTarget.col} FROM inventory WHERE product_id = ?`, [old.product_id]);
+      const current = parseFloat(check[0]?.[oldTarget.col]) || 0;
+      if (current < oldVal) {
+        return res.status(400).json({ error: `Stock insuficiente en destino para editar: tiene ${current.toFixed(2)} lbs, necesita ${oldVal.toFixed(2)} lbs` });
       }
-
-      // 2. Apply NEW stock
-      const newTarget = colMap[distribution_details] || { col: 'bodega_1', factor: 1 };
-      const newVal = newKg * newTarget.factor;
-      if (newTarget.col !== 'bodega_1') {
-        await query(`UPDATE inventory SET bodega_1 = bodega_1 - ?, ${newTarget.col} = ${newTarget.col} + ?, initial_stock = initial_stock + ? WHERE product_id = ?`, [newKg, newVal, newVal, product_id]);
-      } else {
-        await query(`UPDATE inventory SET ${newTarget.col} = ${newTarget.col} + ?, initial_stock = initial_stock + ? WHERE product_id = ?`, [newVal, newVal, product_id]);
-      }
-
-      // 3. Update Record
-      await query(`
-        UPDATE ransa_requests SET product_id = ?, tag_weight = ?, scale_weight = ?, units_per_box = ?, unit_type = ?, distribution_details = ?
-        WHERE id = ?
-      `, [product_id, parseFloat(tag_weight) || 0, newKg, unitsPerBox, 'Kg', distribution_details, id]);
     }
+    if (newTarget.col !== 'bodega_1') {
+      const { rows: check } = await query('SELECT bodega_1 FROM inventory WHERE product_id = ?', [product_id]);
+      const current = parseFloat(check[0]?.bodega_1) || 0;
+      if (current + oldKg < newKg) {
+        return res.status(400).json({ error: `Stock insuficiente en Ransa para la nueva distribución: necesita ${newKg.toFixed(2)} kg` });
+      }
+    }
+
+    const updates = [];
+    // 1. Revert OLD
+    if (oldTarget.col !== 'bodega_1') {
+      updates.push({ sql: `UPDATE inventory SET bodega_1 = bodega_1 + ?, ${oldTarget.col} = ${oldTarget.col} - ?, initial_stock = initial_stock - ? WHERE product_id = ?`, params: [oldKg, oldVal, oldVal, old.product_id] });
+    } else {
+      updates.push({ sql: `UPDATE inventory SET ${oldTarget.col} = ${oldTarget.col} - ?, initial_stock = initial_stock - ? WHERE product_id = ?`, params: [oldVal, oldVal, old.product_id] });
+    }
+    // 2. Apply NEW
+    if (newTarget.col !== 'bodega_1') {
+      updates.push({ sql: `UPDATE inventory SET bodega_1 = bodega_1 - ?, ${newTarget.col} = ${newTarget.col} + ?, initial_stock = initial_stock + ? WHERE product_id = ?`, params: [newKg, newVal, newVal, product_id] });
+    } else {
+      updates.push({ sql: `UPDATE inventory SET ${newTarget.col} = ${newTarget.col} + ?, initial_stock = initial_stock + ? WHERE product_id = ?`, params: [newVal, newVal, product_id] });
+    }
+    // 3. Update record
+    updates.push({ sql: 'UPDATE ransa_requests SET product_id = ?, tag_weight = ?, scale_weight = ?, units_per_box = ?, unit_type = ?, distribution_details = ? WHERE id = ?', params: [product_id, tagKg, newKg, unitsPerBox, 'Kg', distribution_details, id] });
+
+    await runTransaction(updates);
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
