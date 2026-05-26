@@ -427,7 +427,7 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
                   style={{ flex: 1, padding: '10px', borderRadius: '10px', border: formData.process_mode === 'ransa' ? '2px solid var(--accent)' : '1px solid var(--border)', cursor: 'pointer', fontWeight: 700, fontSize: '0.8rem', background: formData.process_mode === 'ransa' ? 'rgba(56,189,248,0.12)' : 'rgba(255,255,255,0.03)', color: formData.process_mode === 'ransa' ? 'var(--accent)' : 'var(--text-muted)' }}>
                   <Truck size={16} style={{ verticalAlign: 'middle', marginRight: '6px' }} /> Desde Ransa
                 </button>
-                <button type="button" onClick={() => setFormData({ ...formData, process_mode: 'direct', initial_weight: '0', cut_weight: '', waste: '0' })}
+                <button type="button" onClick={() => setFormData({ ...formData, process_mode: 'direct', dest_warehouse: 'Lomas de San Francisco', initial_weight: '0', cut_weight: '', waste: '0' })}
                   style={{ flex: 1, padding: '10px', borderRadius: '10px', border: formData.process_mode === 'direct' ? '2px solid #f59e0b' : '1px solid var(--border)', cursor: 'pointer', fontWeight: 700, fontSize: '0.8rem', background: formData.process_mode === 'direct' ? 'rgba(245,158,11,0.12)' : 'rgba(255,255,255,0.03)', color: formData.process_mode === 'direct' ? '#f59e0b' : 'var(--text-muted)' }}>
                   <ClipboardList size={16} style={{ verticalAlign: 'middle', marginRight: '6px' }} /> Peso Procesado Directo
                 </button>
