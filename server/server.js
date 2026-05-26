@@ -1019,6 +1019,12 @@ app.post('/api/inventory/undo-adjustment', async (req, res) => {
   }
 });
 
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error('[UNHANDLED ERROR]', err.message, err.stack);
+  res.status(500).json({ error: 'Error interno del servidor' });
+});
+
 app.get('/api/reports/inventory-status', async (req, res) => {
   try {
     const { rows } = await query(`
