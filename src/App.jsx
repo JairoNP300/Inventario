@@ -533,7 +533,7 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
           {formData.process_mode === 'direct' && formData.product_id && (() => {
             const prod = products.find(p => String(p.id) === String(formData.product_id));
             const selectedWarehouse = formData.dest_warehouse || 'Soyapango';
-            const warehouseLbs = parseFloat(prod?.[`stock_b${selectedWarehouse === 'Soyapango' ? '2' : selectedWarehouse === 'Usulután' ? '3' : '4`}] || 0);
+            const warehouseLbs = parseFloat(prod?.[`stock_b${selectedWarehouse === 'Soyapango' ? '2' : selectedWarehouse === 'Usulután' ? '3' : '4'}`] || 0);
             const warehouseLabel = selectedWarehouse === 'Soyapango' ? 'Soyapango (Lbs)' : selectedWarehouse === 'Usulután' ? 'Usulután (Lbs)' : 'Lomas de San Francisco (Lbs)';
             return (
               <div style={{ padding: '8px 12px', borderRadius: '8px', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)', marginBottom: '0.8rem', fontSize: '0.8rem' }}>
