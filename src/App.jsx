@@ -803,7 +803,7 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
     });
 
     // Dark professional title bar
-    ws.mergeCells('A1:G1');
+    ws.mergeCells('A1:H1');
     const titleCell = ws.getCell('A1');
     titleCell.value = 'BALANCE CONSOLIDADO POR BODEGA';
     titleCell.font = { bold: true, size: 16, color: { argb: 'FFFFFFFF' }, name: 'Calibri' };
@@ -811,7 +811,7 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
     titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F172A' } };
     ws.getRow(1).height = 38;
 
-    ws.mergeCells('A2:G2');
+    ws.mergeCells('A2:H2');
     const subCell = ws.getCell('A2');
     subCell.value = `Generado: ${new Date().toLocaleString('es-SV', { timeZone: 'America/El_Salvador', dateStyle: 'long', timeStyle: 'short' })} | Unidad: ${viewUnit}`;
     subCell.font = { size: 9, color: { argb: 'FF94A3B8' }, italic: true, name: 'Calibri' };
@@ -837,9 +837,9 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
     };
     const numFmt = '#,##0.0';
 
-    const headers = ['Producto', `Entradas (${viewUnit})`, `Ransa (${viewUnit})`, `Soyapango (${viewUnit})`, `Usulután (${viewUnit})`, `Lomas (${viewUnit})`, `Stock Actual (${viewUnit})`];
+    const headers = ['Producto', 'Peso Sin Procesar (Lbs)', `Entradas (${viewUnit})`, `Ransa (${viewUnit})`, `Soyapango (${viewUnit})`, `Usulután (${viewUnit})`, `Lomas (${viewUnit})`, `Stock Actual (${viewUnit})`];
     ws.getColumn(1).width = 44;
-    [2,3,4,5,6,7].forEach(c => { ws.getColumn(c).width = 20; });
+    [2,3,4,5,6,7,8].forEach(c => { ws.getColumn(c).width = 20; });
 
     const headerRow = ws.addRow(headers);
     headerRow.height = 26;
