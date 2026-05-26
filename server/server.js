@@ -48,6 +48,9 @@ app.get('/api/version', (req, res) => {
 });
 
 // --- DATABASE CONFIGURATION ---
+if (!process.env.DATABASE_URL && process.env.RENDER) {
+  process.env.DATABASE_URL = 'postgresql://inventario_db_10qr_user:ydiOhILknw2F4jI9V0mLH2aEg59gdE5g@dpg-d7j7v9rbc2fs739bovg0-a/inventario_db_10qr';
+}
 let isProduction = !!process.env.DATABASE_URL;
 let pool;
 let sqliteDb;
