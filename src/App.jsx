@@ -504,11 +504,27 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
           {formData.process_mode === 'direct' && (
             <div className="form-group">
               <label>Almacenar en Bodega</label>
-              <select value={formData.dest_warehouse || 'Soyapango'} onChange={e => setFormData({ ...formData, dest_warehouse: e.target.value })} required>
+              <select value={formData.dest_warehouse || 'Soyapango'} onChange={e => { setFormData({ ...formData, dest_warehouse: e.target.value }); setCart([]); }} required>
                 <option value="Soyapango">Soyapango (Lbs)</option>
                 <option value="Usulután">Usulután (Lbs)</option>
                 <option value="Lomas de San Francisco">Lomas de San Francisco (Lbs)</option>
               </select>
+              {cart.length > 0 && (
+                <div style={{ marginTop: '1rem', padding: '12px', borderRadius: '10px', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <strong style={{ color: '#f59e0b', fontSize: '0.85rem' }}>Carrito ({cart.length} pesos)</strong>
+                    <span style={{ color: '#f59e0b', fontWeight: 800 }}>Total: {cart.reduce((a, b) => a + b, 0).toFixed(2)} lbs</span>
+                  </div>
+                  <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                    {cart.map((w, i) => (
+                      <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 8px', borderRadius: '6px', marginBottom: '2px', background: i % 2 === 0 ? 'rgba(0,0,0,0.1)' : 'transparent' }}>
+                        <span style={{ fontSize: '0.85rem', color: 'var(--text-main)' }}>#{i + 1}: {w.toFixed(2)} lbs</span>
+                        <button type="button" onClick={() => setCart(prev => prev.filter((_, j) => j !== i))} style={{ padding: '2px 8px', borderRadius: '4px', border: 'none', background: 'rgba(239,68,68,0.2)', color: '#ef4444', cursor: 'pointer', fontSize: '0.75rem' }}>✕</button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
