@@ -1289,17 +1289,37 @@ app.put('/api/production/logs/:id', async (req, res) => {
   const { id } = req.params;
   const { initial_weight, cut_weight, waste } = req.body;
   try {
+    validateRequired(req.body, ['cut_weight']);
     const { rows } = await query('SELECT * FROM production_logs WHERE id = ?', [id]);
-    if (rows.length > 0) {
-      const old = rows[0];
-      // Revert old: restore KG to bodega_1, remove old LBS from bodega_2
-      await query('UPDATE inventory SET bodega_1 = bodega_1 + ? WHERE product_id = ?', [old.initial_weight, old.product_id]);
-      await query('UPDATE inventory SET bodega_2 = bodega_2 - ? WHERE product_id = ?', [old.cut_weight, old.product_id]);
-      // Apply new: deduct new KG from bodega_1, add new LBS to bodega_2
-      await query('UPDATE inventory SET bodega_1 = bodega_1 - ? WHERE product_id = ?', [initial_weight, old.product_id]);
-      await query('UPDATE inventory SET bodega_2 = bodega_2 + ? WHERE product_id = ?', [cut_weight, old.product_id]);
-      await query('UPDATE production_logs SET initial_weight = ?, cut_weight = ?, waste = ? WHERE id = ?', [initial_weight, cut_weight, waste, id]);
+    if (rows.length === 0) return res.status(404).json({ error: 'Producción no encontrada' });
+    const old = rows[0];
+    const initKg = sanitizeNumber(initial_weight, 'initial_weight');
+    const cutLbs = sanitizeNumber(cut_weight, 'cut_weight', false);
+    const wasteVal = sanitizeNumber(waste, 'waste');
+
+    // Verify sufficient stock for reverting old values
+    const { rows: check } = await query('SELECT bodega_2 FROM inventory WHERE product_id = ?', [old.product_id]);
+    const currentB2 = parseFloat(check[0]?.bodega_2) || 0;
+    if (currentB2 < old.cut_weight) {
+      return res.status(400).json({ error: `Stock insuficiente en Soyapango para editar: tiene ${currentB2.toFixed(2)} lbs, necesita ${old.cut_weight} lbs` });
     }
+    // Check Ransa stock for new deduction if increasing
+    if (initKg > old.initial_weight) {
+      const diff = initKg - old.initial_weight;
+      const { rows: checkB1 } = await query('SELECT bodega_1 FROM inventory WHERE product_id = ?', [old.product_id]);
+      const currentB1 = parseFloat(checkB1[0]?.bodega_1) || 0;
+      if (currentB1 < diff) {
+        return res.status(400).json({ error: `Stock insuficiente en Ransa para aumentar: tiene ${currentB1.toFixed(2)} kg, necesita ${diff.toFixed(2)} kg adicionales` });
+      }
+    }
+
+    await runTransaction([
+      { sql: 'UPDATE inventory SET bodega_1 = bodega_1 + ? WHERE product_id = ?', params: [old.initial_weight, old.product_id] },
+      { sql: 'UPDATE inventory SET bodega_2 = bodega_2 - ? WHERE product_id = ?', params: [old.cut_weight, old.product_id] },
+      { sql: 'UPDATE inventory SET bodega_1 = bodega_1 - ? WHERE product_id = ?', params: [initKg, old.product_id] },
+      { sql: 'UPDATE inventory SET bodega_2 = bodega_2 + ? WHERE product_id = ?', params: [cutLbs, old.product_id] },
+      { sql: 'UPDATE production_logs SET initial_weight = ?, cut_weight = ?, waste = ? WHERE id = ?', params: [initKg, cutLbs, wasteVal, id] }
+    ]);
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
