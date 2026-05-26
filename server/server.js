@@ -1261,53 +1261,154 @@ app.get('/api/agros', async (req, res) => {
 });
 
 app.post('/api/inventory/transfer', async (req, res) => {
-  const { product_id, origin, destination, origin_weight, dest_weight, weight, unit_type } = req.body;
-  try {
-    validateRequired(req.body, ['product_id', 'origin', 'destination', 'weight']);
-    const deductWeight = sanitizeNumber(origin_weight ?? weight ?? 0, 'weight', false);
-    const addWeight = sanitizeNumber(dest_weight ?? weight ?? 0, 'dest_weight', false);
-    const colMap = {
-      'Ransa': 'bodega_1',
-      'Central de abasto - Soyapango (Cuarto Frío)': 'bodega_2',
-      'Soyapango': 'bodega_2',
-      'Central de abasto - Usulután (Cuarto Frío)': 'bodega_3',
-      'Usulután': 'bodega_3',
-      'Lomas de San Francisco': 'bodega_4'
-    };
-    const originCol = colMap[origin];
-    const destCol = colMap[destination];
-    if (!originCol || !destCol) {
-      return res.status(400).json({ error: 'Origen o destino inválido' });
-    }
+   const { product_id, origin, destination, origin_weight, dest_weight, weight, unit_type } = req.body;
+   try {
+     validateRequired(req.body, ['product_id', 'origin', 'destination', 'weight']);
+     
+     // Define warehouse to column mapping and their respective units
+     const warehouseInfo = {
+       'Ransa': { col: 'bodega_1', unit: 'KG' },
+       'Central de abasto - Soyapango (Cuarto Frío)': { col: 'bodega_2', unit: 'Lbs' },
+       'Soyapango': { col: 'bodega_2', unit: 'Lbs' },
+       'Central de abasto - Usulután (Cuarto Frío)': { col: 'bodega_3', unit: 'Lbs' },
+       'Usulután': { col: 'bodega_3', unit: 'Lbs' },
+       'Lomas de San Francisco': { col: 'bodega_4', unit: 'Lbs' }
+     };
+     
+     const originInfo = warehouseInfo[origin];
+     const destInfo = warehouseInfo[destination];
+     
+     if (!originInfo || !destInfo) {
+       return res.status(400).json({ error: 'Origen o destino inválido' });
+     }
 
-    if (unit_type === 'Cajas') {
-      const boxCount = parseInt(weight) || 0;
-      if (boxCount > 0) {
-        await query('UPDATE inventory SET salidas_cajas = salidas_cajas + ? WHERE product_id = ?', [boxCount, product_id]);
-      }
-    } else {
-      // Verify sufficient stock
-      const { rows: check } = await query(`SELECT ${originCol} FROM inventory WHERE product_id = ?`, [product_id]);
-      const current = parseFloat(check[0]?.[originCol]) || 0;
-      if (current < deductWeight) {
-        return res.status(400).json({ error: `Stock insuficiente en origen: tiene ${current.toFixed(2)}, necesita ${deductWeight.toFixed(2)}` });
-      }
-    }
+     let deductWeightKg = 0; // Weight to deduct from origin in KG
+     let addWeightKg = 0;    // Weight to add to destination in KG
+     
+     if (unit_type === 'Cajas') {
+       // Handle box transfers - need to convert boxes to weight based on product
+       const boxCount = parseInt(weight) || 0;
+       if (boxCount <= 0) {
+         return res.status(400).json({ error: 'La cantidad de cajas debe ser mayor que 0' });
+       }
+       
+       // Get product weight per box to convert boxes to weight
+       const { rows: productRows } = await query('SELECT price_per_box FROM products WHERE id = ?', [product_id]);
+       const weightPerBoxKg = productRows[0]?.price_per_box ? parseFloat(productRows[0].price_per_box) / 2.20462 : 0; // Convert lbs to kg
+       
+       if (weightPerBoxKg <= 0) {
+         return res.status(400).json({ error: 'No se puede determinar el peso por caja del producto' });
+       }
+       
+       const totalWeightKg = boxCount * weightPerBoxKg;
+       deductWeightKg = totalWeightKg;
+       addWeightKg = totalWeightKg;
+       
+       // Update box counters
+       await query('UPDATE inventory SET salidas_cajas = salidas_cajas + ? WHERE product_id = ?', [boxCount, product_id]);
+     } else {
+       // Handle weight transfers
+       const originWeightProvided = origin_weight !== undefined && origin_weight !== null && origin_weight !== '';
+       const destWeightProvided = dest_weight !== undefined && dest_weight !== null && dest_weight !== '';
+       
+       // Determine weights based on what's provided
+       let weightValueKg = 0;
+       
+       if (originWeightProvided && destWeightProvided) {
+         // Both weights provided - use them directly with conversion to KG
+         const originWeightNum = parseFloat(origin_weight);
+         const destWeightNum = parseFloat(dest_weight);
+         
+         // Convert to KG based on origin unit
+         if (originInfo.unit === 'KG') {
+           weightValueKg = originWeightNum;
+         } else { // Lbs
+           weightValueKg = originWeightNum / 2.20462;
+         }
+         
+         // Verify the dest weight matches (within tolerance for conversion)
+         const expectedDestWeightKg = weightValueKg;
+         const actualDestWeightKg = destInfo.unit === 'KG' ? destWeightNum : destWeightNum / 2.20462;
+         
+         if (Math.abs(expectedDestWeightKg - actualDestWeightKg) > 0.01) {
+           return res.status(400).json({ error: 'Los pesos de origen y destino no son consistentes' });
+         }
+       } else if (originWeightProvided) {
+         // Only origin weight provided
+         const originWeightNum = parseFloat(origin_weight);
+         if (originInfo.unit === 'KG') {
+           weightValueKg = originWeightNum;
+         } else { // Lbs
+           weightValueKg = originWeightNum / 2.20462;
+         }
+       } else if (destWeightProvided) {
+         // Only dest weight provided
+         const destWeightNum = parseFloat(dest_weight);
+         if (destInfo.unit === 'KG') {
+           weightValueKg = destWeightNum;
+         } else { // Lbs
+           weightValueKg = destWeightNum / 2.20462;
+         }
+       } else {
+         // Only general weight provided - treat as origin weight
+         const weightNum = parseFloat(weight);
+         if (originInfo.unit === 'KG') {
+           weightValueKg = weightNum;
+         } else { // Lbs
+           weightValueKg = weightNum / 2.20462;
+         }
+       }
+       
+       deductWeightKg = weightValueKg;
+       addWeightKg = weightValueKg;
+       
+       // Verify sufficient stock in origin (convert to origin unit for comparison)
+       const { rows: check } = await query(`SELECT ${originInfo.col} FROM inventory WHERE product_id = ?`, [product_id]);
+       const currentInOriginUnit = parseFloat(check[0]?.[originInfo.col]) || 0;
+       const currentInKg = originInfo.unit === 'KG' ? currentInOriginUnit : currentInOriginUnit / 2.20462;
+       
+       if (currentInKg < deductWeightKg) {
+         const currentDisplay = originInfo.unit === 'KG' ? currentInOriginUnit : currentInOriginUnit;
+         const neededDisplay = originInfo.unit === 'KG' ? deductWeightKg * 2.20462 : deductWeightKg;
+         return res.status(400).json({ 
+           error: `Stock insuficiente en origen: tiene ${currentDisplay.toFixed(2)} ${originInfo.unit}, necesita ${neededDisplay.toFixed(2)} ${originInfo.unit}` 
+         });
+       }
+     }
 
-    const updates = unit_type === 'Cajas'
-      ? [{ sql: 'INSERT INTO movements (product_id, origin_warehouse, dest_warehouse, weight, type, origin_weight, dest_weight, unit_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', params: [product_id, origin, destination, deductWeight, 'TRANSFER', deductWeight, addWeight, unit_type || 'Lbs'] }]
-      : [
-          { sql: `UPDATE inventory SET ${originCol} = ${originCol} - ? WHERE product_id = ?`, params: [deductWeight, product_id] },
-          { sql: `UPDATE inventory SET ${destCol} = ${destCol} + ? WHERE product_id = ?`, params: [addWeight, product_id] },
-          { sql: 'INSERT INTO movements (product_id, origin_warehouse, dest_warehouse, weight, type, origin_weight, dest_weight, unit_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', params: [product_id, origin, destination, deductWeight, 'TRANSFER', deductWeight, addWeight, unit_type || 'Lbs'] }
-        ];
+     // Prepare inventory updates
+     const updates = [];
+     
+     // Deduct from origin
+     if (originInfo.unit === 'KG') {
+       updates.push({ sql: `UPDATE inventory SET ${originInfo.col} = ${originInfo.col} - ? WHERE product_id = ?`, params: [deductWeightKg, product_id] });
+     } else { // Lbs
+       updates.push({ sql: `UPDATE inventory SET ${originInfo.col} = ${originInfo.col} - ? WHERE product_id = ?`, params: [deductWeightKg * 2.20462, product_id] });
+     }
+     
+     // Add to destination
+     if (destInfo.unit === 'KG') {
+       updates.push({ sql: `UPDATE inventory SET ${destInfo.col} = ${destInfo.col} + ? WHERE product_id = ?`, params: [addWeightKg, product_id] });
+     } else { // Lbs
+       updates.push({ sql: `UPDATE inventory SET ${destInfo.col} = ${destInfo.col} + ? WHERE product_id = ?`, params: [addWeightKg * 2.20462, product_id] });
+     }
+     
+     // Record movement
+     const originWeightForLog = originInfo.unit === 'KG' ? deductWeightKg : deductWeightKg * 2.20462;
+     const destWeightForLog = destInfo.unit === 'KG' ? addWeightKg : addWeightKg * 2.20462;
+     const unitForLog = unit_type !== 'Cajas' ? (originInfo.unit === 'KG' ? 'KG' : 'Lbs') : unit_type;
+     
+     updates.push({
+       sql: 'INSERT INTO movements (product_id, origin_warehouse, dest_warehouse, weight, type, origin_weight, dest_weight, unit_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+       params: [product_id, origin, destination, unit_type === 'Cajas' ? parseInt(weight) : originWeightForLog, 'TRANSFER', originWeightForLog, destWeightForLog, unitForLog]
+     });
 
-    await runTransaction(updates);
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
+     await runTransaction(updates);
+     res.json({ success: true });
+   } catch (err) {
+     res.status(500).json({ error: err.message });
+   }
+ });
 
 // --- Movements (transfers) CRUD ---
 app.get('/api/movements', async (req, res) => {
