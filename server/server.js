@@ -1200,46 +1200,51 @@ app.get('/api/production/logs', async (req, res) => {
 app.post('/api/production/logs', async (req, res) => {
   const { product_id, initial_weight, cut_weight, waste, storage_cost, transport_cost, labor_cost, other_costs, process_mode, dest_warehouse } = req.body;
   try {
-    const initKg = parseFloat(initial_weight) || 0;
-    const cutLbs = parseFloat(cut_weight) || 0;
+    validateRequired(req.body, ['product_id', 'cut_weight']);
+    const initKg = sanitizeNumber(initial_weight, 'initial_weight');
+    const cutLbs = sanitizeNumber(cut_weight, 'cut_weight', false);
     const wasteVal = parseFloat(waste) || (initKg > 0 ? initKg * 2.20462 - cutLbs : 0);
 
-    await query(`
-      INSERT INTO production_logs (product_id, initial_weight, cut_weight, waste, storage_cost, transport_cost, labor_cost, other_costs)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `, [product_id, initKg, cutLbs, wasteVal, storage_cost || 0, transport_cost || 0, labor_cost || 0, other_costs || 0]);
+    const updates = [
+      { sql: 'INSERT INTO production_logs (product_id, initial_weight, cut_weight, waste, storage_cost, transport_cost, labor_cost, other_costs) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', params: [product_id, initKg, cutLbs, wasteVal, storage_cost || 0, transport_cost || 0, labor_cost || 0, other_costs || 0] }
+    ];
 
     if (process_mode === 'direct') {
-      // Directo: almacenar peso procesado en la bodega seleccionada
       const destColMap = {
         'Soyapango': 'bodega_2',
         'Usulután': 'bodega_3',
         'Lomas de San Francisco': 'bodega_4'
       };
-      const destCol = destColMap[dest_warehouse] || 'bodega_2';
-      if (cutLbs > 0) {
-        await query(`UPDATE inventory SET ${destCol} = ${destCol} + ? WHERE product_id = ?`, [cutLbs, product_id]);
+      const destCol = destColMap[dest_warehouse];
+      if (!destCol) {
+        return res.status(400).json({ error: 'Destino de producción directa inválido' });
       }
+      if (cutLbs > 0) {
+        updates.push({ sql: `UPDATE inventory SET ${destCol} = ${destCol} + ? WHERE product_id = ?`, params: [cutLbs, product_id] });
+      }
+      updates.push({ sql: 'INSERT INTO movements (product_id, origin_warehouse, dest_warehouse, weight, type) VALUES (?, ?, ?, ?, ?)', params: [product_id, 'Proceso directo', dest_warehouse, cutLbs, 'INCOME'] });
 
-      await query('INSERT INTO movements (product_id, origin_warehouse, dest_warehouse, weight, type) VALUES (?, ?, ?, ?, ?)',
-        [product_id, 'Proceso directo', dest_warehouse || 'Soyapango', cutLbs, 'INCOME']);
-
+      await runTransaction(updates);
       const { rows: pRowsProd } = await query('SELECT name FROM products WHERE id = ?', [product_id]);
       const pNameProd = pRowsProd[0]?.name || `Producto #${product_id}`;
-      await logActivity({ role: req.headers['x-role'] || 'desconocido', action: 'PRODUCCIÓN DIRECTA', entity: 'production_logs', product_name: pNameProd, quantity: cutLbs, unit: 'Lbs', location: dest_warehouse || 'Soyapango', details: `Peso procesado: ${cutLbs} lbs → ${dest_warehouse || 'Soyapango'}` });
+      await logActivity({ role: req.headers['x-role'] || 'desconocido', action: 'PRODUCCIÓN DIRECTA', entity: 'production_logs', product_name: pNameProd, quantity: cutLbs, unit: 'Lbs', location: dest_warehouse, details: `Peso procesado: ${cutLbs} lbs → ${dest_warehouse}` });
     } else if (initKg > 0) {
-      // Ransa: deduct from bodega_1, add to bodega_2
-      await query('UPDATE inventory SET bodega_1 = bodega_1 - ? WHERE product_id = ?', [initKg, product_id]);
-      await query('UPDATE inventory SET bodega_2 = bodega_2 + ? WHERE product_id = ?', [cutLbs, product_id]);
+      // Verify sufficient stock
+      const { rows: check } = await query('SELECT bodega_1 FROM inventory WHERE product_id = ?', [product_id]);
+      const current = parseFloat(check[0]?.bodega_1) || 0;
+      if (current < initKg) {
+        return res.status(400).json({ error: `Stock insuficiente en Ransa: tiene ${current.toFixed(2)} kg, necesita ${initKg.toFixed(2)} kg` });
+      }
+      updates.push({ sql: 'UPDATE inventory SET bodega_1 = bodega_1 - ? WHERE product_id = ?', params: [initKg, product_id] });
+      updates.push({ sql: 'UPDATE inventory SET bodega_2 = bodega_2 + ? WHERE product_id = ?', params: [cutLbs, product_id] });
+      updates.push({ sql: 'INSERT INTO movements (product_id, origin_warehouse, dest_warehouse, weight, type) VALUES (?, ?, ?, ?, ?)', params: [product_id, 'Ransa (KG)', 'Soyapango (Lbs)', cutLbs, 'TRANSFER'] });
 
-      await query('INSERT INTO movements (product_id, origin_warehouse, dest_warehouse, weight, type) VALUES (?, ?, ?, ?, ?)',
-        [product_id, 'Ransa (KG)', 'Soyapango (Lbs)', cutLbs, 'TRANSFER']);
-
+      await runTransaction(updates);
       const { rows: pRowsProd } = await query('SELECT name FROM products WHERE id = ?', [product_id]);
       const pNameProd = pRowsProd[0]?.name || `Producto #${product_id}`;
       await logActivity({ role: req.headers['x-role'] || 'desconocido', action: 'PRODUCCIÓN', entity: 'production_logs', product_name: pNameProd, quantity: initKg, unit: 'KG', location: 'Ransa → Soyapango', details: `Entrada: ${initKg} kg | Salida: ${cutLbs} lbs | Merma: ${wasteVal.toFixed(2)} lbs` });
     } else {
-      // initKg === 0, solo registrar
+      await runTransaction(updates);
       const { rows: pRowsProd } = await query('SELECT name FROM products WHERE id = ?', [product_id]);
       const pNameProd = pRowsProd[0]?.name || `Producto #${product_id}`;
       await logActivity({ role: req.headers['x-role'] || 'desconocido', action: 'PRODUCCIÓN', entity: 'production_logs', product_name: pNameProd, quantity: cutLbs, unit: 'Lbs', location: 'Proceso', details: `Salida: ${cutLbs} lbs` });
