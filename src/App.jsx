@@ -394,32 +394,18 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
         <form onSubmit={e => {
           e.preventDefault();
           const p = products.find(p => String(p.id) === String(formData.product_id));
-          if (formData.process_mode === 'direct' && cart.length > 0) {
-            const body = JSON.stringify({ product_id: formData.product_id, dest_warehouse: formData.dest_warehouse, weights: cart, process_mode: 'direct' });
-            apiFetch(`${API_BASE}/production/logs/batch`, { method: 'POST', body })
-              .then(r => r.json())
-              .then(data => {
-                if (data.error) { alert('Error: ' + data.error); return; }
-                setCart([]);
-                setFormData(prev => ({ ...prev, cut_weight: '' }));
-                onUpdate();
-              })
-              .catch(err => { console.error('Error producción:', err); alert('Error de conexión'); });
-          } else {
-            const body = { ...formData, product_name: p?.name || 'Unknown', date: new Date().toISOString() };
-            const method = editingId ? 'PUT' : 'POST';
-            const url = editingId ? `${API_BASE}/production/logs/${editingId}` : `${API_BASE}/production/logs`;
-            apiFetch(url, { method, body: JSON.stringify(body) })
-              .then(r => r.json())
-              .then(data => {
-                if (data.error) { alert('Error: ' + data.error); return; }
-                setFormData({ product_id: '', initial_weight: '', cut_weight: '', waste: '', storage_cost: '', transport_cost: '', labor_cost: '', other_costs: '', process_mode: 'ransa', dest_warehouse: 'Soyapango' });
-                setEditingId(null);
-                setCart([]);
-                onUpdate();
-              })
-              .catch(err => { console.error('Error producción:', err); alert('Error de conexión'); });
-          }
+          const body = { ...formData, product_name: p?.name || 'Unknown', date: new Date().toISOString() };
+          const method = editingId ? 'PUT' : 'POST';
+          const url = editingId ? `${API_BASE}/production/logs/${editingId}` : `${API_BASE}/production/logs`;
+          apiFetch(url, { method, body: JSON.stringify(body) })
+            .then(r => r.json())
+            .then(data => {
+              if (data.error) { alert('Error: ' + data.error); return; }
+              setFormData({ product_id: '', initial_weight: '', cut_weight: '', waste: '', storage_cost: '', transport_cost: '', labor_cost: '', other_costs: '', process_mode: 'ransa', dest_warehouse: 'Soyapango' });
+              setEditingId(null);
+              onUpdate();
+            })
+            .catch(err => { console.error('Error producción:', err); alert('Error de conexión'); });
         }} className="form-card">
           <h3>Panel de Conversión & Proceso</h3>
 
@@ -484,15 +470,25 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
                 <input type="number" step="0.01" value={formData.cut_weight} onChange={e => {
                   const c = e.target.value;
                   setFormData(prev => ({ ...prev, cut_weight: c, waste: prev.process_mode === 'direct' ? '0' : (parseFloat(prev.initial_weight || 0) - parseFloat(c || 0)).toFixed(2) }));
-                }} placeholder="0.00" required={!(formData.process_mode === 'direct' && cart.length > 0)} style={{ flex: 1 }} />
+                }} placeholder="0.00" required style={{ flex: 1 }} />
                 {formData.process_mode === 'direct' && (
                   <button type="button" onClick={() => {
                     const w = parseFloat(formData.cut_weight);
                     if (!w || w <= 0) { alert('Ingrese un peso válido'); return; }
-                    setCart(prev => [...prev, w]);
-                    setFormData(prev => ({ ...prev, cut_weight: '' }));
+                    const p = products.find(p => String(p.id) === String(formData.product_id));
+                    apiFetch(`${API_BASE}/production/logs`, {
+                      method: 'POST',
+                      body: JSON.stringify({ product_id: formData.product_id, product_name: p?.name || 'Unknown', cut_weight: w, process_mode: 'direct', dest_warehouse: 'Lomas de San Francisco', date: new Date().toISOString() })
+                    })
+                      .then(r => r.json())
+                      .then(data => {
+                        if (data.error) { alert('Error: ' + data.error); return; }
+                        setFormData(prev => ({ ...prev, cut_weight: '' }));
+                        onUpdate();
+                      })
+                      .catch(err => { console.error('Error producción:', err); alert('Error de conexión'); });
                   }} style={{ padding: '10px 16px', borderRadius: '10px', border: '2px solid #f59e0b', background: 'rgba(245,158,11,0.15)', color: '#f59e0b', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                    + Agregar al carrito
+                    + Agregar a Lomas
                   </button>
                 )}
               </div>
