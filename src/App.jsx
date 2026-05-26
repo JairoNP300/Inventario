@@ -4847,18 +4847,16 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
         </div>
       </div>
 
-      {dataAge && (() => {
-        const daysOld = Math.floor((Date.now() - new Date(dataAge).getTime()) / 86400000);
-        if (daysOld < 30) return null;
-        return (
-          <div style={{ background: 'linear-gradient(135deg, rgba(245,158,11,0.15), rgba(239,68,68,0.1))', border: '1px solid rgba(245,158,11,0.3)', borderRadius: '12px', padding: '10px 16px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.85rem' }}>
-            <span style={{ fontSize: '1.2rem' }}>⚠️</span>
-            <span>Hay datos desde hace <strong>{daysOld} días</strong> ({new Date(dataAge).toLocaleDateString('es-SV')}). </span>
-            <button onClick={() => safeSetTab('config')} className="btn-primary" style={{ background: '#d97706', width: 'auto', padding: '6px 14px', fontSize: '0.8rem', marginLeft: 'auto', flexShrink: 0 }}>
-              Exportar ahora
-            </button>
-          </div>
-        );
+      {dataAge && (function() {
+        try {
+          const daysOld = Math.floor((Date.now() - new Date(dataAge).getTime()) / 86400000);
+          if (daysOld < 30) return null;
+          return React.createElement('div', { style: { background: 'linear-gradient(135deg, rgba(245,158,11,0.15), rgba(239,68,68,0.1))', border: '1px solid rgba(245,158,11,0.3)', borderRadius: '12px', padding: '10px 16px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.85rem' } },
+            React.createElement('span', { style: { fontSize: '1.2rem' } }, '\u26A0\uFE0F'),
+            React.createElement('span', null, 'Hay datos desde hace ', React.createElement('strong', null, String(daysOld), ' d\u00EDas'), ' (', new Date(dataAge).toLocaleDateString('es-SV'), '). '),
+            React.createElement('button', { onClick: () => safeSetTab('config'), className: 'btn-primary', style: { background: '#d97706', width: 'auto', padding: '6px 14px', fontSize: '0.8rem', marginLeft: 'auto', flexShrink: 0 } }, 'Exportar ahora')
+          );
+        } catch(e) { return null; }
       })()}
 
       <nav className="nav-tabs">
