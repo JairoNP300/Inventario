@@ -550,7 +550,7 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
                       <td className="col-cod" style={{ fontWeight: 800, color: 'var(--text-muted)' }}>{p.code}</td>
                       <td className="col-carne" style={{ fontWeight: 700, color: 'var(--text-main)' }}>{p.name}</td>
                       <td className="col-qty" style={{ color: totalLbs > 0 ? 'var(--success)' : 'var(--danger)', fontWeight: 800, fontSize: '1.1rem' }}>{totalLbs.toFixed(2)} <small>lbs</small></td>
-                      <td className="col-qty" style={{ color: '#f97316', fontWeight: 700 }}>{toNum(p.raw_total).toFixed(1)} <small>lbs</small></td>
+                      <td className="col-qty" style={{ color: '#f97316', fontWeight: 700 }}>{(Number(p.raw_total) || 0).toFixed(1)} <small>lbs</small></td>
                       <td className="col-qty" style={{ fontWeight: 600, color: 'rgba(255,255,255,0.3)' }}>{totalKg.toFixed(2)} <small>kg</small></td>
                     </tr>
                     );
