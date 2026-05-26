@@ -28,7 +28,8 @@ import {
   Lock,
   MapPin,
   Bell,
-  Clock
+  Clock,
+  TrendingUp
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import ExcelJS from 'exceljs';
