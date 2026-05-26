@@ -314,7 +314,6 @@ const ProductIntelligenceCard = ({ product }) => {
             <span style={{ color: 'var(--text-muted)' }}>Soyapango: <b style={{ color: 'var(--accent)' }}>{n(product.stock_b2).toFixed(1)}lbs</b></span>
             <span style={{ color: 'var(--text-muted)' }}>Usulután: <b style={{ color: 'var(--accent)' }}>{n(product.stock_b3).toFixed(1)}lbs</b></span>
             <span style={{ color: 'var(--text-muted)' }}>Stock Cajas: <b style={{ color: '#f59e0b' }}>{n(product.stock_cajas).toFixed(0)}</b></span>
-            <span style={{ color: 'var(--text-muted)' }}>Peso Sin Procesar: <b style={{ color: '#f97316' }}>{n(product.raw_total).toFixed(1)}lbs</b></span>
           </div>
         </div>
         <div style={{ borderLeft: '1px solid var(--border-light)', paddingLeft: '25px' }}>
@@ -4874,13 +4873,6 @@ const AppShell = ({ role, roleCfg, onLogout }) => {
               </div>
             );
           })}
-
-          <div className="status-item" style={{ borderColor: 'rgba(249,115,22,0.3)' }}>
-            <div className="status-label">PESO SIN PROCESAR</div>
-            <div className="status-value" style={{ color: '#f97316' }}>
-              {Math.round(inventorySummary.reduce((acc, i) => acc + (parseFloat(i.raw_total) || 0), 0)).toLocaleString()} <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>LBS</span>
-            </div>
-          </div>
 
           <div className="status-item" style={{ borderColor: 'rgba(245,158,11,0.3)' }}>
             <div className="status-label">CAJAS TOTALES</div>
