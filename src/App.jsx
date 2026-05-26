@@ -411,7 +411,7 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
 
           <div className="form-group">
             <label>Producto a Procesar</label>
-            <select value={formData.product_id} onChange={e => { setFormData({ ...formData, product_id: e.target.value }); setCart([]); }} required>
+            <select value={formData.product_id} onChange={e => setFormData({ ...formData, product_id: e.target.value })} required>
               <option value="">Seleccione Producto...</option>
               {products.map(p => <option key={p.id} value={p.id}>{p.code ? `${p.code}: ` : ''}{p.name}</option>)}
             </select>
@@ -423,7 +423,7 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
             <div className="form-group">
               <label>Origen del Producto</label>
               <div style={{ display: 'flex', gap: '8px' }}>
-                <button type="button" onClick={() => { setFormData({ ...formData, process_mode: 'ransa', initial_weight: '', cut_weight: '', waste: '' }); setCart([]); }}
+                <button type="button" onClick={() => setFormData({ ...formData, process_mode: 'ransa', initial_weight: '', cut_weight: '', waste: '' })}
                   style={{ flex: 1, padding: '10px', borderRadius: '10px', border: formData.process_mode === 'ransa' ? '2px solid var(--accent)' : '1px solid var(--border)', cursor: 'pointer', fontWeight: 700, fontSize: '0.8rem', background: formData.process_mode === 'ransa' ? 'rgba(56,189,248,0.12)' : 'rgba(255,255,255,0.03)', color: formData.process_mode === 'ransa' ? 'var(--accent)' : 'var(--text-muted)' }}>
                   <Truck size={16} style={{ verticalAlign: 'middle', marginRight: '6px' }} /> Desde Ransa
                 </button>
@@ -495,31 +495,9 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
             </div>
           </div>
 
-          {/* Destino del peso procesado (solo modo directo) */}
           {formData.process_mode === 'direct' && (
-            <div className="form-group">
-              <label>Almacenar en Bodega</label>
-              <select value={formData.dest_warehouse || 'Soyapango'} onChange={e => { setFormData({ ...formData, dest_warehouse: e.target.value }); setCart([]); }} required>
-                <option value="Soyapango">Soyapango (Lbs)</option>
-                <option value="Usulután">Usulután (Lbs)</option>
-                <option value="Lomas de San Francisco">Lomas de San Francisco (Lbs)</option>
-              </select>
-              {cart.length > 0 && (
-                <div style={{ marginTop: '1rem', padding: '12px', borderRadius: '10px', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                    <strong style={{ color: '#f59e0b', fontSize: '0.85rem' }}>Carrito ({cart.length} pesos)</strong>
-                    <span style={{ color: '#f59e0b', fontWeight: 800 }}>Total: {cart.reduce((a, b) => a + b, 0).toFixed(2)} lbs</span>
-                  </div>
-                  <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
-                    {cart.map((w, i) => (
-                      <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 8px', borderRadius: '6px', marginBottom: '2px', background: i % 2 === 0 ? 'rgba(0,0,0,0.1)' : 'transparent' }}>
-                        <span style={{ fontSize: '0.85rem', color: 'var(--text-main)' }}>#{i + 1}: {w.toFixed(2)} lbs</span>
-                        <button type="button" onClick={() => setCart(prev => prev.filter((_, j) => j !== i))} style={{ padding: '2px 8px', borderRadius: '4px', border: 'none', background: 'rgba(239,68,68,0.2)', color: '#ef4444', cursor: 'pointer', fontSize: '0.75rem' }}>✕</button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+            <div style={{ padding: '8px 12px', borderRadius: '8px', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)', marginBottom: '0.8rem', fontSize: '0.8rem', color: '#f59e0b' }}>
+              Los pesos se agregarán directamente a <strong>Lomas de San Francisco (Lbs)</strong>
             </div>
           )}
 
@@ -542,7 +520,7 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
           </div>
 
           <button type="submit" className="btn-primary" style={{ background: editingId ? 'var(--secondary)' : 'var(--accent)', marginTop: '20px' }}>
-            {editingId ? <><Save size={18} /> Actualizar Conversión</> : formData.process_mode === 'direct' && cart.length > 0 ? <><Package size={18} /> Guardar {cart.length} pesos ({cart.reduce((a, b) => a + b, 0).toFixed(1)} lbs)</> : <><Package size={18} /> Finalizar Producción & Conversión</>}
+            {editingId ? <><Save size={18} /> Actualizar Conversión</> : <><Package size={18} /> Finalizar Producción & Conversión</>}
           </button>
           {editingId && <button type="button" onClick={() => { setEditingId(null); setFormData({ product_id: '', initial_kg: '', initial_weight: '', cut_weight: '', waste: '', storage_cost: '', transport_cost: '', labor_cost: '', other_costs: '' }); }} className="btn-primary" style={{ background: '#64748b', marginTop: '10px' }}>Cancelar Edición</button>}
         </form>
