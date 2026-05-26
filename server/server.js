@@ -46,6 +46,11 @@ app.get('/api/version', (req, res) => {
   res.send(version);
 });
 
+// Health check for Render (render.yaml healthCheckPath: /api)
+app.get('/api', (req, res) => {
+  res.json({ status: 'ok', time: new Date().toISOString() });
+});
+
 // --- DATABASE CONFIGURATION ---
 // Auto-detect: PostgreSQL if DATABASE_URL is set, else SQLite
 const isProduction = !!process.env.DATABASE_URL;
