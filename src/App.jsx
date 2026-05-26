@@ -497,7 +497,7 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
 
           {formData.process_mode === 'direct' && formData.product_id && (() => {
             const prod = products.find(p => String(p.id) === String(formData.product_id));
-            const lomasLbs = parseFloat(prod?.bodega_4 || 0);
+            const lomasLbs = parseFloat(prod?.stock_b4 || prod?.bodega_4 || 0);
             return (
               <div style={{ padding: '8px 12px', borderRadius: '8px', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)', marginBottom: '0.8rem', fontSize: '0.8rem' }}>
                 <span style={{ color: '#f59e0b' }}>Los pesos se agregarán directamente a <strong>Lomas de San Francisco (Lbs)</strong></span>
