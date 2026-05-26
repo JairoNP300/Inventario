@@ -1462,6 +1462,52 @@ app.post('/api/production/logs', async (req, res) => {
   }
 });
 
+// POST /api/production/logs/batch — carrito de procesado directo (múltiples pesos, un producto/destino)
+app.post('/api/production/logs/batch', async (req, res) => {
+  const { product_id, dest_warehouse, weights, process_mode } = req.body;
+  try {
+    validateRequired(req.body, ['product_id', 'dest_warehouse', 'weights']);
+    if (!Array.isArray(weights) || weights.length === 0) {
+      return res.status(400).json({ error: 'Debe incluir al menos un peso' });
+    }
+    const destColMap = {
+      'Soyapango': 'bodega_2',
+      'Usulután': 'bodega_3',
+      'Lomas de San Francisco': 'bodega_4'
+    };
+    const destCol = destColMap[dest_warehouse];
+    if (!destCol) return res.status(400).json({ error: 'Destino inválido' });
+
+    let totalLbs = 0;
+    const updates = [];
+    for (const w of weights) {
+      const lbs = sanitizeNumber(w, 'weight', false);
+      if (lbs <= 0) continue;
+      totalLbs += lbs;
+      updates.push({
+        sql: 'INSERT INTO production_logs (product_id, initial_weight, raw_weight, cut_weight, waste, dest_warehouse) VALUES (?, 0, 0, ?, 0, ?)',
+        params: [product_id, lbs, dest_warehouse]
+      });
+      updates.push({
+        sql: 'INSERT INTO movements (product_id, origin_warehouse, dest_warehouse, weight, type) VALUES (?, ?, ?, ?, ?)',
+        params: [product_id, 'Proceso directo', dest_warehouse, lbs, 'INCOME']
+      });
+    }
+    if (totalLbs <= 0) return res.status(400).json({ error: 'Todos los pesos son inválidos' });
+
+    updates.push({ sql: `UPDATE inventory SET ${destCol} = ${destCol} + ? WHERE product_id = ?`, params: [totalLbs, product_id] });
+    await runTransaction(updates);
+
+    const { rows: pRows } = await query('SELECT name FROM products WHERE id = ?', [product_id]);
+    const pName = pRows[0]?.name || `Producto #${product_id}`;
+    await logActivity({ role: req.headers['x-role'] || 'desconocido', action: 'PRODUCCIÓN DIRECTA (LOTE)', entity: 'production_logs', product_name: pName, quantity: totalLbs, unit: 'Lbs', location: dest_warehouse, details: `${weights.length} pesos | Total: ${totalLbs} lbs → ${dest_warehouse}` });
+
+    res.json({ success: true, totalLbs, count: weights.length });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.delete('/api/production/logs/:id', async (req, res) => {
   const { id } = req.params;
   try {
