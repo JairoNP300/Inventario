@@ -48,8 +48,7 @@ app.get('/api/version', (req, res) => {
 });
 
 // --- DATABASE CONFIGURATION ---
-// TEMPORARY: Force SQLite to restore functionality while PostgreSQL issues are investigated
-const isProduction = false; // Force SQLite for now
+const isProduction = !!process.env.DATABASE_URL; // PostgreSQL if DATABASE_URL is set, else SQLite
 let pool;
 let sqliteDb;
 
