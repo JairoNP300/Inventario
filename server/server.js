@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express';
 // import Database from 'better-sqlite3'; // Moved to dynamic import for production optimization
 
