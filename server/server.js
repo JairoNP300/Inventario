@@ -616,10 +616,15 @@ async function logActivity({ role = 'sistema', action, entity, details = '', pro
 // ─── ENDPOINT: obtener log de actividad (solo admin) ─────────────────────────
 app.get('/api/admin/activity', async (req, res) => {
   try {
-    const { rows } = await query(`SELECT * FROM activity_log ORDER BY created_at DESC LIMIT 200`);
-    res.json(rows);
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(500, Math.max(1, parseInt(req.query.limit) || 100));
+    const offset = (page - 1) * limit;
+    const { rows: countRows } = await query('SELECT COUNT(*) as total FROM activity_log');
+    const total = countRows[0]?.total || 0;
+    const { rows } = await query(`SELECT * FROM activity_log ORDER BY created_at DESC LIMIT ? OFFSET ?`, [limit, offset]);
+    res.json({ rows, total, page, limit, pages: Math.ceil(total / limit) });
   } catch (err) {
-    res.json([]);
+    res.json({ rows: [], total: 0, page: 1, limit: 100, pages: 0 });
   }
 });
 
@@ -800,17 +805,23 @@ app.post('/api/reports/ransa', async (req, res) => {
 
 app.get('/api/reports/dispatches', async (req, res) => {
   try {
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(200, Math.max(1, parseInt(req.query.limit) || 100));
+    const offset = (page - 1) * limit;
+    const { rows: countRows } = await query('SELECT COUNT(*) as total FROM dispatches');
+    const total = countRows[0]?.total || 0;
     const { rows } = await query(`
       SELECT d.*, p.name as product_name, a.name as agro_name 
       FROM dispatches d
       LEFT JOIN products p ON d.product_id = p.id
       LEFT JOIN agros a ON d.agro_id = a.id
       ORDER BY d.date DESC
-    `);
-    res.json(rows);
+      LIMIT ? OFFSET ?
+    `, [limit, offset]);
+    res.json({ rows, total, page, limit, pages: Math.ceil(total / limit) });
   } catch (err) {
     console.error('Error fetching dispatches:', err.message);
-    res.json([]);
+    res.json({ rows: [], total: 0, page: 1, limit: 100, pages: 0 });
   }
 });
 
