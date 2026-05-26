@@ -1724,18 +1724,17 @@ app.post('/api/admin/sync-catalog', async (req, res) => {
     for (const p of products) {
       await query('INSERT INTO products (code, name, category, price_per_lb) VALUES (?, ?, ?, ?)', p);
     }
-    // Ensure inventory exists for new products - includes all bodega columns
+    // Ensure inventory exists for each product — all values start at 0
     const { rows: prods } = await query('SELECT id, code FROM products');
     for (const p of prods) {
-      const physicalData = physicalInventoryData[p.code] || {};
       await query(`
         INSERT INTO inventory (product_id, bodega_1, bodega_2, bodega_3, bodega_4, initial_stock, current_stock, sold_stock)
-        VALUES (?, ?, 0, ?, 0, 100, 100, 0)
+        VALUES (?, 0, 0, 0, 0, 0, 0, 0)
         ON CONFLICT(product_id) DO NOTHING
-      `, [p.id, physicalData.bodega_1 || 0, physicalData.bodega_3 || 0]);
+      `, [p.id]);
     }
 
-    res.json({ success: true, message: 'Catálogo sincronizado con la imagen' });
+    res.json({ success: true, message: 'Catálogo sincronizado (inventario en cero)' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
