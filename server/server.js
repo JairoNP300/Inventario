@@ -902,6 +902,7 @@ app.post('/api/sales', async (req, res) => {
 app.post('/api/inventory/adjust', async (req, res) => {
   const { product_id, current_stock, initial_stock, cajas, warehouse, mode } = req.body;
   try {
+    validateRequired(req.body, ['product_id']);
     const colMap = {
       'Ransa': { col: 'bodega_1', unit: 'KG' },
       'Central de abasto - Soyapango (Cuarto Frío)': { col: 'bodega_2', unit: 'Lbs' },
@@ -913,38 +914,39 @@ app.post('/api/inventory/adjust', async (req, res) => {
 
     let weightChange = 0;
     let cajasChange = 0;
+    const updates = [];
 
     if (initial_stock !== undefined) {
-      await query('UPDATE inventory SET initial_stock = ? WHERE product_id = ?', [initial_stock, product_id]);
+      updates.push({ sql: 'UPDATE inventory SET initial_stock = ? WHERE product_id = ?', params: [sanitizeNumber(initial_stock, 'initial_stock'), product_id] });
     }
     if (current_stock !== undefined) {
+      const val = sanitizeNumber(current_stock, 'current_stock');
       if (mode === 'add') {
-        await query(`UPDATE inventory SET ${targetCol} = ${targetCol} + ? WHERE product_id = ?`, [current_stock, product_id]);
-        weightChange = current_stock;
+        updates.push({ sql: `UPDATE inventory SET ${targetCol} = ${targetCol} + ? WHERE product_id = ?`, params: [val, product_id] });
+        weightChange = val;
       } else {
-        await query(`UPDATE inventory SET ${targetCol} = ? WHERE product_id = ?`, [current_stock, product_id]);
-        weightChange = current_stock; // for logging
+        updates.push({ sql: `UPDATE inventory SET ${targetCol} = ? WHERE product_id = ?`, params: [val, product_id] });
+        weightChange = val;
       }
     }
     if (cajas !== undefined) {
-      // Get current entradas/salidas to compute proper adjustment
+      const cajasVal = sanitizeNumber(cajas, 'cajas');
       const { rows: curRows } = await query('SELECT entradas_cajas, salidas_cajas FROM inventory WHERE product_id = ?', [product_id]);
       const curEntradas = parseFloat(curRows[0]?.entradas_cajas) || 0;
       const curSalidas = parseFloat(curRows[0]?.salidas_cajas) || 0;
-      const curStock = curEntradas - curSalidas;
       if (mode === 'set') {
-        const diff = cajas - curStock;
-        // Adjust entradas_cajas to achieve target stock (preserves salidas/dispatch history)
-        await query('UPDATE inventory SET entradas_cajas = ? WHERE product_id = ?', [curSalidas + cajas, product_id]);
-        cajasChange = cajas;
+        updates.push({ sql: 'UPDATE inventory SET entradas_cajas = ? WHERE product_id = ?', params: [curSalidas + cajasVal, product_id] });
+        cajasChange = cajasVal;
       } else {
-        // Sumar mode: add to entradas (boxes arrived)
-        await query('UPDATE inventory SET entradas_cajas = entradas_cajas + ? WHERE product_id = ?', [cajas, product_id]);
-        cajasChange = cajas;
+        updates.push({ sql: 'UPDATE inventory SET entradas_cajas = entradas_cajas + ? WHERE product_id = ?', params: [cajasVal, product_id] });
+        cajasChange = cajasVal;
       }
     }
 
-    // Record in stock_adjustments
+    if (updates.length > 0) {
+      await runTransaction(updates);
+    }
+
     const adjInfo = await query(
       `INSERT INTO stock_adjustments (product_id, warehouse, bodega_col, weight_change, cajas_change, role) VALUES (?, ?, ?, ?, ?, ?) RETURNING id`,
       [product_id, warehouse, targetCol, weightChange, cajasChange, req.headers['x-role'] || 'desconocido']
