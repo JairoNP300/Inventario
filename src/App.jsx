@@ -333,7 +333,7 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
   const [editingId, setEditingId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [formData, setFormData] = useState({
-    product_id: '', initial_kg: '', initial_weight: '', cut_weight: '', waste: '',
+    product_id: '', initial_kg: '', initial_weight: '', raw_weight: '', cut_weight: '', waste: '',
     storage_cost: '', transport_cost: '', labor_cost: '', other_costs: '', process_mode: 'ransa', dest_warehouse: 'Soyapango'
   });
 
@@ -359,6 +359,7 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
       product_id: log.product_id,
       initial_kg: log.initial_kg,
       initial_weight: log.initial_weight,
+      raw_weight: log.raw_weight || '',
       cut_weight: log.cut_weight,
       waste: log.waste,
       storage_cost: log.storage_cost || '',
@@ -377,7 +378,7 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
       body: JSON.stringify(formData)
     }).then(() => {
       onUpdate();
-      setFormData({ product_id: '', initial_kg: '', initial_weight: '', cut_weight: '', waste: '', storage_cost: '', transport_cost: '', labor_cost: '', other_costs: '' });
+      setFormData({ product_id: '', initial_kg: '', initial_weight: '', raw_weight: '', cut_weight: '', waste: '', storage_cost: '', transport_cost: '', labor_cost: '', other_costs: '' });
       setEditingId(null);
       alert(editingId ? 'Cambios guardados correctamente' : 'Proceso registrado');
     });
@@ -401,7 +402,7 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
             .then(r => r.json())
             .then(data => {
               if (data.error) { alert('Error: ' + data.error); return; }
-              setFormData({ product_id: '', initial_weight: '', cut_weight: '', waste: '', storage_cost: '', transport_cost: '', labor_cost: '', other_costs: '', process_mode: 'ransa', dest_warehouse: 'Soyapango' });
+              setFormData({ product_id: '', initial_weight: '', raw_weight: '', cut_weight: '', waste: '', storage_cost: '', transport_cost: '', labor_cost: '', other_costs: '', process_mode: 'ransa', dest_warehouse: 'Soyapango' });
               setEditingId(null);
               onUpdate();
             })
@@ -458,6 +459,10 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
               </div>
             )}
             <div className="form-group">
+              <label>Peso Sin Procesar (Lbs)</label>
+              <input type="number" step="0.01" value={formData.raw_weight} onChange={e => setFormData({ ...formData, raw_weight: e.target.value })} placeholder="0.00" />
+            </div>
+            <div className="form-group">
               <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span>{formData.process_mode === 'direct' ? 'Peso Procesado (Lbs)' : 'Salida Limpia (Lbs)'}</span>
                 {formData.process_mode !== 'direct' && (
@@ -506,7 +511,7 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
           <button type="submit" className="btn-primary" style={{ background: editingId ? 'var(--secondary)' : 'var(--accent)', marginTop: '20px' }}>
             {editingId ? <><Save size={18} /> Actualizar Conversión</> : <><Package size={18} /> Finalizar Producción & Conversión</>}
           </button>
-          {editingId && <button type="button" onClick={() => { setEditingId(null); setFormData({ product_id: '', initial_kg: '', initial_weight: '', cut_weight: '', waste: '', storage_cost: '', transport_cost: '', labor_cost: '', other_costs: '' }); }} className="btn-primary" style={{ background: '#64748b', marginTop: '10px' }}>Cancelar Edición</button>}
+          {editingId && <button type="button" onClick={() => { setEditingId(null); setFormData({ product_id: '', initial_kg: '', initial_weight: '', raw_weight: '', cut_weight: '', waste: '', storage_cost: '', transport_cost: '', labor_cost: '', other_costs: '' }); }} className="btn-primary" style={{ background: '#64748b', marginTop: '10px' }}>Cancelar Edición</button>}
         </form>
 
           <div className="form-card">
@@ -2595,14 +2600,13 @@ const ConfigPanel = ({ products, onUpdate }) => {
       const r = await fetch(`${API_BASE}/admin/archive`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ year: archiveMonth.year, month: archiveMonth.month, deleteAfter: true })
+        body: JSON.stringify({ year: archiveMonth.year, month: archiveMonth.month })
       });
       const result = await r.json();
       if (result.error) { alert('Error: ' + result.error); return; }
-      alert(`Datos de ${archiveMonth.month}/${archiveMonth.year} archivados y eliminados de la BD`);
+      alert(`Respaldo creado: ${result.filename}`);
       fetchArchives();
       fetchDbStats();
-      onUpdate();
     } catch (e) {
       alert('Error al archivar: ' + e.message);
     }
@@ -2652,7 +2656,7 @@ const ConfigPanel = ({ products, onUpdate }) => {
       
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
         <h3 style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: 0 }}>
-          <Archive size={20} color="var(--accent)" /> Archivado de Datos
+          <Download size={20} color="var(--accent)" /> Respaldos por Mes
         </h3>
         <button onClick={() => { fetchArchives(); fetchDbStats(); }} className="btn-primary" style={{ width: 'auto', padding: '8px 16px', fontSize: '0.78rem' }}>
           <RefreshCcw size={14} /> Refrescar
@@ -2673,24 +2677,24 @@ const ConfigPanel = ({ products, onUpdate }) => {
         </div>
         <div>
           <Archive size={24} style={{ opacity: 0.5, marginBottom: '8px' }} />
-          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Archivos Generados</div>
+          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Respaldos Generados</div>
           <div style={{ fontSize: '1.2rem', fontWeight: 800 }}>{archiveList.length}</div>
         </div>
         <div>
-          <Clock size={24} style={{ opacity: 0.5, marginBottom: '8px' }} />
-          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Retención</div>
-          <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#10b981' }}>30 días</div>
+          <CheckCircle2 size={24} style={{ opacity: 0.5, marginBottom: '8px' }} />
+          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Datos en BD</div>
+          <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#10b981' }}>Intactos</div>
         </div>
       </div>
 
       {/* Manual Archive */}
       <div className="form-card" style={{ marginBottom: '1.5rem' }}>
         <h4 style={{ margin: '0 0 1rem 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Download size={16} /> Archivar Mes Manualmente
+          <Download size={16} /> Generar Respaldo Excel
         </h4>
         <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
-          Seleccioná un mes para exportar sus datos a Excel y eliminarlos de la base de datos.
-          Los datos se guardan en un archivo .xlsx con una hoja por cada tipo de registro.
+          Seleccioná un mes para generar un archivo Excel con todos sus datos como respaldo.
+          Los datos originales permanecen intactos en la base de datos.
         </p>
         <div style={{ display: 'flex', gap: '10px', alignItems: 'end', flexWrap: 'wrap' }}>
           <div className="form-group" style={{ margin: 0, minWidth: '120px' }}>
@@ -2709,8 +2713,8 @@ const ConfigPanel = ({ products, onUpdate }) => {
               ))}
             </select>
           </div>
-          <button onClick={handleManualArchive} disabled={archiving} className="btn-primary" style={{ width: 'auto', padding: '10px 24px', background: '#dc2626' }}>
-            {archiving ? 'Archivando...' : 'Archivar y Eliminar de BD'}
+          <button onClick={handleManualArchive} disabled={archiving} className="btn-primary" style={{ width: 'auto', padding: '10px 24px', background: '#2563eb' }}>
+            {archiving ? 'Generando...' : 'Generar Respaldo Excel'}
           </button>
           <button onClick={handleVacuum} className="btn-primary" style={{ width: 'auto', padding: '10px 24px', background: '#0891b2' }}>
             Optimizar BD (VACUUM)
@@ -2723,7 +2727,7 @@ const ConfigPanel = ({ products, onUpdate }) => {
         <h4 style={{ margin: '0 0 1rem 0' }}>Archivos Generados</h4>
         {archiveList.length === 0 ? (
           <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>
-            No hay archivos de archivado aún. Los archivos se generan automáticamente al iniciar el servidor cuando hay datos mayores a 30 días.
+            No hay respaldos generados aún. Los respaldos se generan automáticamente al iniciar el servidor.
           </p>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>

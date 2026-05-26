@@ -194,30 +194,26 @@ const ARCHIVE_TABLES = [
   { name: 'activity_log',   dateCol: 'created_at', label: 'Actividad' }
 ];
 
-// Auto-archive data older than 30 days into Excel files
+// Auto-backup data to Excel files (does NOT delete from DB)
 async function autoArchiveOldData() {
-  if (!sqliteDb) return; // Only works with SQLite (file-based)
+  if (!sqliteDb) return;
   try {
     await fs.mkdir(archiveDir, { recursive: true });
-    const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
     
-    // Collect distinct months with data older than cutoff
-    const monthsToArchive = new Set();
+    // Collect distinct months with data
+    const allMonths = new Set();
     for (const table of ARCHIVE_TABLES) {
       try {
-        const data = await query(`SELECT DISTINCT strftime('%Y-%m', ${table.dateCol}) as month FROM ${table.name} WHERE ${table.dateCol} < ? ORDER BY month`, [cutoff]);
+        const data = await query(`SELECT DISTINCT strftime('%Y-%m', ${table.dateCol}) as month FROM ${table.name} ORDER BY month`);
         for (const row of (data.rows || [])) {
-          if (row.month) monthsToArchive.add(row.month);
+          if (row.month) allMonths.add(row.month);
         }
-      } catch (e) { /* table might be empty */ }
+      } catch { /* skip */ }
     }
     
-    if (monthsToArchive.size === 0) {
-      console.log('[ARCHIVE] No hay datos anteriores a 30 d├¡as');
-      return;
-    }
+    if (allMonths.size === 0) return;
     
-    for (const month of monthsToArchive) {
+    for (const month of allMonths) {
       const [year, mon] = month.split('-');
       const archivePath = join(archiveDir, `Archivo_${year}_${mon}.xlsx`);
       
@@ -245,25 +241,14 @@ async function autoArchiveOldData() {
           ws.columns = keys.map(k => ({ header: k, key: k, width: 20 }));
           ws.addRows(rows);
           ws.getRow(1).font = { bold: true };
-        } catch (e) { /* skip if table query fails */ }
+        } catch { /* skip */ }
       }
       
       if (!hasData) continue;
       
       await workbook.xlsx.writeFile(archivePath);
-      console.log(`[ARCHIVE] Creado: Archivo_${year}_${mon}.xlsx`);
-      
-      // Delete archived data
-      for (const table of ARCHIVE_TABLES) {
-        try {
-          await query(`DELETE FROM ${table.name} WHERE ${table.dateCol} >= ? AND ${table.dateCol} < ?`, [startDate, endDate]);
-        } catch (e) { /* skip if delete fails */ }
-      }
-      
-      // Force VACUUM after each month
-      try { sqliteDb.exec('VACUUM'); } catch { /* ok */ }
+      console.log(`[ARCHIVE] Respaldo creado: Archivo_${year}_${mon}.xlsx (sin eliminar datos)`);
     }
-    console.log('[ARCHIVE] Archivo completado');
   } catch (e) {
     console.warn('[ARCHIVE] Error:', e.message);
   }
@@ -499,6 +484,18 @@ const migrateDatabase = async () => {
     console.log('dest_warehouse column added to production_logs');
   } catch(e) {
     console.log('dest_warehouse column already exists in production_logs');
+  }
+
+  // Add raw_weight column to production_logs if not exists
+  try {
+    if (isProduction) {
+      await query(`ALTER TABLE production_logs ADD COLUMN raw_weight DECIMAL(10,2) DEFAULT 0`);
+    } else {
+      sqliteDb.prepare("ALTER TABLE production_logs ADD COLUMN raw_weight DECIMAL(10,2) DEFAULT 0").run();
+    }
+    console.log('raw_weight column added to production_logs');
+  } catch(e) {
+    console.log('raw_weight column already exists in production_logs');
   }
 };
 
@@ -1406,15 +1403,16 @@ app.get('/api/production/logs', async (req, res) => {
 
 // POST /api/production/logs — usado por el formulario de producción del frontend
 app.post('/api/production/logs', async (req, res) => {
-  const { product_id, initial_weight, cut_weight, waste, storage_cost, transport_cost, labor_cost, other_costs, process_mode, dest_warehouse } = req.body;
+  const { product_id, initial_weight, raw_weight, cut_weight, waste, storage_cost, transport_cost, labor_cost, other_costs, process_mode, dest_warehouse } = req.body;
   try {
     validateRequired(req.body, ['product_id', 'cut_weight']);
     const initKg = initial_weight !== undefined && initial_weight !== '' ? sanitizeNumber(initial_weight, 'initial_weight') : 0;
+    const rawLbs = raw_weight !== undefined && raw_weight !== '' ? sanitizeNumber(raw_weight, 'raw_weight') : 0;
     const cutLbs = sanitizeNumber(cut_weight, 'cut_weight', false);
     const wasteVal = parseFloat(waste) || (initKg > 0 ? initKg * 2.20462 - cutLbs : 0);
 
     const updates = [
-      { sql: 'INSERT INTO production_logs (product_id, initial_weight, cut_weight, waste, storage_cost, transport_cost, labor_cost, other_costs, dest_warehouse) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', params: [product_id, initKg, cutLbs, wasteVal, storage_cost || 0, transport_cost || 0, labor_cost || 0, other_costs || 0, process_mode === 'direct' ? (dest_warehouse || 'Soyapango') : ''] }
+      { sql: 'INSERT INTO production_logs (product_id, initial_weight, raw_weight, cut_weight, waste, storage_cost, transport_cost, labor_cost, other_costs, dest_warehouse) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', params: [product_id, initKg, rawLbs, cutLbs, wasteVal, storage_cost || 0, transport_cost || 0, labor_cost || 0, other_costs || 0, process_mode === 'direct' ? (dest_warehouse || 'Soyapango') : ''] }
     ];
 
     if (process_mode === 'direct') {
@@ -1505,13 +1503,14 @@ app.delete('/api/production/logs/:id', async (req, res) => {
 
 app.put('/api/production/logs/:id', async (req, res) => {
   const { id } = req.params;
-  const { initial_weight, cut_weight, waste } = req.body;
+  const { initial_weight, raw_weight, cut_weight, waste } = req.body;
   try {
     validateRequired(req.body, ['cut_weight']);
     const { rows } = await query('SELECT * FROM production_logs WHERE id = ?', [id]);
     if (rows.length === 0) return res.status(404).json({ error: 'Producción no encontrada' });
     const old = rows[0];
     const initKg = sanitizeNumber(initial_weight, 'initial_weight');
+    const rawLbs = raw_weight !== undefined && raw_weight !== '' ? parseFloat(raw_weight) : 0;
     const cutLbs = sanitizeNumber(cut_weight, 'cut_weight', false);
     const wasteVal = sanitizeNumber(waste, 'waste');
 
@@ -1536,7 +1535,7 @@ app.put('/api/production/logs/:id', async (req, res) => {
       { sql: 'UPDATE inventory SET bodega_2 = bodega_2 - ? WHERE product_id = ?', params: [old.cut_weight, old.product_id] },
       { sql: 'UPDATE inventory SET bodega_1 = bodega_1 - ? WHERE product_id = ?', params: [initKg, old.product_id] },
       { sql: 'UPDATE inventory SET bodega_2 = bodega_2 + ? WHERE product_id = ?', params: [cutLbs, old.product_id] },
-      { sql: 'UPDATE production_logs SET initial_weight = ?, cut_weight = ?, waste = ? WHERE id = ?', params: [initKg, cutLbs, wasteVal, id] }
+      { sql: 'UPDATE production_logs SET initial_weight = ?, raw_weight = ?, cut_weight = ?, waste = ? WHERE id = ?', params: [initKg, rawLbs, cutLbs, wasteVal, id] }
     ]);
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
@@ -1893,10 +1892,10 @@ app.get('/api/admin/db-stats', async (req, res) => {
   }
 });
 
-// Manual archive: generate Excel for a month, return as download, optionally delete
+// Manual archive: generate Excel for a month and save to disk
 app.post('/api/admin/archive', async (req, res) => {
   try {
-    const { year, month, deleteAfter } = req.body;
+    const { year, month } = req.body;
     if (!year || !month) return res.status(400).json({ error: 'year y month son requeridos' });
     
     const workbook = await generateArchiveExcel(parseInt(year), parseInt(month));
@@ -1905,27 +1904,11 @@ app.post('/api/admin/archive', async (req, res) => {
     const mon = String(month).padStart(2, '0');
     const filename = `Archivo_${year}_${mon}.xlsx`;
     
-    if (deleteAfter && sqliteDb) {
-      // Save to disk and delete from DB
-      await fs.mkdir(archiveDir, { recursive: true });
-      await workbook.xlsx.writeFile(join(archiveDir, filename));
-      
-      const startDate = `${year}-${mon}-01`;
-      const nextM = parseInt(month) === 12 ? `${parseInt(year)+1}-01` : `${year}-${String(parseInt(month)+1).padStart(2,'0')}`;
-      const endDate = `${nextM}-01`;
-      
-      for (const table of ARCHIVE_TABLES) {
-        try { await query(`DELETE FROM ${table.name} WHERE ${table.dateCol} >= ? AND ${table.dateCol} < ?`, [startDate, endDate]); } catch { /* skip */ }
-      }
-      await runVacuum();
-      res.json({ success: true, message: `Datos de ${month}/${year} archivados y eliminados de la BD`, filename });
-    } else {
-      // Stream Excel directly as download
-      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-      await workbook.xlsx.write(res);
-      res.end();
-    }
+    // Save to disk (never delete from DB)
+    await fs.mkdir(archiveDir, { recursive: true });
+    await workbook.xlsx.writeFile(join(archiveDir, filename));
+    
+    res.json({ success: true, message: `Respaldo creado: ${filename} (los datos permanecen en la BD)`, filename });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -1996,6 +1979,17 @@ initDb().then(() => {
     app.listen(port, '0.0.0.0', () => {
       console.log(`Server running at port ${port}`);
       console.log('All changes applied: New locations, stock levels, and deduction logic');
+
+      // Trigger Render deploy on local startup (not on Render itself)
+      if (!process.env.RENDER) {
+        const DEPLOY_HOOK = process.env.RENDER_DEPLOY_HOOK_URL;
+        if (DEPLOY_HOOK) {
+          fetch(DEPLOY_HOOK, { method: 'POST' }).then(r => {
+            if (r.ok) console.log('🚀 Render deploy triggered via webhook');
+            else console.warn('⚠️ Render webhook responded', r.status);
+          }).catch(e => console.warn('⚠️ Render webhook error:', e.message));
+        }
+      }
 
       // Auto-deploy watcher: always active, auto-restarts on failure
       if (!process.env.RENDER) {
