@@ -395,18 +395,32 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
         <form onSubmit={e => {
           e.preventDefault();
           const p = products.find(p => String(p.id) === String(formData.product_id));
-          const body = { ...formData, product_name: p?.name || 'Unknown', date: new Date().toISOString() };
-          const method = editingId ? 'PUT' : 'POST';
-          const url = editingId ? `${API_BASE}/production/logs/${editingId}` : `${API_BASE}/production/logs`;
-          apiFetch(url, { method, body: JSON.stringify(body) })
-            .then(r => r.json())
-            .then(data => {
-              if (data.error) { alert('Error: ' + data.error); return; }
-              setFormData({ product_id: '', initial_weight: '', cut_weight: '', waste: '', storage_cost: '', transport_cost: '', labor_cost: '', other_costs: '', process_mode: 'ransa', dest_warehouse: 'Soyapango' });
-              setEditingId(null);
-              onUpdate();
-            })
-            .catch(err => { console.error('Error producción:', err); alert('Error de conexión'); });
+          if (formData.process_mode === 'direct' && cart.length > 0) {
+            const body = JSON.stringify({ product_id: formData.product_id, dest_warehouse: formData.dest_warehouse, weights: cart, process_mode: 'direct' });
+            apiFetch(`${API_BASE}/production/logs/batch`, { method: 'POST', body })
+              .then(r => r.json())
+              .then(data => {
+                if (data.error) { alert('Error: ' + data.error); return; }
+                setCart([]);
+                setFormData(prev => ({ ...prev, cut_weight: '' }));
+                onUpdate();
+              })
+              .catch(err => { console.error('Error producción:', err); alert('Error de conexión'); });
+          } else {
+            const body = { ...formData, product_name: p?.name || 'Unknown', date: new Date().toISOString() };
+            const method = editingId ? 'PUT' : 'POST';
+            const url = editingId ? `${API_BASE}/production/logs/${editingId}` : `${API_BASE}/production/logs`;
+            apiFetch(url, { method, body: JSON.stringify(body) })
+              .then(r => r.json())
+              .then(data => {
+                if (data.error) { alert('Error: ' + data.error); return; }
+                setFormData({ product_id: '', initial_weight: '', cut_weight: '', waste: '', storage_cost: '', transport_cost: '', labor_cost: '', other_costs: '', process_mode: 'ransa', dest_warehouse: 'Soyapango' });
+                setEditingId(null);
+                setCart([]);
+                onUpdate();
+              })
+              .catch(err => { console.error('Error producción:', err); alert('Error de conexión'); });
+          }
         }} className="form-card">
           <h3>Panel de Conversión & Proceso</h3>
 
