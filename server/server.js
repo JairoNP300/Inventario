@@ -1273,36 +1273,40 @@ app.put('/api/dispatches/:id', async (req, res) => {
   const { id } = req.params;
   const { weight, value } = req.body;
   try {
+    validateRequired(req.body, ['weight', 'value']);
     const { rows } = await query('SELECT * FROM dispatches WHERE id = ?', [id]);
-    if (rows.length > 0) {
-      const old = rows[0];
+    if (rows.length === 0) return res.status(404).json({ error: 'Despacho no encontrado' });
+    const old = rows[0];
 
-      // Map agro_id to bodega column
-      const agroToBodegaMap = {
-        1: 'bodega_1', // Ransa
-        2: 'bodega_2', // Soyapango
-        3: 'bodega_3', // Usulután
-        4: 'bodega_4'  // Lomas de San Francisco
-      };
-      const bodegaCol = agroToBodegaMap[old.agro_id] || 'bodega_1';
+    const agroToBodegaMap = {
+      1: 'bodega_1',
+      2: 'bodega_2',
+      3: 'bodega_3',
+      4: 'bodega_4'
+    };
+    const bodegaCol = agroToBodegaMap[old.agro_id] || 'bodega_1';
 
-      // Convert weights to lbs for inventory
-      let oldWeightInLbs = parseFloat(old.weight);
-      let newWeightInLbs = parseFloat(weight);
+    let oldWeightInLbs = parseFloat(old.weight);
+    let newWeightInLbs = sanitizeNumber(weight, 'weight', false);
 
-      if (old.unit_type === 'Kg') {
-        oldWeightInLbs = oldWeightInLbs * 2.20462;
+    if (old.unit_type === 'Kg') oldWeightInLbs *= 2.20462;
+    if (old.unit_type === 'Kg') newWeightInLbs *= 2.20462;
+
+    // If increasing dispatch, verify sufficient stock
+    if (newWeightInLbs > oldWeightInLbs) {
+      const diff = newWeightInLbs - oldWeightInLbs;
+      const { rows: check } = await query(`SELECT ${bodegaCol} FROM inventory WHERE product_id = ?`, [old.product_id]);
+      const current = parseFloat(check[0]?.[bodegaCol]) || 0;
+      if (current < diff) {
+        return res.status(400).json({ error: `Stock insuficiente para aumentar el despacho: tiene ${current.toFixed(2)} lbs, necesita ${diff.toFixed(2)} lbs adicionales` });
       }
-      // For new weight, we need to get the unit_type from the old record since it's not passed in PUT
-      if (old.unit_type === 'Kg') {
-        newWeightInLbs = newWeightInLbs * 2.20462;
-      }
-
-      // Diff reversal - add back old weight, subtract new weight
-      await query(`UPDATE inventory SET ${bodegaCol} = ${bodegaCol} + ?, sold_stock = sold_stock - ? WHERE product_id = ?`, [oldWeightInLbs, oldWeightInLbs, old.product_id]);
-      await query(`UPDATE inventory SET ${bodegaCol} = ${bodegaCol} - ?, sold_stock = sold_stock + ? WHERE product_id = ?`, [newWeightInLbs, newWeightInLbs, old.product_id]);
-      await query('UPDATE dispatches SET weight = ?, value = ? WHERE id = ?', [weight, value, id]);
     }
+
+    await runTransaction([
+      { sql: `UPDATE inventory SET ${bodegaCol} = ${bodegaCol} + ?, sold_stock = sold_stock - ? WHERE product_id = ?`, params: [oldWeightInLbs, oldWeightInLbs, old.product_id] },
+      { sql: `UPDATE inventory SET ${bodegaCol} = ${bodegaCol} - ?, sold_stock = sold_stock + ? WHERE product_id = ?`, params: [newWeightInLbs, newWeightInLbs, old.product_id] },
+      { sql: 'UPDATE dispatches SET weight = ?, value = ? WHERE id = ?', params: [weight, value, id] }
+    ]);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
