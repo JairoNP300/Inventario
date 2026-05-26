@@ -427,7 +427,7 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
                   style={{ flex: 1, padding: '10px', borderRadius: '10px', border: formData.process_mode === 'ransa' ? '2px solid var(--accent)' : '1px solid var(--border)', cursor: 'pointer', fontWeight: 700, fontSize: '0.8rem', background: formData.process_mode === 'ransa' ? 'rgba(56,189,248,0.12)' : 'rgba(255,255,255,0.03)', color: formData.process_mode === 'ransa' ? 'var(--accent)' : 'var(--text-muted)' }}>
                   <Truck size={16} style={{ verticalAlign: 'middle', marginRight: '6px' }} /> Desde Ransa
                 </button>
-                <button type="button" onClick={() => setFormData({ ...formData, process_mode: 'direct', dest_warehouse: 'Lomas de San Francisco', initial_weight: '0', cut_weight: '', waste: '0' })}
+                <button type="button" onClick={() => setFormData({ ...formData, process_mode: 'direct', dest_warehouse: formData.dest_warehouse || 'Lomas de San Francisco', initial_weight: '0', cut_weight: '', waste: '0' })}
                   style={{ flex: 1, padding: '10px', borderRadius: '10px', border: formData.process_mode === 'direct' ? '2px solid #f59e0b' : '1px solid var(--border)', cursor: 'pointer', fontWeight: 700, fontSize: '0.8rem', background: formData.process_mode === 'direct' ? 'rgba(245,158,11,0.12)' : 'rgba(255,255,255,0.03)', color: formData.process_mode === 'direct' ? '#f59e0b' : 'var(--text-muted)' }}>
                   <ClipboardList size={16} style={{ verticalAlign: 'middle', marginRight: '6px' }} /> Peso Procesado Directo
                 </button>
@@ -475,10 +475,12 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
                   <button type="button" onClick={() => {
                     const w = parseFloat(formData.cut_weight);
                     if (!w || w <= 0) { alert('Ingrese un peso válido'); return; }
+                    if (!formData.product_id) { alert('Seleccione un producto'); return; }
                     const p = products.find(p => String(p.id) === String(formData.product_id));
+                    const destWh = formData.dest_warehouse || 'Lomas de San Francisco';
                     apiFetch(`${API_BASE}/production/logs`, {
                       method: 'POST',
-                      body: JSON.stringify({ product_id: formData.product_id, product_name: p?.name || 'Unknown', cut_weight: w, process_mode: 'direct', dest_warehouse: 'Lomas de San Francisco', date: new Date().toISOString() })
+                      body: JSON.stringify({ product_id: formData.product_id, product_name: p?.name || 'Unknown', cut_weight: w, process_mode: 'direct', dest_warehouse: destWh, date: new Date().toISOString() })
                     })
                       .then(r => r.json())
                       .then(data => {
@@ -488,21 +490,61 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
                       })
                       .catch(err => { console.error('Error producción:', err); alert('Error de conexión'); });
                   }} style={{ padding: '10px 16px', borderRadius: '10px', border: '2px solid #f59e0b', background: 'rgba(245,158,11,0.15)', color: '#f59e0b', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                    + Agregar a Lomas
+                    + Agregar
                   </button>
                 )}
               </div>
             </div>
           </div>
 
+          {/* Selector de bodega destino para modo directo */}
+          {formData.process_mode === 'direct' && (
+            <div className="form-group">
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span>Bodega Destino</span>
+                <span style={{ fontSize: '0.7rem', color: '#f59e0b', fontWeight: 700, background: 'rgba(245,158,11,0.1)', padding: '2px 8px', borderRadius: '20px', border: '1px solid rgba(245,158,11,0.3)' }}>Peso Procesado Directo</span>
+              </label>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                {[
+                  { label: 'Lomas de San Francisco', value: 'Lomas de San Francisco', stockKey: 'stock_b4', stockAlt: 'bodega_4' },
+                  { label: 'Soyapango', value: 'Central de abasto - Soyapango (Cuarto Frío)', stockKey: 'stock_b2', stockAlt: 'bodega_2' },
+                  { label: 'Usulután', value: 'Central de abasto - Usulután (Cuarto Frío)', stockKey: 'stock_b3', stockAlt: 'bodega_3' }
+                ].map(opt => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, dest_warehouse: opt.value }))}
+                    style={{
+                      flex: 1, minWidth: '120px', padding: '10px 12px', borderRadius: '10px', cursor: 'pointer',
+                      fontWeight: 700, fontSize: '0.78rem', textAlign: 'center',
+                      border: formData.dest_warehouse === opt.value ? '2px solid #f59e0b' : '1px solid var(--border)',
+                      background: formData.dest_warehouse === opt.value ? 'rgba(245,158,11,0.15)' : 'rgba(255,255,255,0.03)',
+                      color: formData.dest_warehouse === opt.value ? '#f59e0b' : 'var(--text-muted)',
+                      transition: 'all 0.15s'
+                    }}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {formData.process_mode === 'direct' && formData.product_id && (() => {
             const prod = products.find(p => String(p.id) === String(formData.product_id));
-            const lomasLbs = parseFloat(prod?.stock_b4 || prod?.bodega_4 || 0);
+            const destWh = formData.dest_warehouse || 'Lomas de San Francisco';
+            const whMap = {
+              'Lomas de San Francisco': { label: 'Lomas de San Francisco', stockKey: 'stock_b4', stockAlt: 'bodega_4' },
+              'Central de abasto - Soyapango (Cuarto Frío)': { label: 'Soyapango', stockKey: 'stock_b2', stockAlt: 'bodega_2' },
+              'Central de abasto - Usulután (Cuarto Frío)': { label: 'Usulután', stockKey: 'stock_b3', stockAlt: 'bodega_3' }
+            };
+            const wh = whMap[destWh] || whMap['Lomas de San Francisco'];
+            const stockLbs = parseFloat(prod?.[wh.stockKey] || prod?.[wh.stockAlt] || 0);
             return (
               <div style={{ padding: '8px 12px', borderRadius: '8px', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)', marginBottom: '0.8rem', fontSize: '0.8rem' }}>
-                <span style={{ color: '#f59e0b' }}>Los pesos se agregarán directamente a <strong>Lomas de San Francisco (Lbs)</strong></span>
-                <div style={{ marginTop: '4px', color: lomasLbs > 0 ? '#f59e0b' : 'var(--text-muted)' }}>
-                  Stock actual en Lomas: <strong>{lomasLbs.toFixed(1)} lbs</strong>
+                <span style={{ color: '#f59e0b' }}>Los pesos se agregarán directamente a <strong>{wh.label} (Lbs)</strong></span>
+                <div style={{ marginTop: '4px', color: stockLbs > 0 ? '#f59e0b' : 'var(--text-muted)' }}>
+                  Stock actual en {wh.label}: <strong>{stockLbs.toFixed(1)} lbs</strong>
                 </div>
               </div>
             );
