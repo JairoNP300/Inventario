@@ -1256,7 +1256,7 @@ app.post('/api/production/logs', async (req, res) => {
   const { product_id, initial_weight, cut_weight, waste, storage_cost, transport_cost, labor_cost, other_costs, process_mode, dest_warehouse } = req.body;
   try {
     validateRequired(req.body, ['product_id', 'cut_weight']);
-    const initKg = sanitizeNumber(initial_weight, 'initial_weight');
+    const initKg = initial_weight !== undefined && initial_weight !== '' ? sanitizeNumber(initial_weight, 'initial_weight') : 0;
     const cutLbs = sanitizeNumber(cut_weight, 'cut_weight', false);
     const wasteVal = parseFloat(waste) || (initKg > 0 ? initKg * 2.20462 - cutLbs : 0);
 
