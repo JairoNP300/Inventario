@@ -1198,8 +1198,7 @@ app.get('/api/reports/inventory-status', async (req, res) => {
     const { rows } = await query(`
       SELECT p.code, p.name, i.initial_stock, i.sold_stock, i.bodega_1, i.bodega_2, i.bodega_3, i.bodega_4, i.entradas_cajas, i.salidas_cajas,
              (i.bodega_1 + i.bodega_2 + i.bodega_3 + i.bodega_4) as final_stock,
-             (i.entradas_cajas - i.salidas_cajas) as stock_cajas,
-             (SELECT COALESCE(SUM(pl.raw_weight), 0) FROM production_logs pl WHERE pl.product_id = i.product_id) as raw_total
+             (i.entradas_cajas - i.salidas_cajas) as stock_cajas
       FROM inventory i
       LEFT JOIN products p ON i.product_id = p.id
       ORDER BY CAST(p.code AS INTEGER) ASC
