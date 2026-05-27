@@ -1,0 +1,7 @@
+warning: in the working copy of 'server/init-db.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'server/server.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'server_err.log', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'server_out.log', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'server_test_out.log', LF will be replaced by CRLF the next time Git touches it
+To https://github.com/JairoNP300/Inventario.git
+   f791520..f934a5d  main -> main
