@@ -1,0 +1,86 @@
+📂 Iniciando SQLite...
+📁 Database path: C:\Users\Zetin\Downloads\Ventas-e-inventario-main\Ventas-e-inventario-main\inventario_oficial.db
+✅ SQLite inicializado
+Running database migration...
+discount_percent column already exists in dispatches
+cajas column already exists in inventory
+entradas_cajas/salidas_cajas columns already exist in inventory
+Database migration completed successfully
+origin_weight/dest_weight columns already exist in movements
+unit_type column already exists in movements
+dest_warehouse column already exists in production_logs
+raw_weight column already exists in production_logs
+[BACKUP] Database backed up to C:\Users\Zetin\Downloads\Ventas-e-inventario-main\Ventas-e-inventario-main\backups\inventario_20260527_0841.db
+Server running at port 3000
+All changes applied: New locations, stock levels, and deduction logic
+👀 Iniciando auto-deploy watcher...
+◇ injected env (0) from .env // tip: ⌘ suppress logs { quiet: true }
+🚀 SISTEMA DE SINCRONIZACIÓN AUTOMÁTICA (CLOUD) INICIADO
+👀 Vigilando cambios en todos los archivos del proyecto...
+✅ Auto-deploy HABILITADO
+💡 Sistema usará PostgreSQL cuando DATABASE_URL esté configurado
+🚀 Render se actualizará automáticamente con cada git push
+🚀 Render deploy triggered via webhook
+
+📌 Cambios pendientes detectados al iniciar. Publicando automáticamente...
+
+📤 Cambios detectados. Sincronizando con la nube (GitHub/Render)...
+[main 92e13e8] Actualización automática: 27/5/2026, 8:41:05 a.m.
+ 2 files changed, 0 insertions(+), 0 deletions(-)
+ create mode 100644 server_err.log
+✅ Sistema funcionando con auto-deploy activo
+
+📝 Archivo modificado: backups
+🚀 Deploy de Render disparado por webhook.
+✅ ¡Cambios subidos con éxito!
+🚀 Render se está actualizando automáticamente.
+   (La URL pública se actualizará en unos minutos)
+
+📝 Archivo modificado: server_err.log
+📝 Archivo modificado: server_out.log
+📝 Archivo modificado: server_out.log
+📝 Archivo modificado: server_out.log
+📝 Archivo modificado: server_out.log
+📝 Archivo modificado: server_out.log
+📝 Archivo modificado: server_out.log
+📝 Archivo modificado: server_out.log
+📝 Archivo modificado: server_out.log
+📝 Archivo modificado: server_out.log
+📝 Archivo modificado: server_out.log
+📝 Archivo modificado: server_out.log
+📝 Archivo modificado: server_out.log
+📝 Archivo modificado: server_out.log
+📝 Archivo modificado: server_out.log
+📝 Archivo modificado: server_out.log
+📝 Archivo modificado: server_out.log
+📝 Archivo modificado: server_out.log
+📝 Archivo modificado: server_out.log
+📝 Archivo modificado: server_out.log
+📝 Archivo modificado: server_out.log
+📝 Archivo modificado: server_out.log
+📝 Archivo modificado: server_out.log
+📝 Archivo modificado: server_out.log
+📝 Archivo modificado: server_out.log
+📝 Archivo modificado: server_out.log
+📝 Archivo modificado: server_out.log
+📝 Archivo modificado: server_out.log
+📝 Archivo modificado: server_out.log
+📝 Archivo modificado: server_out.log
+📝 Archivo modificado: server_out.log
+📝 Archivo modificado: server_out.log
+📝 Archivo modificado: server_out.log
+📝 Archivo modificado: server_out.log
+📝 Archivo modificado: server_out.log
+📝 Archivo modificado: server_out.log
+📝 Archivo modificado: server_out.log
+📝 Archivo modificado: server_out.log
+📝 Archivo modificado: server_out.log
+📝 Archivo modificado: server_out.log
+📝 Archivo modificado: server_out.log
+📝 Archivo modificado: server_out.log
+📝 Archivo modificado: server_out.log
+📝 Archivo modificado: server_out.log
+📝 Archivo modificado: server_out.log
+📝 Archivo modificado: server_out.log
+
+📤 Cambios detectados. Sincronizando con la nube (GitHub/Render)...
