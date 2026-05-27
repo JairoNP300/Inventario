@@ -326,31 +326,7 @@ async function exec(sql) {
 const migrateDatabase = async () => {
   console.log('Running database migration...');
 
-  // Agros are synced in initDb — do NOT delete user-added agros here
-  const agros = [
-    [1, 'Soyapango - Puesto'],
-    [2, 'Usulután - Puesto'],
-    [3, 'Agro Quezaltepeque'],
-    [4, 'Agro Aguilares'],
-    [5, 'Agro Opico'],
-    [6, 'MAG (Gobierno)'],
-    [7, 'CNR (Gobierno)'],
-    [8, 'Relaciones Exteriores (Gobierno)'],
-    [9, 'Lomas de San Francisco']
-  ];
-
-  for (const [id, name] of agros) {
-    try {
-      if (isProduction) {
-        await query('INSERT INTO agros (id, name) VALUES (?, ?) ON CONFLICT (id) DO NOTHING', [id, name]);
-      } else {
-        await query('INSERT OR IGNORE INTO agros (id, name) VALUES (?, ?)', [id, name]);
-      }
-      await query('UPDATE agros SET name = ? WHERE id = ?', [name, id]);
-    } catch (e) {
-      console.warn(`Failed to sync agro ${name}:`, e.message);
-    }
-  }
+  // Agros are synced by name in initDb — do NOT overwrite user-named agros here by hardcoded IDs
 
   // Ensure inventory rows exist for all products — NEVER overwrite existing data (initDb already handles this)
   // Fix existing tables (SQLite only handles one column at a time)
@@ -650,15 +626,18 @@ const initDb = async () => {
     ['1628', 'CARNE BOVINA CONGELADA SIN HUESO RECORTE DE CARNE 90 VL premium', 'Industrial', 4.65, 10.25, 90.00]
   ];
 
-  console.log('🔄 Automatizando sincronización de catálogo oficial...');
-  for (const p of products) {
-    // Only insert if not exists — NEVER overwrite user-modified prices or data
-    if (isProduction) {
-      await query('INSERT INTO products (code, name, category, price_per_lb, price_per_kg, price_per_box) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(name) DO NOTHING', p);
-    } else {
-      try {
-        await query('INSERT OR IGNORE INTO products (code, name, category, price_per_lb, price_per_kg, price_per_box) VALUES (?, ?, ?, ?, ?, ?)', p);
-      } catch (e) { }
+  // Only seed products on fresh install (table empty) — NEVER re-insert deleted products
+  const { rows: existingProducts } = await query('SELECT COUNT(*) as cnt FROM products');
+  if (parseInt(existingProducts[0]?.cnt || 0) === 0) {
+    console.log('🔄 Sembrando catálogo oficial de productos por primera vez...');
+    for (const p of products) {
+      if (isProduction) {
+        await query('INSERT INTO products (code, name, category, price_per_lb, price_per_kg, price_per_box) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(name) DO NOTHING', p);
+      } else {
+        try {
+          await query('INSERT OR IGNORE INTO products (code, name, category, price_per_lb, price_per_kg, price_per_box) VALUES (?, ?, ?, ?, ?, ?)', p);
+        } catch (e) { }
+      }
     }
   }
 
