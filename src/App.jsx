@@ -706,6 +706,8 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
   const [adjustments, setAdjustments] = useState([]);
   const [viewUnit, setViewUnit] = useState('Lbs');
   const [adjData, setAdjData] = useState({ product_id: '', current_stock: '', cajas: '', warehouse: 'Ransa', mode: 'add' });
+  const [editAdjData, setEditAdjData] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [quickKg, setQuickKg] = useState('100');
   const [quickWarehouse, setQuickWarehouse] = useState('Ransa');
   const [quickType, setQuickType] = useState('kg'); // 'kg' or 'cajas'
@@ -1277,6 +1279,7 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
                 <th style={{ textAlign: 'right', padding: '8px', color: 'var(--text-muted)' }}>Peso +</th>
                 <th style={{ textAlign: 'right', padding: '8px', color: 'var(--text-muted)' }}>Cajas +</th>
                 <th style={{ textAlign: 'center', padding: '8px', color: 'var(--text-muted)' }}>Fecha</th>
+                <th style={{ textAlign: 'center', padding: '8px', color: 'var(--text-muted)' }}>Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -1286,13 +1289,66 @@ const StatusReport = ({ products, agros, productWeightData, refreshTrigger, onUp
                   <td style={{ padding: '8px' }}>{a.warehouse}</td>
                   <td style={{ padding: '8px', textAlign: 'right', color: 'var(--success)' }}>{parseFloat(a.weight_change) > 0 ? '+' + parseFloat(a.weight_change).toFixed(1) : '-'}</td>
                   <td style={{ padding: '8px', textAlign: 'right', color: '#f59e0b' }}>{parseInt(a.cajas_change) > 0 ? '+' + a.cajas_change : '-'}</td>
-                  <td style={{ padding: '8px', textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-muted)' }}>{new Date(a.created_at).toLocaleString('es-SV')}</td>
+                  <td style={{ padding: '8px', textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-muted)' }}>{(() => { try { return new Date((a.created_at || '').replace(' ', 'T')).toLocaleString('es-SV', { timeZone: 'America/El_Salvador' }); } catch(e) { return a.created_at || ''; } })()}</td>
+                  <td style={{ padding: '4px', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                    <button onClick={() => { setEditAdjData({ ...a, editWeight: parseFloat(a.weight_change) || 0, editCajas: parseInt(a.cajas_change) || 0, editWarehouse: a.warehouse }); setShowEditModal(true); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--accent)', padding: '4px', marginRight: '4px' }} title="Editar"><Edit2 size={14} /></button>
+                    <button onClick={async () => { if (!confirm('¿Eliminar este ajuste? (no afecta el stock)')) return; try { const r = await fetch(`${API_BASE}/inventory/adjustments/${a.id}`, { method: 'DELETE', headers: { 'x-role': sessionStorage.getItem('cp_role') || 'desconocido' } }); const d = await r.json(); if (d.error) { alert('Error: ' + d.error); return; } onUpdate(); } catch(e) { alert('Error: ' + e.message); } }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', padding: '4px' }} title="Eliminar"><Trash2 size={14} /></button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         )}
       </div>
+
+      {showEditModal && editAdjData && (() => {
+        const wMap = { 'Ransa': 'Ransa', 'Central de abasto - Soyapango (Cuarto Frío)': 'Soyapango', 'Soyapango': 'Soyapango', 'Usulután': 'Usulután', 'Lomas de San Francisco': 'Lomas', 'Lomas': 'Lomas' };
+        const wOptions = [
+          { label: 'Ransa (KG)', value: 'Ransa' },
+          { label: 'Soyapango (Lbs)', value: 'Central de abasto - Soyapango (Cuarto Frío)' },
+          { label: 'Usulután (Lbs)', value: 'Usulután' },
+          { label: 'Lomas (Lbs)', value: 'Lomas' }
+        ];
+        return (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setShowEditModal(false)}>
+            <div style={{ background: '#1e293b', borderRadius: '16px', padding: '2rem', width: '420px', maxWidth: '90vw', boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }} onClick={e => e.stopPropagation()}>
+              <h4 style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: '8px' }}><Edit2 size={16} /> Editar Ajuste #{editAdjData.id}</h4>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1.2rem' }}>{editAdjData.product_code}: {editAdjData.product_name}</p>
+              <div className="form-group">
+                <label>Bodega</label>
+                <select value={editAdjData.editWarehouse} onChange={e => setEditAdjData({ ...editAdjData, editWarehouse: e.target.value })} style={{ width: '100%', padding: '8px', borderRadius: '8px', border: '1px solid var(--border)', background: '#0f172a', color: '#fff', fontSize: '0.9rem' }}>
+                  {wOptions.map(w => <option key={w.value} value={w.value}>{w.label}</option>)}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Peso + ({editAdjData.editWarehouse === 'Ransa' ? 'KG' : 'Lbs'})</label>
+                <input type="number" step="0.01" min="0" value={editAdjData.editWeight} onChange={e => setEditAdjData({ ...editAdjData, editWeight: parseFloat(e.target.value) || 0 })} style={{ width: '100%', padding: '8px', borderRadius: '8px', border: '1px solid var(--border)', background: '#0f172a', color: '#fff', fontSize: '0.9rem' }} />
+              </div>
+              <div className="form-group">
+                <label>Cajas +</label>
+                <input type="number" step="1" min="0" value={editAdjData.editCajas} onChange={e => setEditAdjData({ ...editAdjData, editCajas: parseInt(e.target.value) || 0 })} style={{ width: '100%', padding: '8px', borderRadius: '8px', border: '1px solid var(--border)', background: '#0f172a', color: '#fff', fontSize: '0.9rem' }} />
+              </div>
+              <div style={{ display: 'flex', gap: '10px', marginTop: '1.5rem' }}>
+                <button onClick={() => setShowEditModal(false)} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', fontWeight: 600 }}>Cancelar</button>
+                <button onClick={async () => {
+                  try {
+                    const r = await fetch(`${API_BASE}/inventory/adjustments/${editAdjData.id}`, {
+                      method: 'PUT',
+                      headers: { 'Content-Type': 'application/json', 'x-role': sessionStorage.getItem('cp_role') || 'desconocido' },
+                      body: JSON.stringify({ warehouse: editAdjData.editWarehouse, weight_change: editAdjData.editWeight, cajas_change: editAdjData.editCajas })
+                    });
+                    const d = await r.json();
+                    if (d.error) { alert('Error: ' + d.error); return; }
+                    setShowEditModal(false);
+                    onUpdate();
+                    alert('Ajuste actualizado');
+                  } catch(e) { alert('Error: ' + e.message); }
+                }} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: '#020617', cursor: 'pointer', fontWeight: 700 }}>Guardar Cambios</button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       <div style={{ marginTop: '3.5rem', padding: '2.5rem', background: 'rgba(239, 68, 68, 0.05)', borderRadius: '24px', border: '1px solid rgba(239, 68, 68, 0.2)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>

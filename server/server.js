@@ -1144,6 +1144,96 @@ app.post('/api/inventory/undo-adjustment', async (req, res) => {
   }
 });
 
+app.put('/api/inventory/adjustments/:id', async (req, res) => {
+  const { id } = req.params;
+  const { warehouse, weight_change, cajas_change } = req.body;
+  try {
+    validateRequired(req.body, ['warehouse']);
+    const { rows } = await query('SELECT * FROM stock_adjustments WHERE id = ?', [id]);
+    if (rows.length === 0) return res.status(404).json({ error: 'Ajuste no encontrado' });
+    const old = rows[0];
+
+    const oldWeight = parseFloat(old.weight_change) || 0;
+    const oldCajas = parseInt(old.cajas_change) || 0;
+    const newWeight = parseFloat(weight_change) || 0;
+    const newCajas = parseInt(cajas_change) || 0;
+
+    const updates = [];
+    const bodegaCol = old.bodega_col;
+
+    // Reverse old values
+    if (oldWeight > 0) {
+      updates.push({ sql: `UPDATE inventory SET ${bodegaCol} = ${bodegaCol} - ? WHERE product_id = ?`, params: [oldWeight, old.product_id] });
+    }
+    if (oldCajas > 0) {
+      updates.push({ sql: 'UPDATE inventory SET entradas_cajas = GREATEST(entradas_cajas - ?, 0) WHERE product_id = ?', params: [oldCajas, old.product_id] });
+    }
+
+    // Apply new values
+    const targetCol = warehouse === 'Ransa' ? 'bodega_1' : warehouse === 'Soyapango' ? 'bodega_2' : warehouse === 'Usulután' ? 'bodega_3' : warehouse === 'Lomas' ? 'bodega_4' : null;
+    if (!targetCol) return res.status(400).json({ error: 'Bodega inválida' });
+
+    if (newWeight > 0) {
+      updates.push({ sql: `UPDATE inventory SET ${targetCol} = ${targetCol} + ? WHERE product_id = ?`, params: [newWeight, old.product_id] });
+    }
+    if (newCajas > 0) {
+      updates.push({ sql: 'UPDATE inventory SET entradas_cajas = entradas_cajas + ? WHERE product_id = ?', params: [newCajas, old.product_id] });
+    }
+
+    updates.push({
+      sql: 'UPDATE stock_adjustments SET warehouse = ?, bodega_col = ?, weight_change = ?, cajas_change = ? WHERE id = ?',
+      params: [warehouse, targetCol, newWeight, newCajas, id]
+    });
+
+    await runTransaction(updates);
+
+    const { rows: pRows } = await query('SELECT name FROM products WHERE id = ?', [old.product_id]);
+    const pName = pRows[0]?.name || `Producto #${old.product_id}`;
+    await logActivity({
+      role: req.headers['x-role'] || 'desconocido',
+      action: 'EDITAR AJUSTE',
+      entity: 'inventory',
+      product_name: pName,
+      quantity: newWeight || newCajas,
+      unit: warehouse === 'Ransa' ? 'KG' : 'Lbs',
+      location: warehouse,
+      details: `Ajuste #${id} editado: ${oldWeight}→${newWeight} ${warehouse === 'Ransa' ? 'KG' : 'Lbs'}, cajas ${oldCajas}→${newCajas}`
+    });
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/inventory/adjustments/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { rows } = await query('SELECT * FROM stock_adjustments WHERE id = ?', [id]);
+    if (rows.length === 0) return res.status(404).json({ error: 'Ajuste no encontrado' });
+    const adj = rows[0];
+
+    await query('DELETE FROM stock_adjustments WHERE id = ?', [id]);
+
+    const { rows: pRows } = await query('SELECT name FROM products WHERE id = ?', [adj.product_id]);
+    const pName = pRows[0]?.name || `Producto #${adj.product_id}`;
+    await logActivity({
+      role: req.headers['x-role'] || 'desconocido',
+      action: 'ELIMINAR AJUSTE',
+      entity: 'inventory',
+      product_name: pName,
+      quantity: parseFloat(adj.weight_change) || parseInt(adj.cajas_change) || 0,
+      unit: adj.warehouse === 'Ransa' ? 'KG' : 'Lbs',
+      location: adj.warehouse,
+      details: `Ajuste #${id} eliminado (sin revertir stock): ${adj.weight_change} ${adj.warehouse === 'Ransa' ? 'KG' : 'Lbs'}, ${adj.cajas_change} cajas`
+    });
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Global error handler
 app.use((err, req, res, next) => {
   console.error('[UNHANDLED ERROR]', err.message, err.stack);
