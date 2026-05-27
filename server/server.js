@@ -1268,6 +1268,34 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Error interno del servidor' });
 });
 
+// Temporary: restore entradas_cajas and salidas_cajas
+app.post('/api/admin/restore-cajas', async (req, res) => {
+  try {
+    const cajasData = [
+      { code: "1618", entrada: 326, salida: 325 },
+      { code: "1619", entrada: 200, salida: 152 },
+      { code: "1620", entrada: 114, salida: 105 },
+      { code: "1621", entrada: 45, salida: 32 },
+      { code: "1622", entrada: 43, salida: 20 },
+      { code: "1623", entrada: 45, salida: 34 },
+      { code: "1624", entrada: 105, salida: 103 },
+      { code: "1625", entrada: 55, salida: 55 },
+      { code: "1626", entrada: 46, salida: 46 },
+      { code: "1627", entrada: 53, salida: 21 },
+      { code: "1628", entrada: 186, salida: 137 }
+    ];
+    for (const c of cajasData) {
+      const { rows: p } = await query('SELECT id FROM products WHERE code = ?', [c.code]);
+      if (p.length > 0) {
+        await query('UPDATE inventory SET entradas_cajas = ?, salidas_cajas = ? WHERE product_id = ?', [c.entrada, c.salida, p[0].id]);
+      }
+    }
+    res.json({ success: true, message: 'Cajas restauradas' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get('/api/reports/inventory-status', async (req, res) => {
   try {
     const { rows } = await query(`
