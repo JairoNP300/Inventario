@@ -1168,7 +1168,9 @@ app.put('/api/inventory/adjustments/:id', async (req, res) => {
       updates.push({ sql: `UPDATE inventory SET ${bodegaCol} = ${bodegaCol} - ? WHERE product_id = ?`, params: [oldWeight, old.product_id] });
     }
     if (oldCajas > 0) {
-      updates.push({ sql: 'UPDATE inventory SET entradas_cajas = GREATEST(entradas_cajas - ?, 0) WHERE product_id = ?', params: [oldCajas, old.product_id] });
+      const { rows: ck } = await query('SELECT entradas_cajas FROM inventory WHERE product_id = ?', [old.product_id]);
+      const curCajas = parseFloat(ck[0]?.entradas_cajas) || 0;
+      updates.push({ sql: 'UPDATE inventory SET entradas_cajas = ? WHERE product_id = ?', params: [Math.max(0, curCajas - oldCajas), old.product_id] });
     }
 
     // Apply new values
