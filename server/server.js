@@ -400,6 +400,30 @@ const migrateDatabase = async () => {
 
   console.log('Database migration completed successfully');
 
+  // Clean up duplicate products by code (caused by encoding mismatches in old migrations)
+  try {
+    const { rows: dupGroups } = await query(`
+      SELECT code FROM products 
+      WHERE code IS NOT NULL AND code != ''
+      GROUP BY code HAVING COUNT(*) > 1
+    `);
+    for (const group of (dupGroups || [])) {
+      const { rows: dups } = await query(
+        'SELECT p.id, p.name, COALESCE(i.bodega_1,0)+COALESCE(i.bodega_2,0)+COALESCE(i.bodega_3,0)+COALESCE(i.bodega_4,0) as total_stock FROM products p LEFT JOIN inventory i ON p.id = i.product_id WHERE p.code = ? ORDER BY total_stock DESC, p.id ASC',
+        [group.code]
+      );
+      const keep = dups[0]; // Keep the one with most stock (or first if tied)
+      for (let j = 1; j < dups.length; j++) {
+        const delId = dups[j].id;
+        await query('DELETE FROM inventory WHERE product_id = ?', [delId]);
+        await query('DELETE FROM products WHERE id = ?', [delId]);
+        console.log(`[DEDUP] Removed duplicate product ID ${delId} (code ${group.code}, name: "${dups[j].name}"), keeping ID ${keep.id} ("${keep.name}")`);
+      }
+    }
+  } catch (e) {
+    console.warn('[DEDUP] Error cleaning duplicates:', e.message);
+  }
+
   // Add origin_weight and dest_weight to movements if not exists
   try {
     if (isProduction) {
@@ -1132,8 +1156,17 @@ app.get('/api/reports/inventory-status', async (req, res) => {
       SELECT p.code, p.name, i.initial_stock, i.sold_stock, i.bodega_1, i.bodega_2, i.bodega_3, i.bodega_4, i.entradas_cajas, i.salidas_cajas,
              (i.bodega_1 + i.bodega_2 + i.bodega_3 + i.bodega_4) as final_stock,
              (i.entradas_cajas - i.salidas_cajas) as stock_cajas
-      FROM inventory i
-      LEFT JOIN products p ON i.product_id = p.id
+      FROM (
+        SELECT id, code, name,
+          ROW_NUMBER() OVER (PARTITION BY code ORDER BY id) as rn
+        FROM products
+        WHERE code IS NOT NULL AND code != ''
+        UNION ALL
+        SELECT id, code, name,
+          1 as rn FROM products WHERE code IS NULL OR code = ''
+      ) p
+      JOIN inventory i ON p.id = i.product_id
+      WHERE p.rn = 1
       ORDER BY CAST(p.code AS INTEGER) ASC
     `);
     res.json(rows);
@@ -1157,6 +1190,7 @@ app.get('/api/reports/agro-sales', async (req, res) => {
 });
 
 app.get('/api/products', async (req, res) => {
+  // Use subquery to deduplicate by code (keep lowest ID per code)
   const { rows } = await query(`
     SELECT p.*, 
            i.bodega_1 as stock_kg,
@@ -1166,8 +1200,17 @@ app.get('/api/products', async (req, res) => {
            i.entradas_cajas,
            i.salidas_cajas,
            (i.entradas_cajas - i.salidas_cajas) as stock_cajas
-    FROM products p 
-    LEFT JOIN inventory i ON p.id = i.product_id 
+    FROM (
+      SELECT id, code, name, category, price_per_lb, price_per_kg, price_per_box,
+        ROW_NUMBER() OVER (PARTITION BY code ORDER BY id) as rn
+      FROM products
+      WHERE code IS NOT NULL AND code != ''
+      UNION ALL
+      SELECT id, code, name, category, price_per_lb, price_per_kg, price_per_box,
+        1 as rn FROM products WHERE code IS NULL OR code = ''
+    ) p
+    LEFT JOIN inventory i ON p.id = i.product_id
+    WHERE p.rn = 1
     ORDER BY CAST(p.code AS INTEGER) ASC
   `);
   res.json(rows);
