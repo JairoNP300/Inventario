@@ -532,9 +532,12 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
 
           {formData.process_mode === 'direct' && formData.product_id && (() => {
             const prod = products.find(p => String(p.id) === String(formData.product_id));
-            const selectedWarehouse = formData.dest_warehouse || 'Soyapango';
-            const warehouseLbs = parseFloat(prod?.[`stock_b${selectedWarehouse === 'Soyapango' ? '2' : selectedWarehouse === 'Usulután' ? '3' : '4'}`] || 0);
-            const warehouseLabel = selectedWarehouse === 'Soyapango' ? 'Soyapango (Lbs)' : selectedWarehouse === 'Usulután' ? 'Usulután (Lbs)' : 'Lomas de San Francisco (Lbs)';
+            const inv = inventoryRows.find(i => i.code === prod?.code || i.name === prod?.name);
+            const selectedWarehouse = formData.dest_warehouse || 'Lomas de San Francisco';
+            const bodegaMap = { 'Central de abasto - Soyapango (Cuarto Frío)': 'bodega_2', 'Central de abasto - Usulután (Cuarto Frío)': 'bodega_3', 'Lomas de San Francisco': 'bodega_4' };
+            const bodegaKey = bodegaMap[selectedWarehouse] || 'bodega_4';
+            const warehouseLbs = parseFloat(inv?.[bodegaKey] || 0);
+            const warehouseLabel = selectedWarehouse === 'Central de abasto - Soyapango (Cuarto Frío)' ? 'Soyapango (Lbs)' : selectedWarehouse === 'Central de abasto - Usulután (Cuarto Frío)' ? 'Usulután (Lbs)' : 'Lomas de San Francisco (Lbs)';
             return (
               <div style={{ padding: '8px 12px', borderRadius: '8px', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)', marginBottom: '0.8rem', fontSize: '0.8rem' }}>
                 <span style={{ color: '#f59e0b' }}>Los pesos se agregarán a <strong>{warehouseLabel}</strong></span>
