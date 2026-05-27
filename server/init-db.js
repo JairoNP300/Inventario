@@ -47,8 +47,7 @@ async function initializeDatabase() {
       );
     `);
 
-    // Insert new location options
-    await pool.query('DELETE FROM agros');
+    // Insert default location options — NEVER delete user-added agros
     const agros = [
       [1, 'Ransa'],
       [2, 'Soyapango'],

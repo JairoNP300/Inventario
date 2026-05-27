@@ -12,3 +12,7 @@ warning: in the working copy of 'server_err.log', LF will be replaced by CRLF th
 warning: in the working copy of 'server_out.log', LF will be replaced by CRLF the next time Git touches it
 To https://github.com/JairoNP300/Inventario.git
    2f40a46..1bb0706  main -> main
+warning: in the working copy of 'server_err.log', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'server_out.log', LF will be replaced by CRLF the next time Git touches it
+To https://github.com/JairoNP300/Inventario.git
+   1bb0706..f791520  main -> main

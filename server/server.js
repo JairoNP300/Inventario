@@ -400,28 +400,75 @@ const migrateDatabase = async () => {
 
   console.log('Database migration completed successfully');
 
-  // Clean up duplicate products by code (caused by encoding mismatches in old migrations)
+  // --- Seed default stock values for FRESH databases only ---
+  // If ALL products have bodega_1=0 AND initial_stock=0, this is a fresh database
+  try {
+    const { rows: freshCheck } = await query('SELECT COUNT(*) as total, COALESCE(SUM(initial_stock),0) as sum_init, COALESCE(SUM(bodega_1+bodega_2+bodega_3+bodega_4),0) as sum_bod FROM inventory');
+    if (freshCheck[0] && parseFloat(freshCheck[0].sum_init) === 0 && parseFloat(freshCheck[0].sum_bod) === 0 && parseInt(freshCheck[0].total) > 0) {
+      console.log('🔄 Base de datos fresca detectada — sembrando valores por defecto (ON CONFLICT DO NOTHING)...');
+      const { rows: invProds } = await query('SELECT id, code FROM products');
+      for (const p of invProds) {
+        if (isProduction) {
+          await query(`
+            INSERT INTO inventory (product_id, bodega_1, bodega_2, bodega_3, bodega_4, initial_stock, current_stock, sold_stock)
+            VALUES (?, 0, 100, 0, 100, 400, 400, 0)
+            ON CONFLICT(product_id) DO NOTHING
+          `, [p.id]);
+        } else {
+          await query(`
+            INSERT OR IGNORE INTO inventory (product_id, bodega_1, bodega_2, bodega_3, bodega_4, initial_stock, current_stock, sold_stock)
+            VALUES (?, 0, 100, 0, 100, 400, 400, 0)
+          `, [p.id]);
+        }
+      }
+      // Seed bodega_3 (Usulután) specific values for products that had stock
+      const b3Seed = { "1618": 9468.1, "1619": 5948.9, "1624": 4808.9, "1626": 1072.3, "1628": 5595.4 };
+      for (const [code, val] of Object.entries(b3Seed)) {
+        const { rows: pRows } = await query('SELECT id FROM products WHERE code = ?', [code]);
+        if (pRows.length > 0) {
+          await query('UPDATE inventory SET bodega_3 = ? WHERE product_id = ?', [val, pRows[0].id]);
+        }
+      }
+      // Seed bodega_4 (Lomas) specific values
+      const { rows: p1620 } = await query('SELECT id FROM products WHERE code = ?', ['1620']);
+      if (p1620.length > 0) {
+        await query('UPDATE inventory SET bodega_4 = ? WHERE product_id = ?', [163.02, p1620[0].id]);
+      }
+      console.log('✅ Valores por defecto sembrados correctamente');
+    } else {
+      console.log('ℹ️ Base con datos existentes — se omitió siembra de valores por defecto');
+    }
+  } catch (e) {
+    console.warn('[SEED] Error al sembrar valores por defecto:', e.message);
+  }
+
+  // --- One-time dedup: clean duplicate product codes (solo se ejecuta si hay duplicados) ---
   try {
     const { rows: dupGroups } = await query(`
       SELECT code FROM products 
       WHERE code IS NOT NULL AND code != ''
       GROUP BY code HAVING COUNT(*) > 1
     `);
-    for (const group of (dupGroups || [])) {
-      const { rows: dups } = await query(
-        'SELECT p.id, p.name, COALESCE(i.bodega_1,0)+COALESCE(i.bodega_2,0)+COALESCE(i.bodega_3,0)+COALESCE(i.bodega_4,0) as total_stock FROM products p LEFT JOIN inventory i ON p.id = i.product_id WHERE p.code = ? ORDER BY total_stock DESC, p.id ASC',
-        [group.code]
-      );
-      const keep = dups[0]; // Keep the one with most stock (or first if tied)
-      for (let j = 1; j < dups.length; j++) {
-        const delId = dups[j].id;
-        await query('DELETE FROM inventory WHERE product_id = ?', [delId]);
-        await query('DELETE FROM products WHERE id = ?', [delId]);
-        console.log(`[DEDUP] Removed duplicate product ID ${delId} (code ${group.code}, name: "${dups[j].name}"), keeping ID ${keep.id} ("${keep.name}")`);
+    if (dupGroups && dupGroups.length > 0) {
+      console.log(`[DEDUP] Encontrados ${dupGroups.length} grupo(s) de códigos duplicados — limpiando...`);
+      for (const group of dupGroups) {
+        const { rows: dups } = await query(
+          'SELECT p.id, p.name, COALESCE(i.bodega_1,0)+COALESCE(i.bodega_2,0)+COALESCE(i.bodega_3,0)+COALESCE(i.bodega_4,0) as total_stock FROM products p LEFT JOIN inventory i ON p.id = i.product_id WHERE p.code = ? ORDER BY total_stock DESC, p.id ASC',
+          [group.code]
+        );
+        const keep = dups[0];
+        for (let j = 1; j < dups.length; j++) {
+          const delId = dups[j].id;
+          await query('DELETE FROM inventory WHERE product_id = ?', [delId]);
+          await query('DELETE FROM products WHERE id = ?', [delId]);
+          console.log(`[DEDUP] Eliminado duplicado ID ${delId} (code ${group.code}, name: "${dups[j].name}"), conservado ID ${keep.id} ("${keep.name}")`);
+        }
       }
+    } else {
+      console.log('[DEDUP] No hay códigos duplicados — saltando');
     }
   } catch (e) {
-    console.warn('[DEDUP] Error cleaning duplicates:', e.message);
+    console.warn('[DEDUP] Error:', e.message);
   }
 
   // Add origin_weight and dest_weight to movements if not exists
