@@ -1224,8 +1224,24 @@ app.delete('/api/inventory/adjustments/:id', async (req, res) => {
     const { rows } = await query('SELECT * FROM stock_adjustments WHERE id = ?', [id]);
     if (rows.length === 0) return res.status(404).json({ error: 'Ajuste no encontrado' });
     const adj = rows[0];
+    const weightChange = parseFloat(adj.weight_change) || 0;
+    const cajasChange = parseInt(adj.cajas_change) || 0;
 
-    await query('DELETE FROM stock_adjustments WHERE id = ?', [id]);
+    const updates = [];
+    if (weightChange > 0) {
+      const { rows: check } = await query(`SELECT ${adj.bodega_col} FROM inventory WHERE product_id = ?`, [adj.product_id]);
+      const current = parseFloat(check[0]?.[adj.bodega_col]) || 0;
+      const revert = Math.min(weightChange, current);
+      updates.push({ sql: `UPDATE inventory SET ${adj.bodega_col} = ${adj.bodega_col} - ? WHERE product_id = ?`, params: [revert, adj.product_id] });
+    }
+    if (cajasChange > 0) {
+      const { rows: ck } = await query('SELECT entradas_cajas FROM inventory WHERE product_id = ?', [adj.product_id]);
+      const curCajas = parseFloat(ck[0]?.entradas_cajas) || 0;
+      updates.push({ sql: 'UPDATE inventory SET entradas_cajas = ? WHERE product_id = ?', params: [Math.max(0, curCajas - cajasChange), adj.product_id] });
+    }
+    updates.push({ sql: 'DELETE FROM stock_adjustments WHERE id = ?', params: [id] });
+
+    await runTransaction(updates);
 
     const { rows: pRows } = await query('SELECT name FROM products WHERE id = ?', [adj.product_id]);
     const pName = pRows[0]?.name || `Producto #${adj.product_id}`;
@@ -1234,10 +1250,10 @@ app.delete('/api/inventory/adjustments/:id', async (req, res) => {
       action: 'ELIMINAR AJUSTE',
       entity: 'inventory',
       product_name: pName,
-      quantity: parseFloat(adj.weight_change) || parseInt(adj.cajas_change) || 0,
+      quantity: weightChange || cajasChange,
       unit: adj.warehouse === 'Ransa' ? 'KG' : 'Lbs',
       location: adj.warehouse,
-      details: `Ajuste #${id} eliminado (sin revertir stock): ${adj.weight_change} ${adj.warehouse === 'Ransa' ? 'KG' : 'Lbs'}, ${adj.cajas_change} cajas`
+      details: `Ajuste #${id} eliminado: -${weightChange} ${adj.warehouse === 'Ransa' ? 'KG' : 'Lbs'}, -${cajasChange} cajas`
     });
 
     res.json({ success: true });
