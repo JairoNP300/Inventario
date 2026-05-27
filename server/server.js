@@ -1128,7 +1128,9 @@ app.post('/api/inventory/undo-adjustment', async (req, res) => {
       updates.push({ sql: `UPDATE inventory SET ${adj.bodega_col} = ${adj.bodega_col} - ? WHERE product_id = ?`, params: [weightChange, adj.product_id] });
     }
     if (cajasChange > 0) {
-      updates.push({ sql: 'UPDATE inventory SET entradas_cajas = GREATEST(entradas_cajas - ?, 0) WHERE product_id = ?', params: [cajasChange, adj.product_id] });
+      const { rows: ck } = await query('SELECT entradas_cajas FROM inventory WHERE product_id = ?', [adj.product_id]);
+      const curCajas = parseFloat(ck[0]?.entradas_cajas) || 0;
+      updates.push({ sql: 'UPDATE inventory SET entradas_cajas = ? WHERE product_id = ?', params: [Math.max(0, curCajas - cajasChange), adj.product_id] });
     }
     updates.push({ sql: 'DELETE FROM stock_adjustments WHERE id = ?', params: [id] });
 
