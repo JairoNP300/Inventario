@@ -434,6 +434,26 @@ const migrateDatabase = async () => {
       if (p1620.length > 0) {
         await query('UPDATE inventory SET bodega_4 = ? WHERE product_id = ?', [163.02, p1620[0].id]);
       }
+      // Seed cajas (entradas_cajas, salidas_cajas) for each product
+      const cajasSeed = [
+        { code: "1618", entradas: 326, salidas: 325 },
+        { code: "1619", entradas: 200, salidas: 152 },
+        { code: "1620", entradas: 114, salidas: 105 },
+        { code: "1621", entradas: 45, salidas: 32 },
+        { code: "1622", entradas: 43, salidas: 20 },
+        { code: "1623", entradas: 45, salidas: 34 },
+        { code: "1624", entradas: 105, salidas: 103 },
+        { code: "1625", entradas: 55, salidas: 55 },
+        { code: "1626", entradas: 46, salidas: 46 },
+        { code: "1627", entradas: 53, salidas: 21 },
+        { code: "1628", entradas: 186, salidas: 137 }
+      ];
+      for (const c of cajasSeed) {
+        const { rows: pRows } = await query('SELECT id FROM products WHERE code = ?', [c.code]);
+        if (pRows.length > 0) {
+          await query('UPDATE inventory SET entradas_cajas = ?, salidas_cajas = ? WHERE product_id = ?', [c.entradas, c.salidas, pRows[0].id]);
+        }
+      }
       console.log('✅ Valores por defecto sembrados correctamente');
     } else {
       console.log('ℹ️ Base con datos existentes — se omitió siembra de valores por defecto');
