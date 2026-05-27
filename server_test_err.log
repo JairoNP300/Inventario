@@ -9,3 +9,7 @@ warning: in the working copy of 'server_test_err.log', LF will be replaced by CR
 warning: in the working copy of 'server_test_out.log', LF will be replaced by CRLF the next time Git touches it
 To https://github.com/JairoNP300/Inventario.git
    f934a5d..13ee8f3  main -> main
+warning: in the working copy of 'server_test_err.log', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'server_test_out.log', LF will be replaced by CRLF the next time Git touches it
+To https://github.com/JairoNP300/Inventario.git
+   13ee8f3..0da74fc  main -> main
