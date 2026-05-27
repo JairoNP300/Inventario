@@ -2,3 +2,7 @@ warning: in the working copy of 'server/server.js', LF will be replaced by CRLF 
 warning: in the working copy of 'src/App.jsx', LF will be replaced by CRLF the next time Git touches it
 To https://github.com/JairoNP300/Inventario.git
    f87562a..566ec90  main -> main
+warning: in the working copy of 'server_test.log', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'server_test_err.log', LF will be replaced by CRLF the next time Git touches it
+To https://github.com/JairoNP300/Inventario.git
+   566ec90..2367479  main -> main
