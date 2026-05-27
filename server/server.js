@@ -326,16 +326,7 @@ async function exec(sql) {
 const migrateDatabase = async () => {
   console.log('Running database migration...');
 
-  // Update agros table with new locations - Safely
-  try {
-    await query(`
-      DELETE FROM agros 
-      WHERE id NOT IN (SELECT COALESCE(agro_id, 0) FROM sales)
-      AND id NOT IN (SELECT COALESCE(agro_id, 0) FROM dispatches)
-    `);
-  } catch (e) {
-    console.warn('Could not clean up agros in migration:', e.message);
-  }
+  // Agros are synced in initDb — do NOT delete user-added agros here
   const agros = [
     [1, 'Soyapango - Puesto'],
     [2, 'Usulután - Puesto'],
@@ -361,22 +352,7 @@ const migrateDatabase = async () => {
     }
   }
 
-  // Ensure inventory rows exist for all products — NEVER overwrite existing data
-  const products = await query('SELECT id FROM products');
-  for (const product of products.rows) {
-       if (isProduction) {
-         await query(`
-           INSERT INTO inventory (product_id, bodega_1, bodega_2, bodega_3, bodega_4, initial_stock, current_stock, sold_stock)
-           VALUES (?, 100, 100, 100, 100, 400, 400, 0)
-           ON CONFLICT(product_id) DO NOTHING
-         `, [product.id]);
-       } else {
-         await query(`
-           INSERT OR IGNORE INTO inventory (product_id, bodega_1, bodega_2, bodega_3, bodega_4, initial_stock, current_stock, sold_stock)
-           VALUES (?, 100, 100, 100, 100, 400, 400, 0)
-         `, [product.id]);
-       }
-  }
+  // Ensure inventory rows exist for all products — NEVER overwrite existing data (initDb already handles this)
   // Fix existing tables (SQLite only handles one column at a time)
   const columns = ['current_stock', 'final_stock'];
   for (const col of columns) {
@@ -676,12 +652,12 @@ const initDb = async () => {
 
   console.log('🔄 Automatizando sincronización de catálogo oficial...');
   for (const p of products) {
+    // Only insert if not exists — NEVER overwrite user-modified prices or data
     if (isProduction) {
-      await query('INSERT INTO products (code, name, category, price_per_lb, price_per_kg, price_per_box) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(name) DO UPDATE SET price_per_lb = excluded.price_per_lb, price_per_kg = excluded.price_per_kg, price_per_box = excluded.price_per_box, code = excluded.code', p);
+      await query('INSERT INTO products (code, name, category, price_per_lb, price_per_kg, price_per_box) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(name) DO NOTHING', p);
     } else {
       try {
         await query('INSERT OR IGNORE INTO products (code, name, category, price_per_lb, price_per_kg, price_per_box) VALUES (?, ?, ?, ?, ?, ?)', p);
-        await query('UPDATE products SET price_per_lb = ?, price_per_kg = ?, price_per_box = ?, code = ? WHERE name = ?', [p[3], p[4], p[5], p[0], p[1]]);
       } catch (e) { }
     }
   }
@@ -715,7 +691,7 @@ const initDb = async () => {
     'Relaciones Exteriores (Gobierno)',
     'Lomas de San Francisco'
   ];
-  // Sync destinations
+  // Sync destinations — NEVER delete user-added agros
   for (const a of agros) {
     if (isProduction) {
       await query('INSERT INTO agros (name) VALUES (?) ON CONFLICT(name) DO NOTHING', [a]);
@@ -723,33 +699,7 @@ const initDb = async () => {
       await query('INSERT OR IGNORE INTO agros (name) VALUES (?)', [a]);
     }
   }
-  // Optional: Delete agros not in list to keep it 100% accurate, but only if they are not in use
-  const agrosPlaceholders = agros.map(() => '?').join(',');
-  try {
-    await query(`
-      DELETE FROM agros 
-      WHERE name NOT IN (${agrosPlaceholders})
-      AND id NOT IN (SELECT COALESCE(agro_id, 0) FROM sales)
-      AND id NOT IN (SELECT COALESCE(agro_id, 0) FROM dispatches)
-    `, agros);
-  } catch (e) {
-    console.warn('Could not delete some agros due to dependencies:', e.message);
-  }
-
-  // Explicitly remove any remaining internal-only names from this table, if not in use
-  try {
-    await query(`
-      DELETE FROM agros 
-      WHERE (name LIKE '%Cuarto%' OR name LIKE '%Cuartos%')
-      AND id NOT IN (SELECT COALESCE(agro_id, 0) FROM sales)
-      AND id NOT IN (SELECT COALESCE(agro_id, 0) FROM dispatches)
-    `);
-  } catch (e) {
-    console.warn('Could not delete internal agros due to dependencies:', e.message);
-  }
 };
-
-initDb().catch(console.error);
 
 // ─── HELPER: registrar actividad ─────────────────────────────────────────────
 async function logActivity({ role = 'sistema', action, entity, details = '', product_name = '', quantity = null, unit = '', location = '' }) {
@@ -2013,52 +1963,7 @@ app.get('*', (req, res) => {
 // Initialize database and run migration
 initDb().then(() => {
   migrateDatabase().then(async () => {
-    // Seed cajas solo si están en cero (migración única, no permanente)
-    try {
-      const { rows: countRows } = await query('SELECT COUNT(*) as cnt FROM inventory WHERE salidas_cajas > 0');
-      if (countRows[0].cnt === 0) {
-        const { rows: pCount } = await query('SELECT COUNT(*) as cnt FROM products');
-        if (pCount[0].cnt > 0) {
-          const cajasSeed = { "1618":326,"1619":200,"1620":114,"1621":45,"1622":43,"1623":45,"1624":105,"1625":55,"1626":46,"1627":53,"1628":186 };
-          const salidasSeed = { "1618":325,"1619":152,"1620":105,"1621":32,"1622":20,"1623":34,"1624":103,"1625":55,"1626":46,"1627":21,"1628":137 };
-          for (const [code, cajas] of Object.entries(cajasSeed)) {
-            const { rows: pRows } = await query('SELECT id FROM products WHERE code = ?', [code]);
-            if (pRows.length > 0) {
-              await query('UPDATE inventory SET entradas_cajas = ?, salidas_cajas = ? WHERE product_id = ?', [cajas, salidasSeed[code] || 0, pRows[0].id]);
-            }
-          }
-          console.log('[SEED] Cajas seeded successfully');
-        }
-      } else {
-        console.log('[SEED] Cajas already have data — no seeding needed');
-      }
-    } catch (err) {
-      console.error('[SEED] Error:', err.message);
-    }
-
-    // Seed Usulután (bodega_3) stock solo si está en cero (migración única)
-    try {
-      const { rows: b3Check } = await query('SELECT COUNT(*) as cnt FROM inventory WHERE bodega_3 > 0');
-      if (parseInt(b3Check[0]?.cnt || 0) === 0) {
-        const b3Seed = { "1618":9468.1,"1619":5948.9,"1624":4808.9,"1626":1072.3,"1628":5595.4 };
-        for (const [code, val] of Object.entries(b3Seed)) {
-          const { rows: pRows } = await query('SELECT id FROM products WHERE code = ?', [code]);
-          if (pRows.length > 0) {
-            await query('UPDATE inventory SET bodega_3 = ? WHERE product_id = ?', [val, pRows[0].id]);
-          }
-        }
-        console.log('[SEED] Usulután bodega_3 seeded successfully');
-      } else {
-        console.log('[SEED] Usulután bodega_3 already has data — no seeding needed');
-      }
-    } catch (err) {
-      console.error('[SEED] Usulután bodega_3 error:', err.message);
-    }
-    
-    // Auto-backup before starting
     await backupDatabase();
-
-    // Auto-archive data older than 30 days
     await autoArchiveOldData();
 
     app.listen(port, '0.0.0.0', () => {
