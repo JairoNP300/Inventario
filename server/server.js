@@ -400,67 +400,8 @@ const migrateDatabase = async () => {
 
   console.log('Database migration completed successfully');
 
-  // --- Seed default stock values for FRESH databases only ---
-  // If ALL products have bodega_1=0 AND initial_stock=0, this is a fresh database
-  try {
-    const { rows: freshCheck } = await query('SELECT COUNT(*) as total, COALESCE(SUM(initial_stock),0) as sum_init, COALESCE(SUM(bodega_1+bodega_2+bodega_3+bodega_4),0) as sum_bod FROM inventory');
-    if (freshCheck[0] && parseFloat(freshCheck[0].sum_init) === 0 && parseFloat(freshCheck[0].sum_bod) === 0 && parseInt(freshCheck[0].total) > 0) {
-      console.log('🔄 Base de datos fresca detectada — sembrando valores por defecto (ON CONFLICT DO NOTHING)...');
-      const { rows: invProds } = await query('SELECT id, code FROM products');
-      for (const p of invProds) {
-        if (isProduction) {
-          await query(`
-            INSERT INTO inventory (product_id, bodega_1, bodega_2, bodega_3, bodega_4, initial_stock, current_stock, sold_stock)
-            VALUES (?, 0, 100, 0, 100, 400, 400, 0)
-            ON CONFLICT(product_id) DO NOTHING
-          `, [p.id]);
-        } else {
-          await query(`
-            INSERT OR IGNORE INTO inventory (product_id, bodega_1, bodega_2, bodega_3, bodega_4, initial_stock, current_stock, sold_stock)
-            VALUES (?, 0, 100, 0, 100, 400, 400, 0)
-          `, [p.id]);
-        }
-      }
-      // Seed bodega_3 (Usulután) specific values for products that had stock
-      const b3Seed = { "1618": 9468.1, "1619": 5948.9, "1624": 4808.9, "1626": 1072.3, "1628": 5595.4 };
-      for (const [code, val] of Object.entries(b3Seed)) {
-        const { rows: pRows } = await query('SELECT id FROM products WHERE code = ?', [code]);
-        if (pRows.length > 0) {
-          await query('UPDATE inventory SET bodega_3 = ? WHERE product_id = ?', [val, pRows[0].id]);
-        }
-      }
-      // Seed bodega_4 (Lomas) specific values
-      const { rows: p1620 } = await query('SELECT id FROM products WHERE code = ?', ['1620']);
-      if (p1620.length > 0) {
-        await query('UPDATE inventory SET bodega_4 = ? WHERE product_id = ?', [163.02, p1620[0].id]);
-      }
-      // Seed cajas (entradas_cajas, salidas_cajas) for each product
-      const cajasSeed = [
-        { code: "1618", entradas: 326, salidas: 325 },
-        { code: "1619", entradas: 200, salidas: 152 },
-        { code: "1620", entradas: 114, salidas: 105 },
-        { code: "1621", entradas: 45, salidas: 32 },
-        { code: "1622", entradas: 43, salidas: 20 },
-        { code: "1623", entradas: 45, salidas: 34 },
-        { code: "1624", entradas: 105, salidas: 103 },
-        { code: "1625", entradas: 55, salidas: 55 },
-        { code: "1626", entradas: 46, salidas: 46 },
-        { code: "1627", entradas: 53, salidas: 21 },
-        { code: "1628", entradas: 186, salidas: 137 }
-      ];
-      for (const c of cajasSeed) {
-        const { rows: pRows } = await query('SELECT id FROM products WHERE code = ?', [c.code]);
-        if (pRows.length > 0) {
-          await query('UPDATE inventory SET entradas_cajas = ?, salidas_cajas = ? WHERE product_id = ?', [c.entradas, c.salidas, pRows[0].id]);
-        }
-      }
-      console.log('✅ Valores por defecto sembrados correctamente');
-    } else {
-      console.log('ℹ️ Base con datos existentes — se omitió siembra de valores por defecto');
-    }
-  } catch (e) {
-    console.warn('[SEED] Error al sembrar valores por defecto:', e.message);
-  }
+  // DO NOT seed inventory values — bodega stock belongs to the user's real data.
+  // initDb already creates inventory rows with all zeros for new products.
 
   // --- One-time dedup: clean duplicate product codes (solo se ejecuta si hay duplicados) ---
   try {
