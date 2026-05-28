@@ -49,8 +49,11 @@ app.get('/api/version', (req, res) => {
 });
 
 // --- DATABASE CONFIGURATION ---
-// Use the shared Render PostgreSQL database (accessible from Vercel and Render)
-if (process.env.VERCEL || (process.env.RENDER && !process.env.DATABASE_URL)) {
+// Use Neon PostgreSQL on Vercel, Render PostgreSQL on Render, or SQLite locally
+if (process.env.VERCEL) {
+  process.env.DATABASE_URL = 'postgresql://neondb_owner:npg_1gOJMY4fyIPu@ep-dawn-butterfly-ajnepof5.c-3.us-east-2.aws.neon.tech/neondb?sslmode=require';
+}
+if (!process.env.DATABASE_URL && process.env.RENDER) {
   process.env.DATABASE_URL = 'postgresql://inventario_db_10qr_user:ydiOhILknw2F4jI9V0mLH2aEg59gdE5g@dpg-d7j7v9rbc2fs739bovg0-a.oregon-postgres.render.com/inventario_db_10qr';
 }
 let isProduction = !!process.env.DATABASE_URL;
