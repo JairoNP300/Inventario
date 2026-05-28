@@ -24,7 +24,7 @@ const port = process.env.PORT || 3000; // Auto-deploy: GitHub Actions + watch-de
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static(join(__dirname, '../dist')));
+if (!process.env.VERCEL) app.use(express.static(join(__dirname, '../dist')));
 
 // Public URL exposure (for auto-start scripts)
 async function getPublicUrl() {
@@ -2129,39 +2129,41 @@ app.post('/api/admin/vacuum', async (req, res) => {
   res.json({ success: ok, message: ok ? 'VACUUM completado' : 'Error en VACUUM' });
 });
 
-// Fallback to index.html for SPA
-app.get('*', (req, res) => {
-  res.sendFile(join(__dirname, '../dist/index.html'));
-});
+// Fallback to index.html for SPA (solo en local/Render, Vercel maneja sus propias rutas)
+if (!process.env.VERCEL) {
+  app.get('*', (req, res) => {
+    res.sendFile(join(__dirname, '../dist/index.html'));
+  });
 
-// Initialize database and run migration
-initDb().then(() => {
-  migrateDatabase().then(async () => {
-    await backupDatabase();
-    await autoArchiveOldData();
+  // Initialize database and run migration
+  initDb().then(() => {
+    migrateDatabase().then(async () => {
+      await backupDatabase();
+      await autoArchiveOldData();
 
-    app.listen(port, '0.0.0.0', () => {
-      console.log(`Server running at port ${port}`);
-      console.log('All changes applied: New locations, stock levels, and deduction logic');
+      app.listen(port, '0.0.0.0', () => {
+        console.log(`Server running at port ${port}`);
+        console.log('All changes applied: New locations, stock levels, and deduction logic');
 
-      // Trigger Render deploy on local startup (not on Render itself)
-      if (!process.env.RENDER) {
-        const DEPLOY_HOOK = process.env.RENDER_DEPLOY_HOOK_URL;
-        if (DEPLOY_HOOK) {
-          fetch(DEPLOY_HOOK, { method: 'POST' }).then(r => {
-            if (r.ok) console.log('🚀 Render deploy triggered via webhook');
-            else console.warn('⚠️ Render webhook responded', r.status);
-          }).catch(e => console.warn('⚠️ Render webhook error:', e.message));
+        if (!process.env.RENDER) {
+          const DEPLOY_HOOK = process.env.RENDER_DEPLOY_HOOK_URL;
+          if (DEPLOY_HOOK) {
+            fetch(DEPLOY_HOOK, { method: 'POST' }).then(r => {
+              if (r.ok) console.log('🚀 Render deploy triggered via webhook');
+              else console.warn('⚠️ Render webhook responded', r.status);
+            }).catch(e => console.warn('⚠️ Render webhook error:', e.message));
+          }
         }
-      }
-
-      // Auto-deploy watcher DESACTIVADO para evitar reinicios de Render que borran datos
+      });
+    }).catch(err => {
+      console.error('Migration failed:', err);
+      process.exit(1);
     });
   }).catch(err => {
-    console.error('Migration failed:', err);
+    console.error('Database initialization failed:', err);
     process.exit(1);
   });
-}).catch(err => {
-  console.error('Database initialization failed:', err);
-  process.exit(1);
-});
+}
+
+export default app;
+export { initDb, migrateDatabase };
