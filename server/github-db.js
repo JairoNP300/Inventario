@@ -54,7 +54,9 @@ const TABLE_SCHEMA = `
 `;
 
 export async function init() {
-  const SQL = await initSqlJs();
+  const SQL = await initSqlJs({
+    locateFile: file => `https://cdn.jsdelivr.net/npm/sql.js@1.14.1/dist/${file}`
+  });
   db = new SQL.Database();
   db.run('PRAGMA journal_mode=MEMORY');
 
