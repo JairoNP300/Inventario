@@ -57,42 +57,45 @@ let pool;
 let sqliteDb;
 
 if (process.env.DATABASE_URL) {
-  console.log('🌐 Conectando a PostgreSQL...');
-  try {
-    pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
-      ssl: { rejectUnauthorized: false },
-      family: 4,
-      connectionTimeoutMillis: 15000,
-      idleTimeoutMillis: 30000
-    });
-    const client = await pool.connect();
-    console.log('✅ PostgreSQL conectado exitosamente');
-    client.release();
-  } catch (e) {
-    console.error('❌ Error conectando PostgreSQL:', e.message);
-    console.log('⚠️ Fallback a SQLite...');
-    pool = null;
-    isProduction = false;
-  }
+  console.log('🌐 Configurando conexión a PostgreSQL...');
+  pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false },
+    family: 4,
+    connectionTimeoutMillis: 15000,
+    idleTimeoutMillis: 30000
+  });
 }
 
-if (!pool) {
-  if (process.env.VERCEL) {
-    console.error('❌ No PostgreSQL disponible en Vercel. Verifica DATABASE_URL.');
-    process.exit(1);
+async function ensureDb() {
+  if (pool) {
+    try {
+      const client = await pool.connect();
+      client.release();
+      console.log('✅ PostgreSQL conectado exitosamente');
+      return;
+    } catch (e) {
+      console.error('❌ Error conectando PostgreSQL:', e.message);
+      pool = null;
+      isProduction = false;
+    }
   }
-  console.log('📂 Iniciando SQLite...');
-  try {
-    const Database = (await import('better-sqlite3')).default;
-    const dbPath = join(__dirname, '../inventario_oficial.db');
-    console.log('📁 Database path:', dbPath);
-    sqliteDb = new Database(dbPath);
-    sqliteDb.pragma('journal_mode = WAL');
-    console.log('✅ SQLite inicializado');
-  } catch (e) {
-    console.error('❌ Error cargando SQLite:', e.message);
-    process.exit(1);
+  if (process.env.VERCEL) {
+    throw new Error('No PostgreSQL disponible en Vercel. Verifica DATABASE_URL.');
+  }
+  if (!sqliteDb) {
+    console.log('📂 Iniciando SQLite...');
+    try {
+      const Database = (await import('better-sqlite3')).default;
+      const dbPath = join(__dirname, '../inventario_oficial.db');
+      console.log('📁 Database path:', dbPath);
+      sqliteDb = new Database(dbPath);
+      sqliteDb.pragma('journal_mode = WAL');
+      console.log('✅ SQLite inicializado');
+    } catch (e) {
+      console.error('❌ Error cargando SQLite:', e.message);
+      throw e;
+    }
   }
 }
 
@@ -523,6 +526,7 @@ const migrateDatabase = async () => {
 
 // --- INITIALIZATION ---
 const initDb = async () => {
+  await ensureDb();
   const idType = isProduction ? 'SERIAL' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
   const dateDefault = isProduction ? 'CURRENT_DATE' : "(date('now'))";
 
