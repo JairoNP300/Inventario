@@ -49,14 +49,9 @@ app.get('/api/version', (req, res) => {
 });
 
 // --- DATABASE CONFIGURATION ---
-// Auto-fix: if DATABASE_URL uses direct Supabase hostname (which has DNS issues on Vercel),
-// replace with the connection pooler URL
-if (process.env.DATABASE_URL && process.env.DATABASE_URL.includes('.supabase.co')) {
-  const ref = process.env.DATABASE_URL.match(/db\.([^.]+)\.supabase\.co/)?.[1] || '';
-  process.env.DATABASE_URL = `postgresql://postgres.${ref}:ventas-inventario@aws-0-us-east-1.pooler.supabase.com:6543/postgres?pgbouncer=true`;
-}
-if (!process.env.DATABASE_URL && process.env.RENDER) {
-  process.env.DATABASE_URL = 'postgresql://inventario_db_10qr_user:ydiOhILknw2F4jI9V0mLH2aEg59gdE5g@dpg-d7j7v9rbc2fs739bovg0-a/inventario_db_10qr';
+// Use the shared Render PostgreSQL database (accessible from Vercel and Render)
+if (process.env.VERCEL || (process.env.RENDER && !process.env.DATABASE_URL)) {
+  process.env.DATABASE_URL = 'postgresql://inventario_db_10qr_user:ydiOhILknw2F4jI9V0mLH2aEg59gdE5g@dpg-d7j7v9rbc2fs739bovg0-a.oregon-postgres.render.com/inventario_db_10qr';
 }
 let isProduction = !!process.env.DATABASE_URL;
 let pool;
@@ -443,8 +438,9 @@ const migrateDatabase = async () => {
     const { rows: b2check } = await query(`SELECT COALESCE(SUM(COALESCE(bodega_2,0)),0) as total FROM inventory`);
     if (b2check[0] && parseFloat(b2check[0].total) === 0) {
       for (const p of allProds) {
-        const b2 = seed.bodega_2[p.code] ?? seed.bodega_2.default;
-        await query('UPDATE inventory SET bodega_2 = ?, initial_stock = ?, current_stock = ? WHERE product_id = ?', [b2 || 0, seed.initial_stock, seed.current_stock, p.id]);
+        const b2 = seed.bodega_2[p.code] ?? 0;
+        const initStock = (seed.initial_stock && typeof seed.initial_stock === 'object') ? (seed.initial_stock[p.code] ?? 0) : (seed.initial_stock ?? 0);
+        await query('UPDATE inventory SET bodega_2 = ?, initial_stock = ?, current_stock = ? WHERE product_id = ?', [b2 || 0, initStock, seed.current_stock || 0, p.id]);
       }
       console.log('✅ bodega_2, initial_stock, current_stock restaurados');
     }
