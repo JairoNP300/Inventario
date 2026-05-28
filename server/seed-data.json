@@ -1,4 +1,10 @@
 {
+  "bodega_2": {
+    "default": 100,
+    "1618": 300
+  },
+  "initial_stock": 400,
+  "current_stock": 400,
   "bodega_3": {
     "1618": 94681,
     "1619": 5948.9,
