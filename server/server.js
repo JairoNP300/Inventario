@@ -78,6 +78,10 @@ if (process.env.DATABASE_URL) {
 }
 
 if (!pool) {
+  if (process.env.VERCEL) {
+    console.error('❌ No PostgreSQL disponible en Vercel. Verifica DATABASE_URL.');
+    process.exit(1);
+  }
   console.log('📂 Iniciando SQLite...');
   try {
     const Database = (await import('better-sqlite3')).default;
