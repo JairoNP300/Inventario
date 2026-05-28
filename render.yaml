@@ -12,7 +12,7 @@ services:
       - key: DATABASE_URL
         value: ${DATABASE_URL}
     healthCheckPath: /api
-    autoDeploy: true
+    autoDeploy: false
 
 databases:
   # PostgreSQL Database

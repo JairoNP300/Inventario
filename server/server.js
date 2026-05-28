@@ -400,8 +400,29 @@ const migrateDatabase = async () => {
 
   console.log('Database migration completed successfully');
 
-  // DO NOT seed inventory values — bodega stock belongs to the user's real data.
-  // initDb already creates inventory rows with all zeros for new products.
+  // --- Auto-restore: si la DB está completamente vacía (todo cero), restaura desde seed-data.json ---
+  try {
+    const { rows: zeroCheck } = await query(`SELECT COALESCE(SUM(COALESCE(bodega_1,0)+COALESCE(bodega_2,0)+COALESCE(bodega_3,0)+COALESCE(bodega_4,0)+COALESCE(entradas_cajas,0)+COALESCE(salidas_cajas,0)),0) as total FROM inventory`);
+    if (zeroCheck[0] && parseFloat(zeroCheck[0].total) === 0) {
+      const seedPath = join(__dirname, 'seed-data.json');
+      const seed = JSON.parse(await fs.readFile(seedPath, 'utf8'));
+      for (const [code, val] of Object.entries(seed.bodega_3)) {
+        const { rows: p } = await query('SELECT id FROM products WHERE code = ?', [code]);
+        if (p.length) await query('UPDATE inventory SET bodega_3 = ? WHERE product_id = ?', [val, p[0].id]);
+      }
+      for (const [code, val] of Object.entries(seed.bodega_4)) {
+        const { rows: p } = await query('SELECT id FROM products WHERE code = ?', [code]);
+        if (p.length) await query('UPDATE inventory SET bodega_4 = ? WHERE product_id = ?', [val, p[0].id]);
+      }
+      for (const [code, c] of Object.entries(seed.cajas)) {
+        const { rows: p } = await query('SELECT id FROM products WHERE code = ?', [code]);
+        if (p.length) await query('UPDATE inventory SET entradas_cajas = ?, salidas_cajas = ? WHERE product_id = ?', [c.entradas, c.salidas, p[0].id]);
+      }
+      console.log('✅ Datos restaurados desde seed-data.json (DB estaba vacía)');
+    }
+  } catch(e) {
+    console.warn('[RESTORE] Error:', e.message);
+  }
 
   // --- One-time dedup: clean duplicate product codes (solo se ejecuta si hay duplicados) ---
   try {
@@ -2121,23 +2142,7 @@ initDb().then(() => {
         }
       }
 
-      // Auto-deploy watcher: always active, auto-restarts on failure
-      if (!process.env.RENDER) {
-        const startWatcher = () => {
-          console.log('👀 Iniciando auto-deploy watcher...');
-          const w = spawn('node', [join(__dirname, '../scripts/watch-deploy.js')], {
-            cwd: join(__dirname, '..'),
-            stdio: 'inherit',
-            env: { ...process.env }
-          });
-          w.on('error', (err) => console.error('⚠️ Auto-deploy watcher error:', err.message));
-          w.on('exit', (code) => {
-            console.log(`⚠️ Auto-deploy watcher exited (code ${code}). Reiniciando en 3s...`);
-            setTimeout(startWatcher, 3000);
-          });
-        };
-        startWatcher();
-      }
+      // Auto-deploy watcher DESACTIVADO para evitar reinicios de Render que borran datos
     });
   }).catch(err => {
     console.error('Migration failed:', err);
