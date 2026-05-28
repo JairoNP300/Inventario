@@ -50,10 +50,10 @@ app.get('/api/version', (req, res) => {
 
 // --- DATABASE CONFIGURATION ---
 // Auto-fix: if DATABASE_URL uses direct Supabase hostname (which has DNS issues on Vercel),
-// replace with the connection pooler URL
+// replace with the connection pooler URL (session mode)
 if (process.env.DATABASE_URL && process.env.DATABASE_URL.includes('.supabase.co')) {
   process.env.DATABASE_URL = process.env.DATABASE_URL
-    .replace(/db\.[^.]+\.supabase\.co(:\d+)?\/postgres(\?.*)?$/, 'aws-0-us-east-1.pooler.supabase.com:6543/postgres?pgbouncer=true');
+    .replace(/db\.[^.]+\.supabase\.co(?::\d+)?\/postgres(?:\?.*)?$/, 'aws-0-us-east-1.pooler.supabase.com:5432/postgres?sslmode=require');
 }
 if (!process.env.DATABASE_URL && process.env.RENDER) {
   process.env.DATABASE_URL = 'postgresql://inventario_db_10qr_user:ydiOhILknw2F4jI9V0mLH2aEg59gdE5g@dpg-d7j7v9rbc2fs739bovg0-a/inventario_db_10qr';
