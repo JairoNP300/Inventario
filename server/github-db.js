@@ -1,6 +1,8 @@
 /// <reference types="sql.js" />
 import initSqlJs from 'sql.js';
 import * as XLSX from 'xlsx';
+import { readFile } from 'fs/promises';
+import { Buffer } from 'buffer';
 
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const OWNER = 'JairoNP300';
@@ -54,9 +56,18 @@ const TABLE_SCHEMA = `
 `;
 
 export async function init() {
-  const SQL = await initSqlJs({
-    locateFile: file => `https://cdn.jsdelivr.net/npm/sql.js@1.14.1/dist/${file}`
-  });
+  // Load sql.js WASM binary — try local path first, then fetch from CDN
+  let wasmBinary;
+  try {
+    const { fileURLToPath } = await import('url');
+    const { join } = await import('path');
+    const localPath = join(fileURLToPath(new URL('.', import.meta.url)), '..', 'node_modules', 'sql.js', 'dist', 'sql-wasm.wasm');
+    wasmBinary = await readFile(localPath);
+  } catch {
+    const resp = await fetch('https://cdn.jsdelivr.net/npm/sql.js@1.14.1/dist/sql-wasm.wasm');
+    wasmBinary = new Uint8Array(await resp.arrayBuffer());
+  }
+  const SQL = await initSqlJs({ wasmBinary });
   db = new SQL.Database();
   db.run('PRAGMA journal_mode=MEMORY');
 
