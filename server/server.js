@@ -1,20 +1,12 @@
 import 'dotenv/config';
 import express from 'express';
-// import Database from 'better-sqlite3'; // Moved to dynamic import for production optimization
-
 import cors from 'cors';
 import { fileURLToPath } from 'url';
 import { promises as fs } from 'fs';
 import { spawn } from 'child_process';
 import { dirname, join } from 'path';
-import { resolve4 } from 'dns/promises';
-import { setDefaultResultOrder } from 'dns';
-import pkg from 'pg';
-const { Pool } = pkg;
 import ExcelJS from 'exceljs';
-
-// Force IPv4 DNS resolution globally before any network operations
-setDefaultResultOrder('ipv4first');
+import * as db from './github-db.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -48,129 +40,43 @@ app.get('/api/version', (req, res) => {
   res.send(version);
 });
 
-// --- DATABASE CONFIGURATION ---
-// Use Neon PostgreSQL on Vercel, Render PostgreSQL on Render, or SQLite locally
-if (process.env.VERCEL) {
-  process.env.DATABASE_URL = 'postgresql://neondb_owner:npg_1gOJMY4fyIPu@ep-dawn-butterfly-ajnepof5.c-3.us-east-2.aws.neon.tech/neondb';
-}
-if (!process.env.DATABASE_URL && process.env.RENDER) {
-  process.env.DATABASE_URL = 'postgresql://inventario_db_10qr_user:ydiOhILknw2F4jI9V0mLH2aEg59gdE5g@dpg-d7j7v9rbc2fs739bovg0-a.oregon-postgres.render.com/inventario_db_10qr';
-}
-let isProduction = !!process.env.DATABASE_URL;
-let pool;
-let sqliteDb;
-
-if (process.env.DATABASE_URL) {
-  console.log('🌐 Configurando conexión a PostgreSQL...');
-  pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false },
-    family: 4,
-    max: 1,
-    connectionTimeoutMillis: 25000,
-    idleTimeoutMillis: 10000
-  });
-}
-
-async function ensureDb() {
-  if (pool) {
-    try {
-      const client = await pool.connect();
-      client.release();
-      console.log('✅ PostgreSQL conectado exitosamente');
-      return;
-    } catch (e) {
-      console.error('❌ Error conectando PostgreSQL:', e.message, e.code);
-      if (process.env.VERCEL) {
-        throw new Error('DB connect failed: ' + e.message + ' (code: ' + e.code + ')');
-      }
-      pool = null;
-      isProduction = false;
-    }
-  }
-  if (process.env.VERCEL) {
-    throw new Error('No PostgreSQL disponible en Vercel. Verifica DATABASE_URL.');
-  }
-  if (!sqliteDb) {
-    console.log('📂 Iniciando SQLite...');
-    try {
-      const Database = (await import('better-sqlite3')).default;
-      const dbPath = join(__dirname, '../inventario_oficial.db');
-      console.log('📁 Database path:', dbPath);
-      sqliteDb = new Database(dbPath);
-      sqliteDb.pragma('journal_mode = WAL');
-      console.log('✅ SQLite inicializado');
-    } catch (e) {
-      console.error('❌ Error cargando SQLite:', e.message);
-      throw e;
-    }
-  }
-}
+// Sync in-memory DB to GitHub after every response (no-op if not dirty)
+app.use((req, res, next) => {
+  const originalEnd = res.end;
+  res.end = function(...args) {
+    db.syncToGitHub().catch(e => console.warn('Sync error:', e.message));
+    return originalEnd.apply(this, args);
+  };
+  next();
+});
 
 // Unified Query Helper
 async function query(sql, params = []) {
-  if (isProduction) {
-    if (!pool) {
-      console.warn('⚠️ Query intentada sin conexión a base de datos (DATABASE_URL faltante).');
-      return { rows: [], lastInsertRowid: null };
-    }
-    // Convert ? to $1, $2, etc for PostgreSQL
-    let index = 1;
-    const pgSqlFixed = sql.replace(/\?/g, () => `$${index++}`);
-    const res = await pool.query(pgSqlFixed, params);
-    return {
-      rows: res.rows,
-      lastInsertRowid: res.rows[0]?.id || null
-    };
-  } else {
-    const stmt = sqliteDb.prepare(sql);
-    if (sql.trim().toUpperCase().startsWith('SELECT')) {
-      return { rows: stmt.all(...params) };
-    } else {
-      const info = stmt.run(...params);
-      return { lastInsertRowid: info.lastInsertRowid, rows: [] };
-    }
-  }
+  return db.query(sql, params);
 }
 
 // Ensure inventory exists for a product to prevent silent UPDATE failures
 async function ensureInventoryExists(product_id) {
   if (!product_id) return;
-  if (isProduction) {
-    await query(`
-      INSERT INTO inventory (product_id, bodega_1, bodega_2, bodega_3, bodega_4, initial_stock, current_stock, sold_stock, cajas, entradas_cajas, salidas_cajas)
-      VALUES ($1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
-      ON CONFLICT(product_id) DO NOTHING
-    `, [product_id]);
-  } else {
-    await query(`
-      INSERT OR IGNORE INTO inventory (product_id, bodega_1, bodega_2, bodega_3, bodega_4, initial_stock, current_stock, sold_stock, cajas, entradas_cajas, salidas_cajas)
-      VALUES (?, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
-    `, [product_id]);
-  }
+  await query(`
+    INSERT INTO inventory (product_id, bodega_1, bodega_2, bodega_3, bodega_4, initial_stock, current_stock, sold_stock, cajas, entradas_cajas, salidas_cajas)
+    VALUES ($1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+    ON CONFLICT(product_id) DO NOTHING
+  `, [product_id]);
 }
 
 // Execute multiple SQL updates atomically in a transaction
 async function runTransaction(updates) {
   if (updates.length === 0) return;
-  if (isProduction) {
-    await query('BEGIN');
-    try {
-      for (const u of updates) {
-        await query(u.sql, u.params);
-      }
-      await query('COMMIT');
-    } catch (e) {
-      await query('ROLLBACK');
-      throw e;
+  await query('BEGIN');
+  try {
+    for (const u of updates) {
+      await query(u.sql, u.params);
     }
-  } else {
-    const txn = sqliteDb.transaction(() => {
-      for (const u of updates) {
-        sqliteDb.prepare(u.sql).run(...u.params);
-      }
-    });
-    txn();
+    await query('COMMIT');
+  } catch (e) {
+    await query('ROLLBACK');
+    throw e;
   }
 }
 
@@ -191,28 +97,6 @@ function validateRequired(body, fields) {
   }
 }
 
-// Create a timestamped backup of the SQLite database
-async function backupDatabase() {
-  if (isProduction || !sqliteDb) return;
-  try {
-    const src = join(__dirname, '../inventario_oficial.db');
-    const backupDir = join(__dirname, '../backups');
-    await fs.mkdir(backupDir, { recursive: true });
-    const now = new Date();
-    const stamp = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
-    const dst = join(backupDir, `inventario_${stamp}.db`);
-    await fs.cp(src, dst);
-    console.log(`[BACKUP] Database backed up to ${dst}`);
-    // Keep only last 10 backups
-    const files = (await fs.readdir(backupDir)).filter(f => f.startsWith('inventario_')).sort().reverse();
-    for (const oldFile of files.slice(10)) {
-      await fs.rm(join(backupDir, oldFile), { force: true });
-    }
-  } catch (e) {
-    console.warn('[BACKUP] Error:', e.message);
-  }
-}
-
 // Archive directory
 const archiveDir = join(__dirname, '../archivos');
 
@@ -228,7 +112,6 @@ const ARCHIVE_TABLES = [
 
 // Auto-backup data to Excel files (does NOT delete from DB)
 async function autoArchiveOldData() {
-  if (!sqliteDb) return;
   try {
     await fs.mkdir(archiveDir, { recursive: true });
     
@@ -316,129 +199,33 @@ async function generateArchiveExcel(year, month) {
   return hasData ? workbook : null;
 }
 
-async function runVacuum() {
-  if (!sqliteDb) return;
-  try {
-    sqliteDb.exec('VACUUM');
-    console.log('[VACUUM] Completado');
-    return true;
-  } catch (e) {
-    console.warn('[VACUUM] Error:', e.message);
-    return false;
-  }
-}
-
-async function getDbSize() {
-  if (sqliteDb) {
-    try {
-      const stat = await fs.stat(join(__dirname, '../inventario_oficial.db'));
-      return stat.size;
-    } catch { return 0; }
-  }
-  return 0;
-}
-
 async function exec(sql) {
-  if (isProduction) {
-    if (!pool) {
-      console.warn('⚠️ Exec intentada sin conexión a base de datos.');
-      return { rows: [] };
-    }
-    // Postgres uses SERIAL or IDENTITY instead of AUTOINCREMENT
-    const pgSql = sql
-      .replace(/INTEGER PRIMARY KEY AUTOINCREMENT/gi, 'SERIAL PRIMARY KEY')
-      .replace(/strftime\('%Y-%m', s.date\)/gi, "to_char(s.date, 'YYYY-MM')");
-    return pool.query(pgSql);
-  } else {
-    return sqliteDb.exec(sql);
-  }
+  return db.exec(sql);
 }
 
 // --- MIGRATION ---
 const migrateDatabase = async () => {
   console.log('Running database migration...');
+  // Tables already created by github-db.js initData()
 
-  // Agros are synced by name in initDb — do NOT overwrite user-named agros here by hardcoded IDs
-
-  // Ensure inventory rows exist for all products — NEVER overwrite existing data (initDb already handles this)
-  // Fix existing tables (SQLite only handles one column at a time)
-  const columns = ['current_stock', 'final_stock'];
-  for (const col of columns) {
-    try {
-      await query(`ALTER TABLE inventory ADD COLUMN ${col} DECIMAL(10,2) DEFAULT 0`);
-      console.log(`Column ${col} added to inventory`);
-    } catch (e) {
-      // Column probably already exists
-    }
-  }
-
-  // Ensure activity_log table exists (migration for existing deployments)
-  try {
-    await exec(`
-      CREATE TABLE IF NOT EXISTS activity_log (
-        id ${isProduction ? 'SERIAL' : 'INTEGER'} PRIMARY KEY ${isProduction ? '' : 'AUTOINCREMENT'},
-        role TEXT,
-        action TEXT,
-        entity TEXT,
-        details TEXT,
-        product_name TEXT,
-        quantity DECIMAL(10,2),
-        unit TEXT,
-        location TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-  } catch(e) {
-    console.warn('activity_log migration:', e.message);
-  }
-
-  // Add discount_percent column to dispatches if not exists
-  try {
-    if (isProduction) {
-      await query(`ALTER TABLE dispatches ADD COLUMN discount_percent DECIMAL(5,2) DEFAULT 0`);
-    } else {
-      sqliteDb.prepare('ALTER TABLE dispatches ADD COLUMN discount_percent DECIMAL(5,2) DEFAULT 0').run();
-    }
-    console.log('discount_percent column added to dispatches');
-  } catch(e) {
-    console.log('discount_percent column already exists in dispatches');
-  }
-
-  // Add cajas column to inventory if not exists
-  try {
-    if (isProduction) {
-      await query(`ALTER TABLE inventory ADD COLUMN cajas DECIMAL(10,2) DEFAULT 0`);
-    } else {
-      sqliteDb.prepare('ALTER TABLE inventory ADD COLUMN cajas DECIMAL(10,2) DEFAULT 0').run();
-    }
-    console.log('cajas column added to inventory');
-  } catch(e) {
-    console.log('cajas column already exists in inventory');
-  }
-
-  // Add entradas_cajas and salidas_cajas columns to inventory if not exists
-  try {
-    if (isProduction) {
-      await query(`ALTER TABLE inventory ADD COLUMN entradas_cajas DECIMAL(10,2) DEFAULT 0`);
-      await query(`ALTER TABLE inventory ADD COLUMN salidas_cajas DECIMAL(10,2) DEFAULT 0`);
-    } else {
-      sqliteDb.prepare('ALTER TABLE inventory ADD COLUMN entradas_cajas DECIMAL(10,2) DEFAULT 0').run();
-      sqliteDb.prepare('ALTER TABLE inventory ADD COLUMN salidas_cajas DECIMAL(10,2) DEFAULT 0').run();
-    }
-    console.log('entradas_cajas and salidas_cajas columns added to inventory');
-  } catch(e) {
-    console.log('entradas_cajas/salidas_cajas columns already exist in inventory');
+  // Ensure inventory rows exist for all products
+  const { rows: prods } = await query('SELECT id FROM products');
+  for (const p of prods) {
+    await query(`
+      INSERT INTO inventory (product_id, bodega_1, bodega_2, bodega_3, bodega_4, initial_stock, sold_stock, cajas, entradas_cajas, salidas_cajas) 
+      VALUES (?, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+      ON CONFLICT(product_id) DO NOTHING
+    `, [p.id]);
   }
 
   console.log('Database migration completed successfully');
 
-  // --- Auto-restore: si la DB está completamente vacía (todo cero), restaura desde seed-data.json ---
+  // --- Auto-restore: if bodega_2 is zero, restore from seed-data.json ---
   try {
     const seedPath = join(__dirname, 'seed-data.json');
     const seed = JSON.parse(await fs.readFile(seedPath, 'utf8'));
     const { rows: allProds } = await query('SELECT id, code FROM products');
 
-    // Restaurar bodega_2, initial_stock, current_stock si están en cero
     const { rows: b2check } = await query(`SELECT COALESCE(SUM(COALESCE(bodega_2,0)),0) as total FROM inventory`);
     if (b2check[0] && parseFloat(b2check[0].total) === 0) {
       for (const p of allProds) {
@@ -449,18 +236,17 @@ const migrateDatabase = async () => {
       console.log('✅ bodega_2, initial_stock, current_stock restaurados');
     }
 
-    // Restaurar bodega_3, bodega_4, cajas si están en cero
     const { rows: zeroCheck } = await query(`SELECT COALESCE(SUM(COALESCE(bodega_1,0)+COALESCE(bodega_3,0)+COALESCE(bodega_4,0)+COALESCE(entradas_cajas,0)+COALESCE(salidas_cajas,0)),0) as total FROM inventory`);
     if (zeroCheck[0] && parseFloat(zeroCheck[0].total) === 0) {
-      for (const [code, val] of Object.entries(seed.bodega_3)) {
+      for (const [code, val] of Object.entries(seed.bodega_3 || {})) {
         const p = allProds.find(x => x.code === code);
         if (p) await query('UPDATE inventory SET bodega_3 = ? WHERE product_id = ?', [val, p.id]);
       }
-      for (const [code, val] of Object.entries(seed.bodega_4)) {
+      for (const [code, val] of Object.entries(seed.bodega_4 || {})) {
         const p = allProds.find(x => x.code === code);
         if (p) await query('UPDATE inventory SET bodega_4 = ? WHERE product_id = ?', [val, p.id]);
       }
-      for (const [code, c] of Object.entries(seed.cajas)) {
+      for (const [code, c] of Object.entries(seed.cajas || {})) {
         const p = allProds.find(x => x.code === code);
         if (p) await query('UPDATE inventory SET entradas_cajas = ?, salidas_cajas = ? WHERE product_id = ?', [c.entradas, c.salidas, p.id]);
       }
@@ -470,7 +256,7 @@ const migrateDatabase = async () => {
     console.warn('[RESTORE] Error:', e.message);
   }
 
-  // --- One-time dedup: clean duplicate product codes (solo se ejecuta si hay duplicados) ---
+  // --- One-time dedup: clean duplicate product codes ---
   try {
     const { rows: dupGroups } = await query(`
       SELECT code FROM products 
@@ -478,7 +264,7 @@ const migrateDatabase = async () => {
       GROUP BY code HAVING COUNT(*) > 1
     `);
     if (dupGroups && dupGroups.length > 0) {
-      console.log(`[DEDUP] Encontrados ${dupGroups.length} grupo(s) de códigos duplicados — limpiando...`);
+      console.log(`[DEDUP] Encontrados ${dupGroups.length} grupo(s) duplicados`);
       for (const group of dupGroups) {
         const { rows: dups } = await query(
           'SELECT p.id, p.name, COALESCE(i.bodega_1,0)+COALESCE(i.bodega_2,0)+COALESCE(i.bodega_3,0)+COALESCE(i.bodega_4,0) as total_stock FROM products p LEFT JOIN inventory i ON p.id = i.product_id WHERE p.code = ? ORDER BY total_stock DESC, p.id ASC',
@@ -489,292 +275,61 @@ const migrateDatabase = async () => {
           const delId = dups[j].id;
           await query('DELETE FROM inventory WHERE product_id = ?', [delId]);
           await query('DELETE FROM products WHERE id = ?', [delId]);
-          console.log(`[DEDUP] Eliminado duplicado ID ${delId} (code ${group.code}, name: "${dups[j].name}"), conservado ID ${keep.id} ("${keep.name}")`);
+          console.log(`[DEDUP] Eliminado duplicado ID ${delId}`);
         }
       }
-    } else {
-      console.log('[DEDUP] No hay códigos duplicados — saltando');
     }
-  } catch (e) {
-    console.warn('[DEDUP] Error:', e.message);
-  }
+  } catch (e) { console.warn('[DEDUP] Error:', e.message); }
 
-  // Add origin_weight and dest_weight to movements if not exists
-  try {
-    if (isProduction) {
-      await query(`ALTER TABLE movements ADD COLUMN origin_weight DECIMAL(10,2) DEFAULT 0`);
-      await query(`ALTER TABLE movements ADD COLUMN dest_weight DECIMAL(10,2) DEFAULT 0`);
-    } else {
-      sqliteDb.prepare('ALTER TABLE movements ADD COLUMN origin_weight DECIMAL(10,2) DEFAULT 0').run();
-      sqliteDb.prepare('ALTER TABLE movements ADD COLUMN dest_weight DECIMAL(10,2) DEFAULT 0').run();
-    }
-    console.log('origin_weight/dest_weight columns added to movements');
-  } catch(e) {
-    console.log('origin_weight/dest_weight columns already exist in movements');
-  }
-
-  // Add unit_type to movements if not exists
-  try {
-    if (isProduction) {
-      await query(`ALTER TABLE movements ADD COLUMN unit_type TEXT DEFAULT 'Lbs'`);
-    } else {
-      sqliteDb.prepare("ALTER TABLE movements ADD COLUMN unit_type TEXT DEFAULT 'Lbs'").run();
-    }
-    console.log('unit_type column added to movements');
-  } catch(e) {
-    console.log('unit_type column already exists in movements');
-  }
-
-  // Add dest_warehouse column to production_logs if not exists
-  try {
-    if (isProduction) {
-      await query(`ALTER TABLE production_logs ADD COLUMN dest_warehouse TEXT DEFAULT ''`);
-    } else {
-      sqliteDb.prepare("ALTER TABLE production_logs ADD COLUMN dest_warehouse TEXT DEFAULT ''").run();
-    }
-    console.log('dest_warehouse column added to production_logs');
-  } catch(e) {
-    console.log('dest_warehouse column already exists in production_logs');
-  }
-
-  // Add raw_weight column to production_logs if not exists
-  try {
-    if (isProduction) {
-      await query(`ALTER TABLE production_logs ADD COLUMN raw_weight DECIMAL(10,2) DEFAULT 0`);
-    } else {
-      sqliteDb.prepare("ALTER TABLE production_logs ADD COLUMN raw_weight DECIMAL(10,2) DEFAULT 0").run();
-    }
-    console.log('raw_weight column added to production_logs');
-  } catch(e) {
-    console.log('raw_weight column already exists in production_logs');
-  }
+  // Sync to GitHub after migration
+  await db.syncToGitHub();
 };
 
 // --- INITIALIZATION ---
 const initDb = async () => {
-  await ensureDb();
-  const idType = isProduction ? 'SERIAL' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
-  const dateDefault = isProduction ? 'CURRENT_DATE' : "(date('now'))";
-
-  await exec(`
-    CREATE TABLE IF NOT EXISTS products (
-      id ${idType},
-      code TEXT,
-      name TEXT NOT NULL UNIQUE,
-      category TEXT,
-      price_per_lb DECIMAL(10,2) DEFAULT 0,
-      price_per_kg DECIMAL(10,2) DEFAULT 0,
-      price_per_box DECIMAL(10,2) DEFAULT 0
-    );
-
-    CREATE TABLE IF NOT EXISTS agros (
-      id ${idType},
-      name TEXT NOT NULL UNIQUE
-    );
-
-    CREATE TABLE IF NOT EXISTS inventory (
-      product_id INTEGER PRIMARY KEY,
-      bodega_1 DECIMAL(10,2) DEFAULT 0,
-      bodega_2 DECIMAL(10,2) DEFAULT 0,
-      bodega_3 DECIMAL(10,2) DEFAULT 0,
-      bodega_4 DECIMAL(10,2) DEFAULT 0,
-      initial_stock DECIMAL(10,2) DEFAULT 0,
-      current_stock DECIMAL(10,2) DEFAULT 0,
-      sold_stock DECIMAL(10,2) DEFAULT 0,
-      final_stock DECIMAL(10,2) DEFAULT 0
-    );
-
-    CREATE TABLE IF NOT EXISTS movements (
-      id ${idType},
-      product_id INTEGER,
-      origin_warehouse TEXT,
-      dest_warehouse TEXT,
-      weight DECIMAL(10,2),
-      type TEXT,
-      date DATE DEFAULT ${dateDefault}
-    );
-
-    CREATE TABLE IF NOT EXISTS activity_log (
-      id ${idType},
-      role TEXT,
-      action TEXT,
-      entity TEXT,
-      details TEXT,
-      product_name TEXT,
-      quantity DECIMAL(10,2),
-      unit TEXT,
-      location TEXT,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
-
-    CREATE TABLE IF NOT EXISTS production_logs (
-      id ${idType},
-      product_id INTEGER,
-      initial_weight DECIMAL(10,2),
-      cut_weight DECIMAL(10,2),
-      waste DECIMAL(10,2),
-      storage_cost DECIMAL(10,2) DEFAULT 0,
-      transport_cost DECIMAL(10,2) DEFAULT 0,
-      labor_cost DECIMAL(10,2) DEFAULT 0,
-      other_costs DECIMAL(10,2) DEFAULT 0,
-      warehouse TEXT DEFAULT 'Bodega 2',
-      date DATE DEFAULT ${dateDefault}
-    );
-
-    CREATE TABLE IF NOT EXISTS ransa_requests (
-      id ${idType},
-      product_id INTEGER,
-      tag_weight DECIMAL(10,2),
-      scale_weight DECIMAL(10,2),
-      units_per_box INTEGER,
-      unit_type TEXT DEFAULT 'Lbs',
-      distribution_details TEXT,
-      date DATE DEFAULT ${dateDefault}
-    );
-
-    CREATE TABLE IF NOT EXISTS dispatches (
-      id ${idType},
-      product_id INTEGER,
-      agro_id INTEGER,
-      weight DECIMAL(10,2),
-      unit_type TEXT DEFAULT 'Lbs',
-      value DECIMAL(10,2),
-      date DATE DEFAULT ${dateDefault}
-    );
-
-    CREATE TABLE IF NOT EXISTS sales (
-      id ${idType},
-      agro_id INTEGER,
-      amount_received DECIMAL(10,2),
-      date DATE DEFAULT ${dateDefault}
-    );
-
-    CREATE TABLE IF NOT EXISTS orders (
-      id ${idType},
-      product_id INTEGER,
-      requested_qty DECIMAL(10,2),
-      unit_type TEXT DEFAULT 'Lbs',
-      status TEXT DEFAULT 'PENDING',
-      date DATE DEFAULT ${dateDefault}
-    );
-
-    CREATE TABLE IF NOT EXISTS food_costing (
-      id ${idType},
-      date TEXT,
-      event_name TEXT,
-      details TEXT, 
-      product_id INTEGER,
-      gross_weight DECIMAL(10,2),
-      gross_cost DECIMAL(10,2),
-      cooked_weight DECIMAL(10,2),
-      json_data TEXT
-    );
-
-    CREATE TABLE IF NOT EXISTS stock_adjustments (
-      id ${idType},
-      product_id INTEGER,
-      warehouse TEXT,
-      bodega_col TEXT,
-      weight_change DECIMAL(10,2) DEFAULT 0,
-      cajas_change INTEGER DEFAULT 0,
-      role TEXT,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
-  `);
-
-  if (!isProduction) {
-    try {
-      sqliteDb.prepare('ALTER TABLE products ADD COLUMN code TEXT').run();
-    } catch (e) { }
-    try {
-      sqliteDb.prepare('ALTER TABLE products ADD COLUMN price_per_lb DECIMAL(10,2) DEFAULT 0').run();
-    } catch (e) { }
-    try {
-      sqliteDb.prepare('ALTER TABLE products ADD COLUMN price_per_kg DECIMAL(10,2) DEFAULT 0').run();
-    } catch (e) { }
-    try {
-      sqliteDb.prepare('ALTER TABLE products ADD COLUMN price_per_box DECIMAL(10,2) DEFAULT 0').run();
-    } catch (e) { }
-    try {
-      sqliteDb.prepare('ALTER TABLE inventory ADD COLUMN bodega_1 DECIMAL(10,2) DEFAULT 0').run();
-      sqliteDb.prepare('ALTER TABLE inventory ADD COLUMN bodega_2 DECIMAL(10,2) DEFAULT 0').run();
-      sqliteDb.prepare('ALTER TABLE inventory ADD COLUMN bodega_3 DECIMAL(10,2) DEFAULT 0').run();
-      sqliteDb.prepare('ALTER TABLE inventory ADD COLUMN bodega_4 DECIMAL(10,2) DEFAULT 0').run();
-    } catch (e) { }
-    try {
-      sqliteDb.prepare('ALTER TABLE food_costing ADD COLUMN json_data TEXT').run();
-    } catch (e) { }
-    try {
-      sqliteDb.prepare('ALTER TABLE food_costing ADD COLUMN gross_weight DECIMAL(10,2)').run();
-      sqliteDb.prepare('ALTER TABLE food_costing ADD COLUMN gross_cost DECIMAL(10,2)').run();
-      sqliteDb.prepare('ALTER TABLE food_costing ADD COLUMN cooked_weight DECIMAL(10,2)').run();
-      sqliteDb.prepare('ALTER TABLE food_costing ADD COLUMN product_id INTEGER').run();
-    } catch (e) { }
-  }
-
-  const products = [
-    ['1618', 'Posta Negra / Nalga de Adentro', 'Cortes', 4.25, 9.37, 85.00],
-    ['1619', 'Cajas Tortuguita', 'Cortes', 4.65, 10.25, 90.00],
-    ['1620', 'HUESO DE YUGO / COGOTE CON HUESO', 'Cortes', 2.00, 4.41, 40.00],
-    ['1621', 'NEW YORK / BIEF ANGOSTO', 'Prime', 6.75, 14.88, 130.00],
-    ['1622', 'TRIMING 80/20 especial', 'Industrial', 3.10, 6.83, 60.00],
-    ['1623', 'cajas de triming 50/50 popular', 'Industrial', 2.75, 6.06, 55.00],
-    ['1624', 'cajas de Aguja/chuck', 'Cortes', 4.25, 9.37, 85.00],
-    ['1625', 'ANGELINA / CORAZON DE CUADRIL', 'Cortes', 4.75, 10.47, 95.00],
-    ['1626', 'CARNE BOVINA CONGELADA SIN HUESO DELANTERO', 'Cortes', 3.95, 8.71, 75.00],
-    ['1627', 'CARNE BOVINA CONGELADA SIN HUESO TAPA CUADRIL / PICAÑA', 'Prime', 9.20, 20.28, 180.00],
-    ['1628', 'CARNE BOVINA CONGELADA SIN HUESO RECORTE DE CARNE 90 VL premium', 'Industrial', 4.65, 10.25, 90.00]
-  ];
-
-  // Only seed products on fresh install (table empty) — NEVER re-insert deleted products
+  // Tables already created by github-db.js init()
+  // Seed default products if table is empty
   const { rows: existingProducts } = await query('SELECT COUNT(*) as cnt FROM products');
   if (parseInt(existingProducts[0]?.cnt || 0) === 0) {
-    console.log('🔄 Sembrando catálogo oficial de productos por primera vez...');
+    console.log('Seeding official product catalog...');
+    const products = [
+      ['1618', 'Posta Negra / Nalga de Adentro', 'Cortes', 4.25, 9.37, 85.00],
+      ['1619', 'Cajas Tortuguita', 'Cortes', 4.65, 10.25, 90.00],
+      ['1620', 'HUESO DE YUGO / COGOTE CON HUESO', 'Cortes', 2.00, 4.41, 40.00],
+      ['1621', 'NEW YORK / BIEF ANGOSTO', 'Prime', 6.75, 14.88, 130.00],
+      ['1622', 'TRIMING 80/20 especial', 'Industrial', 3.10, 6.83, 60.00],
+      ['1623', 'cajas de triming 50/50 popular', 'Industrial', 2.75, 6.06, 55.00],
+      ['1624', 'cajas de Aguja/chuck', 'Cortes', 4.25, 9.37, 85.00],
+      ['1625', 'ANGELINA / CORAZON DE CUADRIL', 'Cortes', 4.75, 10.47, 95.00],
+      ['1626', 'CARNE BOVINA CONGELADA SIN HUESO DELANTERO', 'Cortes', 3.95, 8.71, 75.00],
+      ['1627', 'CARNE BOVINA CONGELADA SIN HUESO TAPA CUADRIL / PICAÑA', 'Prime', 9.20, 20.28, 180.00],
+      ['1628', 'CARNE BOVINA CONGELADA SIN HUESO RECORTE DE CARNE 90 VL premium', 'Industrial', 4.65, 10.25, 90.00]
+    ];
     for (const p of products) {
-      if (isProduction) {
-        await query('INSERT INTO products (code, name, category, price_per_lb, price_per_kg, price_per_box) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(name) DO NOTHING', p);
-      } else {
-        try {
-          await query('INSERT OR IGNORE INTO products (code, name, category, price_per_lb, price_per_kg, price_per_box) VALUES (?, ?, ?, ?, ?, ?)', p);
-        } catch (e) { }
-      }
+      try {
+        await query('INSERT OR IGNORE INTO products (code, name, category, price_per_lb, price_per_kg, price_per_box) VALUES (?, ?, ?, ?, ?, ?)', p);
+      } catch (e) { }
     }
   }
 
-  // Ensure inventory exists for all products — only insert if not exists, NEVER overwrite existing data
+  // Ensure inventory rows exist for all products
   const { rows: prods } = await query('SELECT id FROM products');
   for (const p of prods) {
-    if (isProduction) {
-      await query(`
-        INSERT INTO inventory (product_id, bodega_1, bodega_2, bodega_3, bodega_4, initial_stock, sold_stock) 
-        VALUES (?, 0, 0, 0, 0, 0, 0)
-        ON CONFLICT(product_id) DO NOTHING
-      `, [p.id]);
-    } else {
-      await query(`
-        INSERT OR IGNORE INTO inventory (product_id, bodega_1, bodega_2, bodega_3, bodega_4, initial_stock, sold_stock) 
-        VALUES (?, 0, 0, 0, 0, 0, 0)
-      `, [p.id]);
-    }
-    // DO NOT force-update existing inventory — real data must be preserved
+    await query(`
+      INSERT OR IGNORE INTO inventory (product_id, bodega_1, bodega_2, bodega_3, bodega_4, initial_stock, sold_stock, current_stock, cajas, entradas_cajas, salidas_cajas) 
+      VALUES (?, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+    `, [p.id]);
   }
 
-  const agros = [
-    'Soyapango - Puesto',
-    'Usulután - Puesto',
-    'Agro Quezaltepeque',
-    'Agro Aguilares',
-    'Agro Opico',
-    'MAG (Gobierno)',
-    'CNR (Gobierno)',
-    'Relaciones Exteriores (Gobierno)',
-    'Lomas de San Francisco'
-  ];
-  // Sync destinations — NEVER delete user-added agros
-  for (const a of agros) {
-    if (isProduction) {
-      await query('INSERT INTO agros (name) VALUES (?) ON CONFLICT(name) DO NOTHING', [a]);
-    } else {
+  // Seed default agros if needed
+  const { rows: existingAgros } = await query('SELECT COUNT(*) as cnt FROM agros');
+  if (parseInt(existingAgros[0]?.cnt || 0) === 0) {
+    const agros = [
+      'Soyapango - Puesto', 'Usulután - Puesto', 'Agro Quezaltepeque',
+      'Agro Aguilares', 'Agro Opico', 'MAG (Gobierno)',
+      'CNR (Gobierno)', 'Relaciones Exteriores (Gobierno)', 'Lomas de San Francisco'
+    ];
+    for (const a of agros) {
       await query('INSERT OR IGNORE INTO agros (name) VALUES (?)', [a]);
     }
   }
@@ -1366,11 +921,10 @@ app.get('/api/reports/inventory-status', async (req, res) => {
 });
 
 app.get('/api/reports/agro-sales', async (req, res) => {
-  const dateFunc = isProduction ? "to_char(s.date, 'YYYY-MM')" : "strftime('%Y-%m', s.date)";
   const { rows } = await query(`
     SELECT a.name as agro_name, 
            SUM(s.amount_received) as total_sales,
-           ${dateFunc} as month
+           strftime('%Y-%m', s.date) as month
     FROM sales s
     JOIN agros a ON s.agro_id = a.id
     GROUP BY a.id, a.name, month
@@ -1932,23 +1486,10 @@ app.get('/api/food-costing', async (req, res) => {
 app.post('/api/food-costing', async (req, res) => {
   const { product_id, gross_weight, gross_cost, cooked_weight, json_data } = req.body;
   try {
-    // Use different queries for SQLite vs PostgreSQL
-    let info;
-    if (isProduction) {
-      // PostgreSQL supports RETURNING
-      info = await query(`
-        INSERT INTO food_costing (product_id, gross_weight, gross_cost, cooked_weight, json_data, date)
-        VALUES (?, ?, ?, ?, ?, ?) RETURNING id
-      `, [product_id, gross_weight, gross_cost, cooked_weight, json_data, new Date().toISOString()]);
-    } else {
-      // SQLite: insert then get last ID
-      const insertStmt = sqliteDb.prepare(`
-        INSERT INTO food_costing (product_id, gross_weight, gross_cost, cooked_weight, json_data, date)
-        VALUES (?, ?, ?, ?, ?, ?)
-      `);
-      const result = insertStmt.run(product_id, gross_weight, gross_cost, cooked_weight, json_data, new Date().toISOString());
-      info = { lastInsertRowid: result.lastInsertRowid, rows: [] };
-    }
+    const info = await query(`
+      INSERT INTO food_costing (product_id, gross_weight, gross_cost, cooked_weight, json_data, date)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `, [product_id, gross_weight, gross_cost, cooked_weight, json_data, new Date().toISOString()]);
 
     // Parse json_data for better log details
     let eventName = 'Lote de comida';
@@ -2126,8 +1667,7 @@ app.get('/api/admin/archives/:filename', async (req, res) => {
 // Get DB stats (size, record counts)
 app.get('/api/admin/db-stats', async (req, res) => {
   try {
-    const dbSize = await getDbSize();
-    const stats = { dbSize, tables: {} };
+    const stats = { dbSize: null, tables: {} };
     for (const table of ARCHIVE_TABLES) {
       try {
         const data = await query(`SELECT COUNT(*) as cnt, COALESCE(MIN(${table.dateCol}), '---') as oldest, COALESCE(MAX(${table.dateCol}), '---') as newest FROM ${table.name}`);
@@ -2163,10 +1703,9 @@ app.post('/api/admin/archive', async (req, res) => {
   }
 });
 
-// Manual VACUUM
+// Manual VACUUM (no-op: in-memory SQLite)
 app.post('/api/admin/vacuum', async (req, res) => {
-  const ok = await runVacuum();
-  res.json({ success: ok, message: ok ? 'VACUUM completado' : 'Error en VACUUM' });
+  res.json({ success: true, message: 'VACUUM no es necesario (BD en memoria)' });
 });
 
 // Fallback to index.html for SPA (solo en local/Render, Vercel maneja sus propias rutas)
@@ -2176,31 +1715,35 @@ if (!process.env.VERCEL) {
   });
 
   // Initialize database and run migration
-  initDb().then(() => {
-    migrateDatabase().then(async () => {
-      await backupDatabase();
-      await autoArchiveOldData();
+  db.init().then(() => {
+    initDb().then(() => {
+      migrateDatabase().then(async () => {
+        await autoArchiveOldData();
 
-      app.listen(port, '0.0.0.0', () => {
-        console.log(`Server running at port ${port}`);
-        console.log('All changes applied: New locations, stock levels, and deduction logic');
+        app.listen(port, '0.0.0.0', () => {
+          console.log(`Server running at port ${port}`);
+          console.log('All changes applied: New locations, stock levels, and deduction logic');
 
-        if (!process.env.RENDER) {
-          const DEPLOY_HOOK = process.env.RENDER_DEPLOY_HOOK_URL;
-          if (DEPLOY_HOOK) {
-            fetch(DEPLOY_HOOK, { method: 'POST' }).then(r => {
-              if (r.ok) console.log('🚀 Render deploy triggered via webhook');
-              else console.warn('⚠️ Render webhook responded', r.status);
-            }).catch(e => console.warn('⚠️ Render webhook error:', e.message));
+          if (!process.env.RENDER) {
+            const DEPLOY_HOOK = process.env.RENDER_DEPLOY_HOOK_URL;
+            if (DEPLOY_HOOK) {
+              fetch(DEPLOY_HOOK, { method: 'POST' }).then(r => {
+                if (r.ok) console.log('🚀 Render deploy triggered via webhook');
+                else console.warn('⚠️ Render webhook responded', r.status);
+              }).catch(e => console.warn('⚠️ Render webhook error:', e.message));
+            }
           }
-        }
+        });
+      }).catch(err => {
+        console.error('Migration failed:', err);
+        process.exit(1);
       });
     }).catch(err => {
-      console.error('Migration failed:', err);
+      console.error('Database initialization failed:', err);
       process.exit(1);
     });
   }).catch(err => {
-    console.error('Database initialization failed:', err);
+    console.error('DB initialization failed:', err);
     process.exit(1);
   });
 }
