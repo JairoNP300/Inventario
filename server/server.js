@@ -81,7 +81,10 @@ async function ensureDb() {
       console.log('✅ PostgreSQL conectado exitosamente');
       return;
     } catch (e) {
-      console.error('❌ Error conectando PostgreSQL:', e.message);
+      console.error('❌ Error conectando PostgreSQL:', e.message, e.code);
+      if (process.env.VERCEL) {
+        throw new Error('DB connect failed: ' + e.message + ' (code: ' + e.code + ')');
+      }
       pool = null;
       isProduction = false;
     }
