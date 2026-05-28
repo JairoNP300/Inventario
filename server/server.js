@@ -44,7 +44,7 @@ app.get('/api/public-url', async (req, res) => {
 
 // Version endpoint for auto-refresh
 app.get('/api/version', (req, res) => {
-  const version = process.env.RENDER_GIT_COMMIT || Date.now().toString();
+  const version = process.env.VERCEL_GIT_COMMIT_SHA || process.env.RENDER_GIT_COMMIT || Date.now().toString();
   res.send(version);
 });
 
@@ -122,6 +122,23 @@ async function query(sql, params = []) {
       const info = stmt.run(...params);
       return { lastInsertRowid: info.lastInsertRowid, rows: [] };
     }
+  }
+}
+
+// Ensure inventory exists for a product to prevent silent UPDATE failures
+async function ensureInventoryExists(product_id) {
+  if (!product_id) return;
+  if (isProduction) {
+    await query(`
+      INSERT INTO inventory (product_id, bodega_1, bodega_2, bodega_3, bodega_4, initial_stock, current_stock, sold_stock, cajas, entradas_cajas, salidas_cajas)
+      VALUES ($1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+      ON CONFLICT(product_id) DO NOTHING
+    `, [product_id]);
+  } else {
+    await query(`
+      INSERT OR IGNORE INTO inventory (product_id, bodega_1, bodega_2, bodega_3, bodega_4, initial_stock, current_stock, sold_stock, cajas, entradas_cajas, salidas_cajas)
+      VALUES (?, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+    `, [product_id]);
   }
 }
 
@@ -915,6 +932,7 @@ app.put('/api/reports/ransa/:id', async (req, res) => {
 app.post('/api/reports/ransa', async (req, res) => {
   const { product_id, tag_weight, scale_weight, units_per_box, cajas, unit_type, distribution_details } = req.body;
   try {
+    await ensureInventoryExists(product_id);
     validateRequired(req.body, ['product_id', 'scale_weight', 'distribution_details']);
     const scaleKg = sanitizeNumber(scale_weight, 'scale_weight', false);
     const tagKg = sanitizeNumber(tag_weight, 'tag_weight');
@@ -987,6 +1005,7 @@ app.get('/api/reports/dispatches', async (req, res) => {
 app.post('/api/dispatches', async (req, res) => {
   const { product_id, agro_id, weight, unit_type, value, origin_warehouse, discount_percent, cajas } = req.body;
   try {
+    await ensureInventoryExists(product_id);
     validateRequired(req.body, ['product_id', 'weight', 'value']);
     const weightVal = sanitizeNumber(weight, 'weight', false);
     const valueVal = sanitizeNumber(value, 'value', false);
@@ -1072,6 +1091,7 @@ app.post('/api/sales', async (req, res) => {
 app.post('/api/inventory/adjust', async (req, res) => {
   const { product_id, current_stock, initial_stock, cajas, warehouse, mode } = req.body;
   try {
+    await ensureInventoryExists(product_id);
     validateRequired(req.body, ['product_id']);
     const colMap = {
       'Ransa': { col: 'bodega_1', unit: 'KG' },
@@ -1224,7 +1244,7 @@ app.put('/api/inventory/adjustments/:id', async (req, res) => {
     }
 
     // Apply new values
-    const targetCol = warehouse === 'Ransa' ? 'bodega_1' : warehouse === 'Soyapango' ? 'bodega_2' : warehouse === 'Usulután' ? 'bodega_3' : warehouse === 'Lomas' ? 'bodega_4' : null;
+    const targetCol = warehouse === 'Ransa' ? 'bodega_1' : warehouse === 'Soyapango' ? 'bodega_2' : warehouse === 'Usulután' ? 'bodega_3' : warehouse === 'Lomas de San Francisco' ? 'bodega_4' : null;
     if (!targetCol) return res.status(400).json({ error: 'Bodega inválida' });
 
     if (newWeight > 0) {
@@ -1395,6 +1415,7 @@ app.get('/api/agros', async (req, res) => {
 app.post('/api/inventory/transfer', async (req, res) => {
    const { product_id, origin, destination, origin_weight, dest_weight, weight, unit_type } = req.body;
    try {
+     await ensureInventoryExists(product_id);
      validateRequired(req.body, ['product_id', 'origin', 'destination', 'weight']);
      
      // Define warehouse to column mapping and their respective units
@@ -1591,6 +1612,7 @@ app.put('/api/movements/:id', async (req, res) => {
 app.post('/api/production/process', async (req, res) => {
   const { product_id, initial_kg, cut_weight, waste, storage_cost, transport_cost, labor_cost, other_costs } = req.body;
   try {
+    await ensureInventoryExists(product_id);
     validateRequired(req.body, ['product_id', 'initial_kg', 'cut_weight']);
     const initKg = sanitizeNumber(initial_kg, 'initial_kg', false);
     const cutLbs = sanitizeNumber(cut_weight, 'cut_weight', false);
@@ -1638,6 +1660,7 @@ app.get('/api/production/logs', async (req, res) => {
 app.post('/api/production/logs', async (req, res) => {
   const { product_id, initial_weight, raw_weight, cut_weight, waste, storage_cost, transport_cost, labor_cost, other_costs, process_mode, dest_warehouse } = req.body;
   try {
+    await ensureInventoryExists(product_id);
     validateRequired(req.body, ['product_id', 'cut_weight']);
     const initKg = initial_weight !== undefined && initial_weight !== '' ? sanitizeNumber(initial_weight, 'initial_weight') : 0;
     const rawLbs = raw_weight !== undefined && raw_weight !== '' ? sanitizeNumber(raw_weight, 'raw_weight') : 0;
@@ -1645,7 +1668,7 @@ app.post('/api/production/logs', async (req, res) => {
     const wasteVal = parseFloat(waste) || (initKg > 0 ? initKg * 2.20462 - cutLbs : 0);
 
     const updates = [
-      { sql: 'INSERT INTO production_logs (product_id, initial_weight, raw_weight, cut_weight, waste, storage_cost, transport_cost, labor_cost, other_costs, dest_warehouse) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', params: [product_id, initKg, rawLbs, cutLbs, wasteVal, storage_cost || 0, transport_cost || 0, labor_cost || 0, other_costs || 0, process_mode === 'direct' ? (dest_warehouse || 'Soyapango') : ''] }
+      { sql: 'INSERT INTO production_logs (product_id, initial_weight, raw_weight, cut_weight, waste, storage_cost, transport_cost, labor_cost, other_costs, dest_warehouse) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', params: [product_id, initKg, rawLbs, cutLbs, wasteVal, storage_cost || 0, transport_cost || 0, labor_cost || 0, other_costs || 0, process_mode === 'direct' ? (dest_warehouse || 'Soyapango') : 'Central de abasto - Soyapango (Cuarto Frío)'] }
     ];
 
     if (process_mode === 'direct') {

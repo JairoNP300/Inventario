@@ -8,7 +8,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '../');
 dotenv.config({ path: join(ROOT, '.env') });
 const DEBOUNCE_MS = 5000;
-const RENDER_DEPLOY_HOOK_URL = process.env.RENDER_DEPLOY_HOOK_URL || '';
+const VERCEL_DEPLOY_HOOK_URL = process.env.VERCEL_DEPLOY_HOOK_URL || process.env.RENDER_DEPLOY_HOOK_URL || '';
 
 // Archivos/carpetas a ignorar
 const IGNORE = [
@@ -47,21 +47,21 @@ function clearStaleGitLockIfNeeded() {
     }
 }
 
-async function triggerRenderDeployHook() {
-    if (!RENDER_DEPLOY_HOOK_URL) {
-        console.log('ℹ️ RENDER_DEPLOY_HOOK_URL no configurada. Se usará solo auto-deploy por git push.');
+async function triggerVercelDeployHook() {
+    if (!VERCEL_DEPLOY_HOOK_URL) {
+        console.log('ℹ️ VERCEL_DEPLOY_HOOK_URL no configurada. Se usará solo auto-deploy por git push.');
         return;
     }
 
     try {
-        const res = await fetch(RENDER_DEPLOY_HOOK_URL, { method: 'POST' });
+        const res = await fetch(VERCEL_DEPLOY_HOOK_URL, { method: 'POST' });
         if (!res.ok) {
-            console.warn(`⚠️ Hook de Render respondió ${res.status}. Revisa la URL del deploy hook.`);
+            console.warn(`⚠️ Hook de Vercel respondió ${res.status}. Revisa la URL del deploy hook.`);
             return;
         }
-        console.log('🚀 Deploy de Render disparado por webhook.');
+        console.log('🚀 Deploy de Vercel disparado por webhook.');
     } catch (e) {
-        console.warn('⚠️ No se pudo disparar webhook de Render:', e.message);
+        console.warn('⚠️ No se pudo disparar webhook de Vercel:', e.message);
     }
 }
 
@@ -81,10 +81,10 @@ async function deploy() {
         execSync('git add .', { cwd: ROOT, stdio: 'inherit' });
         execSync(`git commit -m "Actualización automática: ${timestamp}"`, { cwd: ROOT, stdio: 'inherit' });
         execSync('git push origin main', { cwd: ROOT, stdio: 'inherit' });
-        await triggerRenderDeployHook();
+        await triggerVercelDeployHook();
         
         console.log(`✅ ¡Cambios subidos con éxito!`);
-        console.log(`🚀 Render se está actualizando automáticamente.`);
+        console.log(`🚀 Vercel se está actualizando automáticamente.`);
         console.log(`   (La URL pública se actualizará en unos minutos)\n`);
     } catch (e) {
         if (String(e.message || '').includes('index.lock')) {
@@ -124,7 +124,7 @@ function scheduleDeployment() {
 
 console.log('✅ Auto-deploy HABILITADO');
 console.log('💡 Sistema usará PostgreSQL cuando DATABASE_URL esté configurado');
-console.log('🚀 Render se actualizará automáticamente con cada git push');
+console.log('🚀 Vercel se actualizará automáticamente con cada git push');
 
 watch(ROOT, { recursive: true }, (event, filename) => {
     if (filename && !shouldIgnore(filename)) {
