@@ -1,8 +1,13 @@
 /// <reference types="sql.js" />
 import initSqlJs from 'sql.js';
-import ExcelJS from 'exceljs';
-import { readFile } from 'fs/promises';
+import * as XLSX from 'xlsx';
+import { readFile, writeFile } from 'fs/promises';
+import { fileURLToPath } from 'url';
+import { join, dirname } from 'path';
 import { Buffer } from 'buffer';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const LOCAL_DATA_PATH = join(__dirname, '..', 'data', 'data.json');
 
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const OWNER = 'JairoNP300';
@@ -60,14 +65,59 @@ export async function init() {
   // Load sql.js WASM binary — try local path first, then fetch from CDN
   let wasmBinary;
   try {
-    const { fileURLToPath } = await import('url');
-    const { join } = await import('path');
-    const localPath = join(fileURLToPath(new URL('.', import.meta.url)), 'sql-wasm.wasm');
-    wasmBinary = await readFile(localPath);
+    const localWasm = join(__dirname, 'sql-wasm.wasm');
+    wasmBinary = await readFile(localWasm);
   } catch {
     const resp = await fetch('https://cdn.jsdelivr.net/npm/sql.js@1.14.1/dist/sql-wasm.wasm');
     wasmBinary = new Uint8Array(await resp.arrayBuffer());
   }
+  const SQL = await initSqlJs({ wasmBinary });
+  db = new SQL.Database();
+  db.run('PRAGMA journal_mode=MEMORY');
+
+  // Create tables
+  db.run(TABLE_SCHEMA);
+  console.log('Tablas creadas');
+
+  // Load data from local file first (fast, bundled in deployment)
+  try {
+    const localRaw = await readFile(LOCAL_DATA_PATH, 'utf-8');
+    const localData = JSON.parse(localRaw);
+    loadData(localData);
+    console.log('✅ Datos cargados desde archivo local');
+  } catch (e) {
+    console.log('📭 No hay data.json local, BD vacía');
+  }
+
+  // Sync latest from GitHub in background (no await)
+  syncFromGitHub().catch(e => console.warn('GitHub sync error:', e.message));
+}
+
+function loadData(data) {
+  for (const table of TABLE_NAMES) {
+    const rows = data[table] || [];
+    if (rows.length === 0) continue;
+    const cols = Object.keys(rows[0]);
+    const q = cols.map(() => '?').join(',');
+    const stmt = db.prepare(`INSERT OR IGNORE INTO ${table} (${cols.join(',')}) VALUES (${q})`);
+    for (const row of rows) {
+      stmt.run(cols.map(c => row[c]));
+    }
+    stmt.free();
+  }
+}
+
+async function syncFromGitHub() {
+  if (!GITHUB_TOKEN) return;
+  const file = await gh('GET', DATA_PATH);
+  if (!file) return;
+  const raw = Buffer.from(file.content, 'base64').toString('utf-8');
+  const data = JSON.parse(raw);
+  loadData(data);
+  console.log('✅ Datos sincronizados desde GitHub');
+  // Regenerate Excel with latest data
+  await doSync(true);
+}
   const SQL = await initSqlJs({ wasmBinary });
   db = new SQL.Database();
   db.run('PRAGMA journal_mode=MEMORY');
@@ -145,13 +195,13 @@ export async function exec(rawSql) {
 }
 
 export async function syncToGitHub() {
-  if (!dirty || syncPromise) return syncPromise;
+  if (!dirty) return;
   dirty = false;
   syncPromise = doSync();
   try { await syncPromise; } finally { syncPromise = null; }
 }
 
-async function doSync() {
+async function doSync(force = false) {
   if (!GITHUB_TOKEN) return;
   const data = {};
   for (const table of TABLE_NAMES) {
