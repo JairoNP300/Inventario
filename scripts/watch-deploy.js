@@ -1,8 +1,7 @@
-import { watch, existsSync } from 'fs';
+import { watch, existsSync, readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import git from 'isomorphic-git';
-import http from 'isomorphic-git/http/node';
+import https from 'https';
 import dotenv from 'dotenv';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -14,64 +13,79 @@ const OWNER = 'JairoNP300';
 const REPO = 'Inventario';
 const DEBOUNCE_MS = 2000;
 
-const IGNORE = [
-  'node_modules', '.git', 'dist', '.github', 'scratch',
-  '.timestamp-', '.tmp', '.swp', 'server.log',
-];
+const IGNORE = ['node_modules', '.git', 'dist', '.github', 'scratch', '.timestamp-', '.tmp', '.swp', 'server.log'];
 
 let timer = null;
 
+function api(method, path, body) {
+  return new Promise((resolve, reject) => {
+    const opts = {
+      hostname: 'api.github.com', path: `/repos/${OWNER}/${REPO}${path}`, method,
+      headers: { 'User-Agent': 'node', 'Authorization': `Bearer ${TOKEN}`, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
+    };
+    const req = https.request(opts, (res) => {
+      let data = '';
+      res.on('data', c => data += c);
+      res.on('end', () => { if (res.statusCode >= 400) reject(Error(`HTTP ${res.statusCode}`)); else { try { resolve(JSON.parse(data)); } catch { resolve(data); } } });
+    });
+    req.on('error', reject);
+    if (body) req.write(JSON.stringify(body));
+    req.end();
+  });
+}
+
 async function triggerWebhooks() {
-  const hooks = [
+  for (const { url, name } of [
     { url: process.env.VERCEL_DEPLOY_HOOK_URL, name: 'Vercel' },
     { url: process.env.RENDER_DEPLOY_HOOK_URL, name: 'Render' },
-  ];
-  for (const { url, name } of hooks) {
+  ]) {
     if (!url) continue;
-    try {
-      const res = await fetch(url, { method: 'POST' });
-      console.log(`  🔄 ${name}: ✅ (${res.status})`);
-    } catch (e) {
-      console.log(`  ⚠️ ${name}: ${e.message}`);
-    }
+    try { await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }); } catch {}
   }
 }
 
 async function pushChanges() {
   if (!TOKEN) return;
-  const auth = () => ({ username: TOKEN, password: 'x-oauth-basic' });
   try {
-    if (!existsSync(join(ROOT, '.git'))) {
-      await git.init({ fs, dir: ROOT, defaultBranch: 'main' });
-      const remotes = await git.listRemotes({ fs, dir: ROOT });
-      if (!remotes.some(r => r.remote === 'origin')) {
-        await git.addRemote({ fs, dir: ROOT, remote: 'origin', url: `https://github.com/${OWNER}/${REPO}.git` });
-      }
+    const files = ['src/App.jsx', 'server/server.js', 'server/github-db.js', 'package.json', 'package-lock.json', 'vite.config.js', 'index.html', 'vercel.json', 'deploy-github.mjs', 'deploy.bat', 'scripts/watch-deploy.js', '.github/workflows/deploy.yml', 'data/data.json', 'server/seed-data.json'];
+
+    // Get last commit SHA
+    let parentSha;
+    try { const ref = await api('GET', '/git/ref/heads/main'); parentSha = ref.object.sha; } catch { parentSha = null; }
+
+    // Get existing tree to compare
+    let existingTree = {};
+    if (parentSha) {
       try {
-        await git.fetch({ fs, dir: ROOT, http, onAuth: auth, url: `https://github.com/${OWNER}/${REPO}.git`, ref: 'main', singleBranch: true, depth: 1 });
+        const commit = await api('GET', `/git/commits/${parentSha}`);
+        const tree = await api('GET', `/git/trees/${commit.tree.sha}?recursive=1`);
+        for (const item of tree.tree) {
+          if (item.type === 'blob') existingTree[item.path] = item.sha;
+        }
       } catch {}
     }
 
-    // Add changed files
-    const matrix = await git.statusMatrix({ fs, dir: ROOT });
+    const treeEntries = [];
     let changed = 0;
-    for (const [filepath, , workStatus] of matrix) {
-      if (IGNORE.some(i => filepath.includes(i))) continue;
-      if (workStatus !== 1) {
-        await git.add({ fs, dir: ROOT, filepath });
-        changed++;
-      }
+    for (const f of files) {
+      const fp = join(ROOT, f.replace(/\//g, '\\'));
+      if (!existsSync(fp)) continue;
+      const content = readFileSync(fp).toString('base64');
+      const blob = await api('POST', '/git/blobs', { content, encoding: 'base64' });
+      treeEntries.push({ path: f, mode: '100644', type: 'blob', sha: blob.sha });
+      if (existingTree[f] !== blob.sha) changed++;
     }
-    if (changed === 0) return;
 
-    await git.commit({ fs, dir: ROOT, author: { name: 'JairoNP300', email: 'jairo@example.com' }, message: `Auto-deploy: ${new Date().toLocaleString('es-SV')}` });
-    await git.push({ fs, dir: ROOT, http, onAuth: auth, url: `https://github.com/${OWNER}/${REPO}.git`, ref: 'main' });
+    if (changed === 0) return;
     console.log(`📤 ${changed} archivo(s) → GitHub`);
+
+    const tree = await api('POST', '/git/trees', { base_tree: parentSha || undefined, tree: treeEntries });
+    const commit = await api('POST', '/git/commits', { message: `Auto-deploy: ${new Date().toLocaleString('es-SV')}`, tree: tree.sha, parents: parentSha ? [parentSha] : [], author: { name: 'JairoNP300', email: 'jairo@example.com' } });
+    await api('PATCH', '/git/refs/heads/main', { sha: commit.sha, force: false });
+    console.log(`  ✅ ${commit.sha.substring(0, 7)}`);
     await triggerWebhooks();
   } catch (e) {
-    if (!e.message?.includes('index.lock')) {
-      console.error('❌', e.message.slice(0, 100));
-    }
+    if (!e.message?.includes('lock')) console.error('❌', e.message.slice(0, 100));
   }
 }
 
@@ -84,12 +98,7 @@ function shouldIgnore(filename) {
   return !filename || IGNORE.some(i => filename.includes(i));
 }
 
-console.log(`🚀 Auto-deploy ${TOKEN ? '✅ activo' : '⚠️ inactivo (sin GITHUB_TOKEN)'}`);
+console.log(`🚀 Auto-deploy ${TOKEN ? '✅' : '⚠️ inactivo (sin GITHUB_TOKEN)'}`);
 if (!TOKEN) process.exit(1);
-
-// Initial push
 pushChanges();
-
-watch(ROOT, { recursive: true }, (_, filename) => {
-  if (!shouldIgnore(filename)) schedule();
-});
+watch(ROOT, { recursive: true }, (_, filename) => { if (!shouldIgnore(filename)) schedule(); });
