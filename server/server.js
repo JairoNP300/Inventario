@@ -150,7 +150,7 @@ const migrateDatabase = async () => {
     console.warn('[SEED] Error:', e.message);
   }
 
-  // --- One-time dedup: clean duplicate product codes ---
+  // --- Dedup: clean duplicate product codes ---
   try {
     const { rows: allProducts } = await query('SELECT id, code FROM products WHERE code IS NOT NULL AND code != \'\'');
     const codeMap = {};
@@ -169,6 +169,25 @@ const migrateDatabase = async () => {
       }
     }
   } catch (e) { console.warn('[DEDUP] Error:', e.message); }
+
+  // --- Dedup: remove duplicate inventory rows for same product_id ---
+  try {
+    const { rows: allInv } = await query('SELECT product_id FROM inventory');
+    const invMap = {};
+    for (const r of allInv) {
+      if (!invMap[r.product_id]) invMap[r.product_id] = 0;
+      invMap[r.product_id]++;
+    }
+    for (const [pid, count] of Object.entries(invMap)) {
+      if (count > 1) {
+        console.log(`[DEDUP INV] Product ${pid} has ${count} inventory rows, keeping first`);
+        const { rows: dups } = await query('SELECT * FROM inventory WHERE product_id = ?', [parseInt(pid)]);
+        for (let j = 1; j < dups.length; j++) {
+          await query('DELETE FROM inventory WHERE product_id = ? AND entradas_cajas = ? AND salidas_cajas = ?', [parseInt(pid), dups[j].entradas_cajas, dups[j].salidas_cajas]);
+        }
+      }
+    }
+  } catch (e) { console.warn('[DEDUP INV] Error:', e.message); }
 
   // NOTE: syncToGitHub not called here intentionally.
   // The post-response middleware handles sync after each response.
