@@ -66,8 +66,10 @@ async function syncFromGitHub() {
 }
 
 export async function query(sql, params = []) {
-  dirty = true;
-  return jdb.query(sql, params);
+  const result = jdb.query(sql, params);
+  // Only mark dirty for mutation queries (not SELECT/PRAGMA/WITH)
+  if (!/^\s*(SELECT|WITH|PRAGMA|BEGIN|COMMIT|ROLLBACK)/i.test(sql)) dirty = true;
+  return result;
 }
 
 export async function exec(sql) {
