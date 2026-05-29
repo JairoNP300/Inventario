@@ -118,40 +118,36 @@ const migrateDatabase = async () => {
 
   console.log('Database migration completed successfully');
 
-  // --- Auto-restore: if bodega_2 is zero, restore from seed-data.json ---
+  // --- Auto-restore from seed-data.json if inventory is empty ---
   try {
     const seedPath = join(__dirname, 'seed-data.json');
     const seed = JSON.parse(await readFile(seedPath, 'utf8'));
     const { rows: allProds } = await query('SELECT id, code FROM products');
 
-    const { rows: b2check } = await query(`SELECT COALESCE(SUM(COALESCE(bodega_2,0)),0) as total FROM inventory`);
-    if (b2check[0] && parseFloat(b2check[0].total) === 0) {
-      for (const p of allProds) {
-        const b2 = seed.bodega_2[p.code] ?? 0;
-        const initStock = (seed.initial_stock && typeof seed.initial_stock === 'object') ? (seed.initial_stock[p.code] ?? 0) : (seed.initial_stock ?? 0);
-        await query('UPDATE inventory SET bodega_2 = ?, initial_stock = ?, current_stock = ? WHERE product_id = ?', [b2 || 0, initStock, seed.current_stock || 0, p.id]);
-      }
-      console.log('✅ bodega_2, initial_stock, current_stock restaurados');
-    }
+    const { rows: check } = await query(`SELECT COALESCE(SUM(COALESCE(bodega_1,0)+COALESCE(bodega_2,0)+COALESCE(bodega_3,0)+COALESCE(bodega_4,0)+COALESCE(entradas_cajas,0)+COALESCE(salidas_cajas,0)),0) as total FROM inventory`);
+    const total = parseFloat(check[0]?.total || 0);
+    console.log(`[SEED] Total inventario actual: ${total}`);
 
-    const { rows: zeroCheck } = await query(`SELECT COALESCE(SUM(COALESCE(bodega_1,0)+COALESCE(bodega_3,0)+COALESCE(bodega_4,0)+COALESCE(entradas_cajas,0)+COALESCE(salidas_cajas,0)),0) as total FROM inventory`);
-    if (zeroCheck[0] && parseFloat(zeroCheck[0].total) === 0) {
-      for (const [code, val] of Object.entries(seed.bodega_3 || {})) {
-        const p = allProds.find(x => x.code === code);
-        if (p) await query('UPDATE inventory SET bodega_3 = ? WHERE product_id = ?', [val, p.id]);
+    if (total === 0) {
+      console.log('[SEED] Inventario vacío, restaurando desde seed-data.json...');
+      for (const p of allProds) {
+        const b2 = seed.bodega_2?.[p.code] ?? 0;
+        const b3 = seed.bodega_3?.[p.code] ?? 0;
+        const b4 = seed.bodega_4?.[p.code] ?? 0;
+        const b1 = seed.bodega_1?.[p.code] ?? 0;
+        const initStock = seed.initial_stock?.[p.code] ?? 0;
+        const c = seed.cajas?.[p.code] || { entradas: 0, salidas: 0 };
+        await query(
+          'UPDATE inventory SET bodega_1 = ?, bodega_2 = ?, bodega_3 = ?, bodega_4 = ?, initial_stock = ?, current_stock = ?, entradas_cajas = ?, salidas_cajas = ? WHERE product_id = ?',
+          [b1, b2, b3, b4, initStock, seed.current_stock || 0, c.entradas, c.salidas, p.id]
+        );
       }
-      for (const [code, val] of Object.entries(seed.bodega_4 || {})) {
-        const p = allProds.find(x => x.code === code);
-        if (p) await query('UPDATE inventory SET bodega_4 = ? WHERE product_id = ?', [val, p.id]);
-      }
-      for (const [code, c] of Object.entries(seed.cajas || {})) {
-        const p = allProds.find(x => x.code === code);
-        if (p) await query('UPDATE inventory SET entradas_cajas = ?, salidas_cajas = ? WHERE product_id = ?', [c.entradas, c.salidas, p.id]);
-      }
-      console.log('✅ bodega_3, bodega_4, cajas restaurados');
+      console.log('✅ Seed restaurado: bodega_1-4, cajas, initial_stock');
+    } else {
+      console.log('[SEED] Inventario con datos, omitiendo restore');
     }
   } catch(e) {
-    console.warn('[RESTORE] Error:', e.message);
+    console.warn('[SEED] Error:', e.message);
   }
 
   // --- One-time dedup: clean duplicate product codes ---
