@@ -38,12 +38,12 @@ app.get('/api/version', (req, res) => {
   res.send(version);
 });
 
-// Sync in-memory DB to GitHub after mutations (fire-and-forget, process stays alive ~30s)
+// Sync in-memory DB to GitHub after every response
 app.use((req, res, next) => {
-  const originalJson = res.json.bind(res);
-  res.json = function(data) {
-    originalJson(data);
+  const originalEnd = res.end;
+  res.end = function(...args) {
     db.syncToGitHub().catch(e => console.warn('[SYNC] Error:', e.message));
+    return originalEnd.apply(this, args);
   };
   next();
 });
@@ -846,6 +846,7 @@ app.put('/api/products/:id', async (req, res) => {
   const { code, name, category, price_per_lb, price_per_kg, price_per_box } = req.body;
   try {
     await query('UPDATE products SET code = ?, name = ?, category = ?, price_per_lb = ?, price_per_kg = ?, price_per_box = ? WHERE id = ?', [code, name, category, price_per_lb, price_per_kg, price_per_box, id]);
+    await db.syncToGitHub();
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
