@@ -1,115 +1,95 @@
-import { watch, existsSync, readFileSync } from 'fs';
+import { watch, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import https from 'https';
+import git from 'isomorphic-git';
+import http from 'isomorphic-git/http/node';
 import dotenv from 'dotenv';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const ROOT = join(__dirname, '../');
+const ROOT = join(__dirname, '..');
 dotenv.config({ path: join(ROOT, '.env') });
 
 const TOKEN = process.env.GITHUB_TOKEN;
 const OWNER = 'JairoNP300';
 const REPO = 'Inventario';
-const DEBOUNCE_MS = 5000;
+const DEBOUNCE_MS = 2000;
 
 const IGNORE = [
   'node_modules', '.git', 'dist', '.github', 'scratch',
-  '.timestamp-', '.tmp', '.swp'
+  '.timestamp-', '.tmp', '.swp', 'server.log',
 ];
 
 let timer = null;
-let pendingChanges = false;
 
-function gh(method, path, body) {
-  return new Promise((resolve, reject) => {
-    const opts = {
-      hostname: 'api.github.com',
-      path: `/repos/${OWNER}/${REPO}${path}`,
-      method,
-      headers: {
-        'User-Agent': 'node',
-        'Authorization': `Bearer ${TOKEN}`,
-        'Accept': 'application/vnd.github.v3+json',
-        'Content-Type': 'application/json',
-      },
-    };
-    const req = https.request(opts, (res) => {
-      let data = '';
-      res.on('data', c => data += c);
-      res.on('end', () => {
-        if (res.statusCode >= 400) {
-          reject(new Error(`HTTP ${res.statusCode}`));
-        } else {
-          try { resolve(JSON.parse(data)); } catch { resolve(data); }
-        }
-      });
-    });
-    req.on('error', reject);
-    if (body) req.write(JSON.stringify(body));
-    req.end();
-  });
-}
-
-async function uploadFile(relativePath) {
-  const filePath = join(ROOT, relativePath);
-  if (!existsSync(filePath)) return;
-  let sha = null;
-  try {
-    const existing = await gh('GET', `/contents/${relativePath}`);
-    sha = existing.sha;
-  } catch (e) {}
-  const content64 = readFileSync(filePath).toString('base64');
-  await gh('PUT', `/contents/${relativePath}`, {
-    message: `Auto-sync: ${relativePath}`,
-    content: content64,
-    sha: sha || undefined,
-  });
-  console.log(`  ✅ ${relativePath}`);
-}
-
-async function deploy() {
-  if (!TOKEN) {
-    console.log('⚠️ GITHUB_TOKEN no configurado. Auto-deploy desactivado.');
-    return;
+async function triggerWebhooks() {
+  const hooks = [
+    { url: process.env.VERCEL_DEPLOY_HOOK_URL, name: 'Vercel' },
+    { url: process.env.RENDER_DEPLOY_HOOK_URL, name: 'Render' },
+  ];
+  for (const { url, name } of hooks) {
+    if (!url) continue;
+    try {
+      const res = await fetch(url, { method: 'POST' });
+      console.log(`  🔄 ${name}: ✅ (${res.status})`);
+    } catch (e) {
+      console.log(`  ⚠️ ${name}: ${e.message}`);
+    }
   }
+}
+
+async function pushChanges() {
+  if (!TOKEN) return;
+  const auth = () => ({ username: TOKEN, password: 'x-oauth-basic' });
   try {
-    const files = ['src/App.jsx', 'server/server.js', 'server/github-db.js', 'package.json', 'vite.config.js', 'index.html'];
-    for (const f of files) {
-      if (existsSync(join(ROOT, f))) {
-        await uploadFile(f);
+    if (!existsSync(join(ROOT, '.git'))) {
+      await git.init({ fs, dir: ROOT, defaultBranch: 'main' });
+      const remotes = await git.listRemotes({ fs, dir: ROOT });
+      if (!remotes.some(r => r.remote === 'origin')) {
+        await git.addRemote({ fs, dir: ROOT, remote: 'origin', url: `https://github.com/${OWNER}/${REPO}.git` });
+      }
+      try {
+        await git.fetch({ fs, dir: ROOT, http, onAuth: auth, url: `https://github.com/${OWNER}/${REPO}.git`, ref: 'main', singleBranch: true, depth: 1 });
+      } catch {}
+    }
+
+    // Add changed files
+    const matrix = await git.statusMatrix({ fs, dir: ROOT });
+    let changed = 0;
+    for (const [filepath, , workStatus] of matrix) {
+      if (IGNORE.some(i => filepath.includes(i))) continue;
+      if (workStatus !== 1) {
+        await git.add({ fs, dir: ROOT, filepath });
+        changed++;
       }
     }
-    console.log(`✅ Auto-deploy completo: ${new Date().toLocaleString('es-MX')}`);
+    if (changed === 0) return;
+
+    await git.commit({ fs, dir: ROOT, author: { name: 'JairoNP300', email: 'jairo@example.com' }, message: `Auto-deploy: ${new Date().toLocaleString('es-SV')}` });
+    await git.push({ fs, dir: ROOT, http, onAuth: auth, url: `https://github.com/${OWNER}/${REPO}.git`, ref: 'main' });
+    console.log(`📤 ${changed} archivo(s) → GitHub`);
+    await triggerWebhooks();
   } catch (e) {
-    console.error('❌ Auto-deploy error:', e.message);
+    if (!e.message?.includes('index.lock')) {
+      console.error('❌', e.message.slice(0, 100));
+    }
   }
 }
 
-function scheduleDeployment() {
-  pendingChanges = true;
+function schedule() {
   if (timer) clearTimeout(timer);
-  timer = setTimeout(async () => {
-    if (pendingChanges) {
-      pendingChanges = false;
-      await deploy();
-    }
-  }, DEBOUNCE_MS);
+  timer = setTimeout(pushChanges, DEBOUNCE_MS);
 }
 
 function shouldIgnore(filename) {
-  if (!filename) return true;
-  return IGNORE.some(ig => filename.includes(ig));
+  return !filename || IGNORE.some(i => filename.includes(i));
 }
 
-console.log('🚀 Auto-deploy iniciado (sin git)');
-console.log('👀 Vigilando cambios...');
-console.log(TOKEN ? '✅ GITHUB_TOKEN configurado' : '⚠️ Sin GITHUB_TOKEN - auto-deploy inactivo');
+console.log(`🚀 Auto-deploy ${TOKEN ? '✅ activo' : '⚠️ inactivo (sin GITHUB_TOKEN)'}`);
+if (!TOKEN) process.exit(1);
 
-deploy();
+// Initial push
+pushChanges();
 
-watch(ROOT, { recursive: true }, (event, filename) => {
-  if (filename && !shouldIgnore(filename)) {
-    scheduleDeployment();
-  }
+watch(ROOT, { recursive: true }, (_, filename) => {
+  if (!shouldIgnore(filename)) schedule();
 });
