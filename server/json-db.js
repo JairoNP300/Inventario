@@ -163,15 +163,17 @@ function evaluateRow(row, whereStr, params) {
 
 function evalSets(row, setStr, params) {
   const assignments = setStr.split(',').map(s => s.trim());
+  let pIndex = 0;
   for (const a of assignments) {
     const m = a.match(/^(\w+)\s*=\s*(.+)$/);
     if (!m) continue;
     const col = m[1];
     let valExpr = m[2].trim();
-    let pIndex = 0;
     valExpr = valExpr.replace(/\?/g, () => {
       const v = params[pIndex++];
-      return v === null || v === undefined ? 'NULL' : v;
+      if (v === null || v === undefined) return 'NULL';
+      if (typeof v === 'string') return "'" + v.replace(/'/g, "''") + "'";
+      return String(v);
     });
     valExpr = valExpr.replace(/\$(\d+)/g, (_, n) => {
       const v = params[parseInt(n) - 1];
@@ -431,9 +433,11 @@ export function query(sql, params = []) {
     case 'update': {
       let count = 0;
       let rows = tables[parsed.table] || [];
-      if (parsed.whereConditions) rows = rows.filter(r => evaluateRow(r, parsed.whereConditions, params));
+      const setParamCount = (parsed.sets.match(/\?/g) || []).length;
+      const whereParams = params.slice(setParamCount);
+      if (parsed.whereConditions) rows = rows.filter(r => evaluateRow(r, parsed.whereConditions, whereParams));
       for (const r of rows) {
-        evalSets(r, parsed.sets, params);
+        evalSets(r, parsed.sets, params.slice(0, setParamCount));
         count++;
       }
       return { rows: [], lastInsertRowid: null };
