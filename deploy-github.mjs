@@ -96,6 +96,7 @@ async function main() {
     'deploy.bat',
     'scripts/watch-deploy.js',
     '.github/workflows/deploy.yml',
+    'package-lock.json',
     'data/data.json',
   ];
 
