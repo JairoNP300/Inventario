@@ -140,18 +140,18 @@
   ],
   "inventory": [
     {
-      "product_id": 529,
-      "bodega_1": null,
+      "current_stock": 0,
+      "salidas_cajas": null,
       "bodega_2": 0,
-      "bodega_3": null,
-      "bodega_4": 0,
-      "initial_stock": 100,
-      "current_stock": 100,
-      "sold_stock": 0,
       "final_stock": 0,
-      "cajas": 0,
+      "bodega_3": null,
+      "product_id": 529,
+      "bodega_4": 0,
       "entradas_cajas": 326,
-      "salidas_cajas": null
+      "initial_stock": 0,
+      "cajas": 0,
+      "sold_stock": 0,
+      "bodega_1": null
     },
     {
       "product_id": 530,
@@ -299,13 +299,13 @@
       "bodega_2": 0,
       "bodega_3": null,
       "bodega_4": 0,
-      "initial_stock": 100,
-      "current_stock": 100,
+      "initial_stock": 0,
+      "current_stock": 0,
       "sold_stock": 0,
       "cajas": 0,
       "entradas_cajas": 0,
       "salidas_cajas": null,
-      "id": 1513
+      "id": 1515
     }
   ],
   "movements": [
@@ -319,6 +319,17 @@
       "dest_weight": 18870,
       "unit_type": "Cajas",
       "id": 1514
+    },
+    {
+      "product_id": "529",
+      "origin_warehouse": "Ransa",
+      "dest_warehouse": "Usulután",
+      "weight": 222,
+      "type": "TRANSFER",
+      "origin_weight": 8559.298201050522,
+      "dest_weight": 18870,
+      "unit_type": "Cajas",
+      "id": 1516
     }
   ],
   "activity_log": [],
