@@ -101,112 +101,85 @@
     }
   ],
   "agros": [
-    {
-      "id": 1,
-      "name": "Soyapango - Puesto"
-    },
-    {
-      "id": 2,
-      "name": "Usulután - Puesto"
-    },
-    {
-      "id": 1506,
-      "name": "Agro Quezaltepeque"
-    },
-    {
-      "id": 1507,
-      "name": "Agro Aguilares"
-    },
-    {
-      "id": 1508,
-      "name": "Agro Opico"
-    },
-    {
-      "id": 1509,
-      "name": "MAG (Gobierno)"
-    },
-    {
-      "id": 1510,
-      "name": "CNR (Gobierno)"
-    },
-    {
-      "id": 1511,
-      "name": "Relaciones Exteriores (Gobierno)"
-    },
-    {
-      "id": 1512,
-      "name": "Lomas de San Francisco"
-    }
+    { "id": 1, "name": "Soyapango - Puesto" },
+    { "id": 2, "name": "Usulután - Puesto" },
+    { "id": 1506, "name": "Agro Quezaltepeque" },
+    { "id": 1507, "name": "Agro Aguilares" },
+    { "id": 1508, "name": "Agro Opico" },
+    { "id": 1509, "name": "MAG (Gobierno)" },
+    { "id": 1510, "name": "CNR (Gobierno)" },
+    { "id": 1511, "name": "Relaciones Exteriores (Gobierno)" },
+    { "id": 1512, "name": "Lomas de San Francisco" }
   ],
   "inventory": [
     {
       "product_id": 529,
       "bodega_1": "0.00",
-      "bodega_2": "661.39",
-      "bodega_3": "0.00",
+      "bodega_2": "0.00",
+      "bodega_3": "9468.10",
       "bodega_4": "0.00",
-      "initial_stock": "45.15",
+      "initial_stock": "0.00",
       "current_stock": "0.00",
       "sold_stock": "0.00",
       "final_stock": "0.00",
-      "entradas_cajas": "326.00",
-      "salidas_cajas": "325.00",
+      "entradas_cajas": "326",
+      "salidas_cajas": "325",
       "cajas": "0.00"
     },
     {
       "product_id": 530,
       "bodega_1": "0.00",
-      "bodega_2": "661.39",
-      "bodega_3": "0.00",
+      "bodega_2": "0.00",
+      "bodega_3": "5948.90",
       "bodega_4": "0.00",
-      "initial_stock": "19.80",
+      "initial_stock": "0.00",
       "current_stock": "0.00",
       "sold_stock": "0.00",
       "final_stock": "0.00",
-      "entradas_cajas": "200.00",
-      "salidas_cajas": "152.00",
+      "entradas_cajas": "200",
+      "salidas_cajas": "152",
       "cajas": "0.00"
     },
     {
       "product_id": 531,
       "bodega_1": "0.00",
-      "bodega_2": "661.39",
+      "bodega_2": "0.00",
       "bodega_3": "0.00",
-      "bodega_4": "0.00",
-      "initial_stock": "38.89",
+      "bodega_4": "63.00",
+      "initial_stock": "0.00",
       "current_stock": "0.00",
       "sold_stock": "0.00",
       "final_stock": "0.00",
-      "entradas_cajas": "114.00",
-      "salidas_cajas": "105.00",
+      "entradas_cajas": "114",
+      "salidas_cajas": "105",
       "cajas": "0.00"
     },
     {
       "product_id": 532,
       "bodega_1": "0.00",
-      "bodega_2": "661.39",
+      "bodega_2": "0.00",
       "bodega_3": "0.00",
       "bodega_4": "0.00",
       "initial_stock": "0.00",
       "current_stock": "0.00",
       "sold_stock": "0.00",
       "final_stock": "0.00",
-      "entradas_cajas": "45.00",
-      "salidas_cajas": "32.00",
+      "entradas_cajas": "45",
+      "salidas_cajas": "32",
       "cajas": "0.00"
     },
     {
       "product_id": 533,
       "bodega_1": "0.00",
-      "bodega_2": "661.39",
+      "bodega_2": "0.00",
       "bodega_3": "0.00",
       "bodega_4": "0.00",
       "initial_stock": "0.00",
       "current_stock": "0.00",
       "sold_stock": "0.00",
       "final_stock": "0.00",
-      "entradas_cajas": "43.00",
-      "salidas_cajas": "20.00",
+      "entradas_cajas": "43",
+      "salidas_cajas": "20",
       "cajas": "0.00"
     },
     {
@@ -219,22 +192,22 @@
       "current_stock": "0.00",
       "sold_stock": "0.00",
       "final_stock": "0.00",
-      "entradas_cajas": "45.00",
-      "salidas_cajas": "34.00",
+      "entradas_cajas": "45",
+      "salidas_cajas": "34",
       "cajas": "0.00"
     },
     {
       "product_id": 535,
       "bodega_1": "0.00",
       "bodega_2": "0.00",
-      "bodega_3": "0.00",
+      "bodega_3": "4808.90",
       "bodega_4": "0.00",
       "initial_stock": "0.00",
       "current_stock": "0.00",
       "sold_stock": "0.00",
       "final_stock": "0.00",
-      "entradas_cajas": "105.00",
-      "salidas_cajas": "103.00",
+      "entradas_cajas": "105",
+      "salidas_cajas": "103",
       "cajas": "0.00"
     },
     {
@@ -247,22 +220,22 @@
       "current_stock": "0.00",
       "sold_stock": "0.00",
       "final_stock": "0.00",
-      "entradas_cajas": "55.00",
-      "salidas_cajas": "55.00",
+      "entradas_cajas": "55",
+      "salidas_cajas": "55",
       "cajas": "0.00"
     },
     {
       "product_id": 537,
       "bodega_1": "0.00",
       "bodega_2": "0.00",
-      "bodega_3": "0.00",
+      "bodega_3": "1072.30",
       "bodega_4": "0.00",
-      "initial_stock": "110.21",
+      "initial_stock": "0.00",
       "current_stock": "0.00",
       "sold_stock": "0.00",
       "final_stock": "0.00",
-      "entradas_cajas": "46.00",
-      "salidas_cajas": "46.00",
+      "entradas_cajas": "46",
+      "salidas_cajas": "2",
       "cajas": "0.00"
     },
     {
@@ -275,88 +248,27 @@
       "current_stock": "0.00",
       "sold_stock": "0.00",
       "final_stock": "0.00",
-      "entradas_cajas": "53.00",
-      "salidas_cajas": "21.00",
+      "entradas_cajas": "53",
+      "salidas_cajas": "21",
       "cajas": "0.00"
     },
     {
       "product_id": 539,
       "bodega_1": "0.00",
       "bodega_2": "0.00",
-      "bodega_3": "0.00",
+      "bodega_3": "5595.40",
       "bodega_4": "0.00",
       "initial_stock": "0.00",
       "current_stock": "0.00",
       "sold_stock": "0.00",
       "final_stock": "0.00",
-      "entradas_cajas": "186.00",
-      "salidas_cajas": "137.00",
+      "entradas_cajas": "186",
+      "salidas_cajas": "137",
       "cajas": "0.00"
     }
   ],
   "movements": [],
-  "activity_log": [
-    {
-      "id": 3,
-      "role": "admin",
-      "action": "AJUSTE STOCK",
-      "entity": "inventory",
-      "details": "Nuevo stock: 661.386 Lbs en Central de abasto - Soyapango (Cuarto Frío)",
-      "product_name": "Cajas Tortuguita",
-      "quantity": "661.39",
-      "unit": "Lbs",
-      "location": "Central de abasto - Soyapango (Cuarto Frío)",
-      "created_at": "2026-04-29T21:26:10.183Z"
-    },
-    {
-      "id": 4,
-      "role": "admin",
-      "action": "AJUSTE STOCK",
-      "entity": "inventory",
-      "details": "Nuevo stock: 661.386 Lbs en Central de abasto - Soyapango (Cuarto Frío)",
-      "product_name": "Posta Negra / Nalga de Adentro",
-      "quantity": "661.39",
-      "unit": "Lbs",
-      "location": "Central de abasto - Soyapango (Cuarto Frío)",
-      "created_at": "2026-04-29T21:26:10.329Z"
-    },
-    {
-      "id": 5,
-      "role": "admin",
-      "action": "AJUSTE STOCK",
-      "entity": "inventory",
-      "details": "Nuevo stock: 661.386 Lbs en Central de abasto - Soyapango (Cuarto Frío)",
-      "product_name": "HUESO DE YUGO / COGOTE CON HUESO",
-      "quantity": "661.39",
-      "unit": "Lbs",
-      "location": "Central de abasto - Soyapango (Cuarto Frío)",
-      "created_at": "2026-04-29T21:26:10.473Z"
-    },
-    {
-      "id": 6,
-      "role": "admin",
-      "action": "AJUSTE STOCK",
-      "entity": "inventory",
-      "details": "Nuevo stock: 661.386 Lbs en Central de abasto - Soyapango (Cuarto Frío)",
-      "product_name": "NEW YORK / BIEF ANGOSTO",
-      "quantity": "661.39",
-      "unit": "Lbs",
-      "location": "Central de abasto - Soyapango (Cuarto Frío)",
-      "created_at": "2026-04-29T21:26:10.616Z"
-    },
-    {
-      "id": 7,
-      "role": "admin",
-      "action": "AJUSTE STOCK",
-      "entity": "inventory",
-      "details": "Nuevo stock: 661.386 Lbs en Central de abasto - Soyapango (Cuarto Frío)",
-      "product_name": "TRIMING 80/20 especial",
-      "quantity": "661.39",
-      "unit": "Lbs",
-      "location": "Central de abasto - Soyapango (Cuarto Frío)",
-      "created_at": "2026-04-29T21:26:10.764Z"
-    }
-  ],
+  "activity_log": [],
   "production_logs": [],
   "ransa_requests": [],
   "dispatches": [],
