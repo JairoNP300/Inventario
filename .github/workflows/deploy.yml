@@ -1,11 +1,11 @@
-name: Deploy to Render
+name: Build + Deploy
 
 on:
   push:
     branches: [ main ]
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -14,5 +14,24 @@ jobs:
           node-version: '20'
       - run: npm ci
       - run: npm run build
-      - name: Trigger Render deploy webhook
-        run: curl -s -X POST "https://api.render.com/deploy/srv-d7ak6l6a2pns73afj1g0?key=4G9IZVgholQ"
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render deploy
+        run: |
+          URL="${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+          if [ -z "$URL" ]; then
+            URL="https://api.render.com/deploy/srv-d7ak6l6a2pns73afj1g0?key=4G9IZVgholQ"
+          fi
+          curl -s -X POST "$URL"
+      - name: Trigger Vercel deploy
+        env:
+          HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -n "$HOOK" ]; then
+            curl -s -X POST "$HOOK"
+          else
+            echo "VERCEL_DEPLOY_HOOK_URL no configurado — salteando Vercel"
+          fi

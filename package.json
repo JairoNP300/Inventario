@@ -1,7 +1,7 @@
 {
   "name": "ventas-e-inventario",
   "private": true,
-  "version": "1.0.4",
+  "version": "1.0.5",
   "type": "module",
   "engines": {
     "node": "20.x"
@@ -30,6 +30,7 @@
     "express": "^4.21.0",
     "framer-motion": "^11.5.4",
     "html2canvas": "^1.4.1",
+    "isomorphic-git": "^1.38.3",
     "jspdf": "^4.2.1",
     "lucide-react": "^0.441.0",
     "pg": "^8.20.0",
