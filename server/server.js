@@ -38,17 +38,12 @@ app.get('/api/version', (req, res) => {
   res.send(version);
 });
 
-// Sync in-memory DB to GitHub after every response (no-op if not dirty)
+// Sync in-memory DB to GitHub after mutations (fire-and-forget, process stays alive ~30s)
 app.use((req, res, next) => {
-  const originalEnd = res.end;
-  res.end = function(...args) {
-    const self = this;
-    db.syncToGitHub().then(() => {
-      originalEnd.apply(self, args);
-    }).catch(e => {
-      console.warn('Sync error:', e.message);
-      originalEnd.apply(self, args);
-    });
+  const originalJson = res.json.bind(res);
+  res.json = function(data) {
+    originalJson(data);
+    db.syncToGitHub().catch(e => console.warn('[SYNC] Error:', e.message));
   };
   next();
 });
