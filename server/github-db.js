@@ -61,7 +61,7 @@ export async function init() {
   try {
     const { fileURLToPath } = await import('url');
     const { join } = await import('path');
-    const localPath = join(fileURLToPath(new URL('.', import.meta.url)), '..', 'node_modules', 'sql.js', 'dist', 'sql-wasm.wasm');
+    const localPath = join(fileURLToPath(new URL('.', import.meta.url)), 'sql-wasm.wasm');
     wasmBinary = await readFile(localPath);
   } catch {
     const resp = await fetch('https://cdn.jsdelivr.net/npm/sql.js@1.14.1/dist/sql-wasm.wasm');
