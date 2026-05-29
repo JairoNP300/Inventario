@@ -124,8 +124,8 @@ const migrateDatabase = async () => {
     const seed = JSON.parse(await readFile(seedPath, 'utf8'));
     const { rows: allProds } = await query('SELECT id, code FROM products');
 
-    const { rows: check } = await query(`SELECT COALESCE(SUM(COALESCE(bodega_1,0)+COALESCE(bodega_2,0)+COALESCE(bodega_3,0)+COALESCE(bodega_4,0)+COALESCE(entradas_cajas,0)+COALESCE(salidas_cajas,0)),0) as total FROM inventory`);
-    const total = parseFloat(check[0]?.total || 0);
+    const { rows: check } = await query('SELECT COUNT(*) as cnt FROM inventory');
+    const total = check[0]?.cnt || 0;
     console.log(`[SEED] Total inventario actual: ${total}`);
 
     if (total === 0) {
@@ -175,8 +175,8 @@ const migrateDatabase = async () => {
     }
   } catch (e) { console.warn('[DEDUP] Error:', e.message); }
 
-  // Sync to GitHub after migration
-  await db.syncToGitHub();
+  // NOTE: syncToGitHub not called here intentionally.
+  // The post-response middleware handles sync after each response.
 };
 
 // --- INITIALIZATION ---

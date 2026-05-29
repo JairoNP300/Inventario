@@ -21,7 +21,7 @@ function clone(obj) {
 // Simple SQL parser — handles patterns used by this app
 function parseSQL(sql) {
   sql = sql.replace(/\s+/g, ' ').trim();
-  let table = '', columns = '*', where = [], orderBy = null, limit = null, offset = null, join = null;
+  let table = '', tableAlias = '', columns = '*', where = [], orderBy = null, limit = null, offset = null, join = null;
   let isDistinct = false, isSelect = false, isInsert = false, isUpdate = false, isDelete = false;
 
   if (/^SELECT/i.test(sql)) {
@@ -31,12 +31,19 @@ function parseSQL(sql) {
     const selectMatch = rest.match(/^(.+?)\s+FROM\s+(\w+)/i);
     if (!selectMatch) return null;
     columns = selectMatch[1].trim();
+    table = selectMatch[2].trim();
     rest = rest.slice(selectMatch[0].length).trim();
+    // Consume optional table alias (single word, not a SQL keyword)
+    const aliasMatch = rest.match(/^(\w+)\s+/);
+    if (aliasMatch && !/^(LEFT|RIGHT|INNER|OUTER|CROSS|JOIN|WHERE|ORDER|LIMIT|OFFSET|GROUP|HAVING)$/i.test(aliasMatch[1])) {
+      tableAlias = aliasMatch[1];
+      rest = rest.slice(aliasMatch[0].length).trim();
+    }
 
     // JOIN
-    const joinMatch = rest.match(/^(LEFT\s+)?JOIN\s+(\w+)\s+ON\s+(.+?)(?=\s+(WHERE|ORDER\s+BY|LIMIT|$))/i);
+    const joinMatch = rest.match(/^(LEFT\s+)?JOIN\s+(\w+)(?:\s+(\w+))?\s+ON\s+(.+?)(?=\s+(WHERE|ORDER\s+BY|LIMIT|$))/i);
     if (joinMatch) {
-      join = { type: joinMatch[1] || '', table: joinMatch[2], on: joinMatch[3].trim() };
+      join = { type: joinMatch[1] || '', table: joinMatch[2], on: joinMatch[4].trim(), alias: joinMatch[3] || '' };
       rest = rest.slice(joinMatch[0].length).trim();
     }
 
@@ -54,12 +61,18 @@ function parseSQL(sql) {
 
     if (whereMatch) where = parseWhere(whereMatch[1]);  // defer to parse where with params
 
-    return { type: 'select', table, columns, whereConditions: whereMatch ? whereMatch[1] : null, orderBy, limit, offset, join, isDistinct, rawWhere: whereMatch?.[1] };
+    return { type: 'select', table, tableAlias, columns, whereConditions: whereMatch ? whereMatch[1] : null, orderBy, limit, offset, join, isDistinct, rawWhere: whereMatch?.[1] };
   }
 
   if (/^INSERT\s+INTO\s+(\w+)\s*\(([^)]+)\)\s*VALUES\s*\((.+?)\)\s*/i.test(sql)) {
-    const m = sql.match(/^INSERT\s+INTO\s+(\w+)\s*\(([^)]+)\)\s*VALUES\s*\((.+?)\)\s*/i);
-    return { type: 'insert', table: m[1], columns: m[2].split(',').map(c => c.trim()), values: m[3] };
+    const m = sql.match(/^INSERT\s+INTO\s+(\w+)\s*\(([^)]+)\)\s*VALUES\s*\((.+?)\)\s*(ON\s+CONFLICT.*)?$/i);
+    const onConflict = m[4] ? m[4].trim() : null;
+    let conflictCol = null;
+    if (onConflict) {
+      const cm = onConflict.match(/ON\s+CONFLICT\s*\((\w+)\)\s*DO\s+NOTHING/i);
+      if (cm) conflictCol = cm[1];
+    }
+    return { type: 'insert', table: m[1], columns: m[2].split(',').map(c => c.trim()), values: m[3], conflictCol };
   }
 
   if (/^UPDATE\s+(\w+)\s+SET\s+(.+?)(?:\s+WHERE\s+(.+))?$/i.test(sql)) {
@@ -90,56 +103,62 @@ function parseWhere(whereStr) {
 
 function evaluateRow(row, whereStr, params) {
   if (!whereStr) return true;
-  // Replace ? with actual params
-  let expr = whereStr;
-  let pIndex = 0;
-  expr = expr.replace(/\?/g, () => {
-    const val = params[pIndex++];
-    if (val === null || val === undefined) return 'NULL';
-    if (typeof val === 'string') return `'${val.replace(/'/g, "''")}'`;
-    return val;
-  });
-  expr = expr.replace(/\$(\d+)/g, (_, n) => {
-    const val = params[parseInt(n) - 1];
-    if (val === null || val === undefined) return 'NULL';
-    if (typeof val === 'string') return `'${val.replace(/'/g, "''")}'`;
-    return val;
-  });
-
-  // Replace column references (simple heuristic: avoid replacing numbers and strings)
-  for (const key of Object.keys(row)) {
-    const val = row[key];
-    if (val === null || val === undefined) {
-      expr = expr.replace(new RegExp(`\\b${key}\\b`, 'g'), 'NULL');
-    } else if (typeof val === 'string') {
-      expr = expr.replace(new RegExp(`\\b${key}\\b`, 'g'), `'${val.replace(/'/g, "''")}'`);
-    } else {
-      expr = expr.replace(new RegExp(`\\b${key}\\b`, 'g'), val);
+  // Manually parse simple WHERE conditions: col op val [AND/OR col op val ...]
+  const exprs = whereStr.split(/\s+(AND|OR)\s+/i);
+  let overall = true;
+  let logic = 'AND';
+  for (let i = 0; i < exprs.length; i++) {
+    const expr = exprs[i].trim();
+    if (/^(AND|OR)$/i.test(expr)) { logic = expr.toUpperCase(); continue; }
+    const m = expr.match(/^((?:\w+\.)?\w+)\s*(=|!=|<>|>|<|>=|<=|IS\s+NOT\s+NULL|IS\s+NULL|LIKE|IN|NOT\s+IN)\s*(.*)$/i);
+    if (!m) { overall = overall && true; continue; }
+    let col = m[1].includes('.') ? m[1].split('.').pop() : m[1];
+    let op = m[2].trim().toUpperCase().replace(/\s+/g, ' ');
+    let valStr = m[3].trim();
+    const actual = row[col];
+    let result = true;
+    if (op === 'IS NULL') result = (actual === null || actual === undefined);
+    else if (op === 'IS NOT NULL') result = (actual !== null && actual !== undefined);
+    else {
+      // Replace ? and $N with actual params
+      let pIdx = 0;
+      const paramStr = valStr.replace(/\?/g, () => {
+        const v = params[pIdx++];
+        if (v === null || v === undefined) return 'NULL';
+        if (typeof v === 'string') return "'" + v.replace(/'/g, "''") + "'";
+        return String(v);
+      });
+      valStr = paramStr.replace(/\$(\d+)/g, (_, n) => {
+        const v = params[parseInt(n) - 1];
+        if (v === null || v === undefined) return 'NULL';
+        if (typeof v === 'string') return "'" + v.replace(/'/g, "''") + "'";
+        return String(v);
+      });
+      // Get expected value
+      let expected;
+      if (valStr === 'NULL') expected = null;
+      else if (/^'([^']*)'$/.test(valStr)) expected = valStr.match(/^'([^']*)'$/)[1];
+      else expected = parseFloat(valStr);
+      if (op === 'LIKE') {
+        const pattern = new RegExp('^' + expected.replace(/%/g, '.*').replace(/_/g, '.') + '$', 'i');
+        result = pattern.test(String(actual));
+      } else if (op === 'IN') {
+        const list = valStr.slice(1, -1).split(',').map(s => s.trim().replace(/^'(.*)'$/, '$1'));
+        result = list.includes(String(actual));
+      } else if (op === 'NOT IN') {
+        const list = valStr.slice(1, -1).split(',').map(s => s.trim().replace(/^'(.*)'$/, '$1'));
+        result = !list.includes(String(actual));
+      } else if (op === '=') result = actual == expected;
+      else if (op === '!=' || op === '<>') result = actual != expected;
+      else if (op === '>') result = parseFloat(actual) > parseFloat(expected);
+      else if (op === '<') result = parseFloat(actual) < parseFloat(expected);
+      else if (op === '>=') result = parseFloat(actual) >= parseFloat(expected);
+      else if (op === '<=') result = parseFloat(actual) <= parseFloat(expected);
     }
+    if (logic === 'AND') overall = overall && result;
+    else overall = overall || result;
   }
-
-  // Handle SQL functions
-  expr = expr.replace(/COALESCE\(([^,]+),(\d+)\)/g, (_, col, def) => `CASE WHEN ${col} IS NULL OR ${col} = '' THEN ${def} ELSE ${col} END`);
-
-  // Convert SQL operators to JS
-  expr = expr.replace(/\bIS\s+NOT\s+NULL\b/g, '!== null && !== undefined');
-  expr = expr.replace(/\bIS\s+NULL\b/g, '=== null || === undefined');
-  expr = expr.replace(/\bAND\b/g, '&&');
-  expr = expr.replace(/\bOR\b/g, '||');
-  expr = expr.replace(/!=/g, '!==');
-  expr = expr.replace(/LIKE\s+'([^']*)'/g, (_, p) => {
-    const regex = '^' + p.replace(/%/g, '.*').replace(/_/g, '.') + '$';
-    return `.match(/${regex}/)`;
-  });
-  // IN list
-  expr = expr.replace(/\bIN\s*\(([^)]+)\)/g, (_, list) => ` in (${list})`);
-  expr = expr.replace(/\bNOT\s+IN\s*\(([^)]+)\)/g, (_, list) => ` !in (${list})`);
-
-  try {
-    return Function('"use strict"; return (' + expr + ')')();
-  } catch (e) {
-    return true; // fallback
-  }
+  return overall;
 }
 
 function evalSets(row, setStr, params) {
@@ -148,33 +167,27 @@ function evalSets(row, setStr, params) {
     const m = a.match(/^(\w+)\s*=\s*(.+)$/);
     if (!m) continue;
     const col = m[1];
-    let expr = m[2];
+    let valExpr = m[2].trim();
     let pIndex = 0;
-    expr = expr.replace(/\?/g, () => {
-      const val = params[pIndex++];
-      if (val === null || val === undefined) return 'NULL';
-      if (typeof val === 'string') return `'${val.replace(/'/g, "''")}'`;
-      return val;
+    valExpr = valExpr.replace(/\?/g, () => {
+      const v = params[pIndex++];
+      return v === null || v === undefined ? 'NULL' : v;
     });
-    expr = expr.replace(/\$(\d+)/g, (_, n) => {
-      const val = params[parseInt(n) - 1];
-      if (val === null || val === undefined) return 'NULL';
-      if (typeof val === 'string') return `'${val.replace(/'/g, "''")}'`;
-      return val;
+    valExpr = valExpr.replace(/\$(\d+)/g, (_, n) => {
+      const v = params[parseInt(n) - 1];
+      return v === null || v === undefined ? 'NULL' : v;
     });
-    for (const key of Object.keys(row)) {
-      if (expr.includes(key)) {
-        const val = row[key];
-        expr = expr.replace(new RegExp(`\\b${key}\\b`, 'g'), val === null ? '0' : val);
-      }
+    let val;
+    if (valExpr === 'NULL') val = null;
+    else if (/^'([^']*)'$/.test(valExpr)) val = valExpr.match(/^'([^']*)'$/)[1];
+    else if (/^COALESCE\s*\(\s*(.+?)\s*,\s*(\d+)\s*\)$/i.test(valExpr)) {
+      const cm = valExpr.match(/^COALESCE\s*\(\s*(.+?)\s*,\s*(\d+)\s*\)$/i);
+      const rv = row[cm[1].trim()];
+      val = (rv !== null && rv !== undefined && rv !== '') ? parseFloat(rv) : parseFloat(cm[2]);
+    } else {
+      val = parseFloat(valExpr);
     }
-    // Convert SQL operators
-    expr = expr.replace(/COALESCE\(([^,]+),(\d+)\)/g, '(($1) !== null && ($1) !== undefined ? ($1) : $2)');
-    try {
-      row[col] = Function('"use strict"; return (' + expr + ')')();
-    } catch (e) {
-      // skip
-    }
+    row[col] = val;
   }
 }
 
@@ -192,16 +205,24 @@ export function query(sql, params = []) {
         const joined = [];
         for (const row of rows) {
           let matched = false;
-          for (const jRow of joinTable) {
-            // Simple ON condition evaluation
+        for (const jRow of joinTable) {
+            // Simple ON condition evaluation: replace t.col with actual values
             const onExpr = parsed.join.on.replace(/(\w+)\.(\w+)/g, (_, t, c) => {
-              if (t === parsed.table) return row[c];
-              if (t === parsed.join.table) return jRow[c];
-              return `${t}.${c}`;
+              if (t === parsed.table || t === parsed.tableAlias) return JSON.stringify(row[c]);
+              if (t === parsed.join.table || t === parsed.join.alias) return JSON.stringify(jRow[c]);
+              return JSON.stringify(t + '.' + c);
             });
-            if (evaluateRow({}, onExpr.replace(/=/g, '===') + '!==false', [])) {
-              joined.push({ ...row, ...jRow });
-              matched = true;
+            // After replacement, onExpr is something like "5" = "1" — compare simply
+            const eqMatch = onExpr.match(/^\s*(.+?)\s*=\s*(.+?)\s*$/);
+            if (eqMatch) {
+              try {
+                const a = JSON.parse(eqMatch[1]);
+                const b = JSON.parse(eqMatch[2]);
+                if (a == b) {
+                  joined.push({ ...row, ...jRow });
+                  matched = true;
+                }
+              } catch(e) { /* skip bad ON */ }
             }
           }
           if (!matched) {
@@ -255,53 +276,125 @@ export function query(sql, params = []) {
       const offset = parsed.offset || 0;
       if (parsed.limit) rows = rows.slice(offset, offset + parsed.limit);
 
+      // Detect if query has aggregate functions
+      const isAggregate = parsed.columns !== '*' && /(COUNT|SUM|COALESCE|MIN|MAX|strftime)/i.test(parsed.columns);
+
       // Column projection
       const result = [];
+      const aggExprs = [];  // [{alias, expr, type}]
+      if (isAggregate) {
+        const cols = parsed.columns.split(',').map(c => c.trim().toLowerCase());
+        for (const c of cols) {
+          const aliasMatch = c.match(/^(.+?)\s+AS\s+(\w+)$/i);
+          const rawExpr = aliasMatch ? aliasMatch[1].trim() : c;
+          const alias = aliasMatch ? aliasMatch[2] : c.split('.').pop();
+          let type = 'raw';
+          if (/^COUNT\s*\(\*/i.test(rawExpr)) type = 'count_star';
+          else if (/^COUNT\s*\(/i.test(rawExpr)) type = 'count';
+          else if (/^SUM\s*\(/i.test(rawExpr)) type = 'sum';
+          else if (/^COALESCE\s*\(/i.test(rawExpr)) type = 'coalesce';
+          else if (/^MIN\s*\(/i.test(rawExpr)) type = 'min';
+          else if (/^MAX\s*\(/i.test(rawExpr)) type = 'max';
+          aggExprs.push({ alias, rawExpr, type });
+        }
+
+        if (rows.length === 0) {
+          const obj = {};
+          for (const ae of aggExprs) {
+            if (['count_star', 'count', 'sum', 'coalesce'].includes(ae.type)) obj[ae.alias] = 0;
+            else obj[ae.alias] = null;
+          }
+          return { rows: [obj], lastInsertRowid: null };
+        }
+
+        // Accumulate aggregates across all rows
+        const acc = {};
+        for (const ae of aggExprs) {
+          if (ae.type === 'count_star' || ae.type === 'count') acc[ae.alias] = { count: 0 };
+          else if (ae.type === 'sum') acc[ae.alias] = { sum: 0 };
+          else if (ae.type === 'min') acc[ae.alias] = { min: Infinity };
+          else if (ae.type === 'max') acc[ae.alias] = { max: -Infinity };
+          else acc[ae.alias] = null;
+        }
+
+        for (const row of rows) {
+          for (const ae of aggExprs) {
+            if (ae.type === 'count_star' || ae.type === 'count') acc[ae.alias].count++;
+            else if (ae.type === 'sum') {
+              const colName = ae.rawExpr.replace(/^SUM\s*\(\s*/i, '').replace(/\s*\)\s*$/, '').replace(/COALESCE\([^,]+,(\d+)\)/g, 'COALESCE');
+              let val = parseFloat(row[colName]) || 0;
+              // Handle COALESCE inline in SUM
+              if (colName === 'COALESCE') {
+                const innerM = ae.rawExpr.match(/COALESCE\s*\(\s*(.+?)\s*,\s*(\d+)\s*\)/i);
+                if (innerM) val = parseFloat(row[innerM[1].trim()]) || parseFloat(innerM[2]);
+              }
+              acc[ae.alias].sum += val;
+            } else if (ae.type === 'min') {
+              const colName = ae.rawExpr.replace(/^MIN\s*\(\s*/i, '').replace(/\s*\)\s*$/, '');
+              const val = parseFloat(row[colName]);
+              if (val < acc[ae.alias].min) acc[ae.alias].min = val;
+            } else if (ae.type === 'max') {
+              const colName = ae.rawExpr.replace(/^MAX\s*\(\s*/i, '').replace(/\s*\)\s*$/, '');
+              const val = parseFloat(row[colName]);
+              if (val > acc[ae.alias].max) acc[ae.alias].max = val;
+            } else if (ae.type === 'coalesce') {
+              const m = ae.rawExpr.match(/COALESCE\s*\(\s*(.+?)\s*,\s*(\d+)\s*\)/i);
+              if (m) {
+                const val = row[m[1].trim()];
+                acc[ae.alias] = (val !== null && val !== undefined && val !== '') ? parseFloat(val) : parseFloat(m[2]);
+              }
+            }
+          }
+        }
+
+        const obj = {};
+        for (const ae of aggExprs) {
+          if (ae.type === 'count_star' || ae.type === 'count') obj[ae.alias] = acc[ae.alias].count;
+          else if (ae.type === 'sum') obj[ae.alias] = acc[ae.alias].sum;
+          else if (ae.type === 'min') obj[ae.alias] = acc[ae.alias].min === Infinity ? null : acc[ae.alias].min;
+          else if (ae.type === 'max') obj[ae.alias] = acc[ae.alias].max === -Infinity ? null : acc[ae.alias].max;
+          else if (ae.type === 'coalesce') obj[ae.alias] = acc[ae.alias] ?? 0;
+          else obj[ae.alias] = null;
+        }
+        return { rows: [obj], lastInsertRowid: null };
+      }
+
+      // Non-aggregate column projection
       for (const row of rows) {
         if (parsed.columns === '*') {
           result.push(clone(row));
         } else {
           const obj = {};
-          const cols = parsed.columns.split(',').map(c => c.trim().toLowerCase());
+          const cols = parsed.columns.split(',').map(c => c.trim());
           for (const c of cols) {
-            // Handle aliases: col as alias
             const aliasMatch = c.match(/^(.+?)\s+AS\s+(\w+)$/i);
             if (aliasMatch) {
               let colName = aliasMatch[1].trim();
-              if (colName.includes('.')) colName = colName.split('.')[1];
+              if (colName === '*') {
+                // t.* AS alias — copy all row keys
+                Object.assign(obj, clone(row));
+                continue;
+              }
+              if (colName.includes('.')) colName = colName.split('.').pop();
               obj[aliasMatch[2]] = evaluateAggregate(colName, row);
             } else {
-              if (c.includes('.')) {
-                const parts = c.split('.');
-                obj[c] = row[parts[1]];
-              } else {
-                obj[c] = evaluateAggregate(c, row);
+              if (c === '*') {
+                result.push(clone(row));
+                continue;
               }
+              const starPrefix = c.match(/^(\w+)\.\*$/);
+              if (starPrefix) {
+                // t.* — copy all row keys (already joined into one row)
+                Object.assign(obj, clone(row));
+                continue;
+              }
+              let colKey = c;
+              if (colKey.includes('.')) colKey = colKey.split('.').pop();
+              obj[colKey] = evaluateAggregate(colKey, row);
             }
           }
-          result.push(obj);
+          result.push(clone(obj));
         }
-      }
-
-      // Handle aggregate SELECT (COUNT, SUM, etc as single row)
-      if (parsed.columns !== '*' && /(COUNT|SUM|COALESCE|MIN|MAX|strftime)/i.test(parsed.columns)) {
-        if (result.length === 0) {
-          // Return a single row with zero values
-          const obj = {};
-          const cols = parsed.columns.split(',').map(c => c.trim().toLowerCase());
-          for (const c of cols) {
-            const aliasMatch = c.match(/^(.+?)\s+AS\s+(\w+)$/i);
-            const alias = aliasMatch ? aliasMatch[2] : c.split('.').pop();
-            if (/COUNT/i.test(c)) obj[alias] = 0;
-            else if (/SUM/i.test(c)) obj[alias] = 0;
-            else if (/COALESCE/i.test(c)) {
-              const m = c.match(/COALESCE\([^,]+,(\d+)\)/i);
-              obj[alias] = m ? parseFloat(m[1]) : 0;
-            } else obj[alias] = null;
-          }
-          return { rows: [obj], lastInsertRowid: null };
-        }
-        return { rows: result.length > 0 ? [result.reduce((a, b) => ({ ...a, ...b }))] : result, lastInsertRowid: null };
       }
 
       return { rows: result, lastInsertRowid: null };
@@ -325,6 +418,11 @@ export function query(sql, params = []) {
           row[col] = parseFloat(valExpr);
         }
       });
+      // ON CONFLICT DO NOTHING: skip if matching row exists
+      if (parsed.conflictCol) {
+        const existing = (tables[parsed.table] || []).find(r => r[parsed.conflictCol] === row[parsed.conflictCol]);
+        if (existing) return { rows: [], lastInsertRowid: existing.id };
+      }
       if (!row.id) row.id = ++lastId;
       tables[parsed.table].push(row);
       return { rows: [], lastInsertRowid: row.id };
