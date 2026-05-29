@@ -95,6 +95,7 @@ async function main() {
     'deploy-github.mjs',
     'deploy.bat',
     'scripts/watch-deploy.js',
+    '.github/workflows/deploy.yml',
     'data/data.json',
   ];
 
@@ -113,7 +114,26 @@ async function main() {
     console.log(`   Último commit: ${commits[0].sha.substring(0, 7)} - ${commits[0].commit.message.split('\\n')[0]}`);
   } catch {}
 
-  console.log('\n🔄 Vercel/Render se actualizarán automáticamente con el push.');
+  // Trigger deploy webhooks
+  const hooks = [
+    { url: process.env.VERCEL_DEPLOY_HOOK_URL, name: 'Vercel' },
+    { url: process.env.RENDER_DEPLOY_HOOK_URL, name: 'Render' },
+  ];
+  let triggered = false;
+  for (const { url, name } of hooks) {
+    if (url) {
+      try {
+        const res = await fetch(url, { method: 'POST' });
+        console.log(`  🔄 Webhook ${name}: ${res.ok ? '✅' : '⚠️ HTTP '+res.status}`);
+        triggered = true;
+      } catch (e) {
+        console.log(`  ⚠️ Webhook ${name}: ${e.message}`);
+      }
+    }
+  }
+  if (!triggered) {
+    console.log('\n🔄 GitHub Actions desplegará automáticamente (config en .github/workflows/deploy.yml)');
+  }
 }
 
 main().catch(err => {
