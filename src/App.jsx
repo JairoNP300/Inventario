@@ -341,12 +341,15 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
     (p.code && p.code.includes(searchTerm))
   );
 
+  // Entrada desde Ransa se ingresa en Kg, salida (cut_weight) en Lbs.
+  // Convertir Kg -> Lbs (1 kg = 2.20462 lbs) antes de calcular la merma.
+  const KG_TO_LB = 2.20462;
   const handleCalcWaste = () => {
-    const initLbs = parseFloat(formData.initial_weight) || 0;
+    const initKg = parseFloat(formData.initial_weight) || 0;
     const cutLbs = parseFloat(formData.cut_weight) || 0;
     setFormData(prev => ({
       ...prev,
-      waste: (initLbs - cutLbs).toFixed(2)
+      waste: (initKg * KG_TO_LB - cutLbs).toFixed(2)
     }));
   };
 
@@ -451,7 +454,7 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
                 <label>Entrada desde Ransa (Kg)</label>
                 <input type="number" step="0.01" value={formData.initial_weight} onChange={e => {
                   const w = e.target.value;
-                  setFormData(prev => ({ ...prev, initial_weight: w, waste: (parseFloat(w || 0) - parseFloat(prev.cut_weight || 0)).toFixed(2) }));
+                  setFormData(prev => ({ ...prev, initial_weight: w, waste: (parseFloat(w || 0) * KG_TO_LB - parseFloat(prev.cut_weight || 0)).toFixed(2) }));
                 }} placeholder="0.00" required={formData.process_mode === 'ransa'} />
               </div>
             )}
@@ -467,7 +470,7 @@ const ProductionReport = ({ products, onUpdate, productionLogs = [] }) => {
               <div style={{ display: 'flex', gap: '8px' }}>
                 <input type="number" step="0.01" value={formData.cut_weight} onChange={e => {
                   const c = e.target.value;
-                  setFormData(prev => ({ ...prev, cut_weight: c, waste: prev.process_mode === 'direct' ? '0' : (parseFloat(prev.initial_weight || 0) - parseFloat(c || 0)).toFixed(2) }));
+                  setFormData(prev => ({ ...prev, cut_weight: c, waste: prev.process_mode === 'direct' ? '0' : (parseFloat(prev.initial_weight || 0) * KG_TO_LB - parseFloat(c || 0)).toFixed(2) }));
                 }} placeholder="0.00" required style={{ flex: 1 }} />
                 {formData.process_mode === 'direct' && (
                   <button type="button" onClick={() => {

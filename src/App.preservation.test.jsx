@@ -18,8 +18,9 @@ import React from 'react';
 // ---------------------------------------------------------------------------
 
 /**
- * Replica el render del banner item tal como está en App.jsx (~línea 1817)
- * El código actual usa "LBS" hardcoded para TODAS las bodegas.
+ * Replica el render del banner item tal como está en App.jsx (banner global,
+ * tras la corrección): Ransa muestra KG y las demás bodegas muestran LBS.
+ * Estos tests sólo se preocupan por las bodegas NO-Ransa, que siguen en LBS.
  */
 const renderBannerItem_current = (warehouse, value = 1234) => (
   <div key={warehouse.col} className="status-item" data-testid={`banner-${warehouse.label}`}>
@@ -30,7 +31,7 @@ const renderBannerItem_current = (warehouse, value = 1234) => (
         data-testid={`banner-unit-${warehouse.label}`}
         style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}
       >
-        LBS
+        {warehouse.label === 'Ransa' ? 'KG' : 'LBS'}
       </span>
     </div>
   </div>
