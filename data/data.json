@@ -142,38 +142,38 @@
     {
       "product_id": 529,
       "bodega_1": 0,
-      "bodega_2": 661.39,
+      "bodega_2": 0,
       "bodega_3": 9468.1,
       "bodega_4": 0,
-      "initial_stock": 45.15,
+      "initial_stock": 0,
       "current_stock": 0,
       "sold_stock": 0,
       "final_stock": 0,
       "cajas": 0,
       "entradas_cajas": 326,
-      "salidas_cajas": 325
+      "salidas_cajas": 103
     },
     {
       "product_id": 530,
       "bodega_1": 0,
-      "bodega_2": 661.39,
+      "bodega_2": 0,
       "bodega_3": 5948.9,
       "bodega_4": 0,
-      "initial_stock": 19.8,
+      "initial_stock": 0,
       "current_stock": 0,
       "sold_stock": 0,
       "final_stock": 0,
       "cajas": 0,
       "entradas_cajas": 200,
-      "salidas_cajas": 152
+      "salidas_cajas": 41
     },
     {
       "product_id": 531,
       "bodega_1": 0,
-      "bodega_2": 661.39,
+      "bodega_2": 0,
       "bodega_3": 0,
       "bodega_4": 63,
-      "initial_stock": 38.89,
+      "initial_stock": 0,
       "current_stock": 0,
       "sold_stock": 0,
       "final_stock": 0,
@@ -184,7 +184,7 @@
     {
       "product_id": 532,
       "bodega_1": 0,
-      "bodega_2": 661.39,
+      "bodega_2": 0,
       "bodega_3": 0,
       "bodega_4": 0,
       "initial_stock": 0,
@@ -198,7 +198,7 @@
     {
       "product_id": 533,
       "bodega_1": 0,
-      "bodega_2": 661.39,
+      "bodega_2": 0,
       "bodega_3": 0,
       "bodega_4": 0,
       "initial_stock": 0,
@@ -235,7 +235,7 @@
       "final_stock": 0,
       "cajas": 0,
       "entradas_cajas": 105,
-      "salidas_cajas": 103
+      "salidas_cajas": 1
     },
     {
       "product_id": 536,
@@ -257,7 +257,7 @@
       "bodega_2": 0,
       "bodega_3": 1072.3,
       "bodega_4": 0,
-      "initial_stock": 110.21,
+      "initial_stock": 0,
       "current_stock": 0,
       "sold_stock": 0,
       "final_stock": 0,
