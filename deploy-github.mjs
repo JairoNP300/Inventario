@@ -56,7 +56,7 @@ async function triggerWebhooks() {
     if (!url) continue;
     try {
       const start = Date.now();
-      const res = await fetch(url, { method: 'POST' });
+      const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) });
       const ms = Date.now() - start;
       console.log(`  🔄 ${name}: ${res.ok ? '✅' : '⚠️ '+res.status} (${ms}ms)`);
     } catch (e) {
