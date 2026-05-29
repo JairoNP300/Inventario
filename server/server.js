@@ -32,6 +32,23 @@ app.get('/api/public-url', async (req, res) => {
   res.json({ url });
 });
 
+// Debug: test GitHub sync
+app.get('/api/debug/sync', async (req, res) => {
+  try {
+    const hasToken = !!process.env.GITHUB_TOKEN;
+    console.log('[DEBUG] GITHUB_TOKEN present:', hasToken);
+    // Force a mutation to set dirty
+    await query('UPDATE products SET price_per_box = 130 WHERE id = 532');
+    console.log('[DEBUG] dirty should be true now, calling syncToGitHub...');
+    await db.syncToGitHub();
+    console.log('[DEBUG] syncToGitHub completed');
+    res.json({ ok: true, hasToken });
+  } catch (e) {
+    console.error('[DEBUG] Error:', e.message, e.stack);
+    res.json({ ok: false, error: e.message });
+  }
+});
+
 // Version endpoint for auto-refresh
 app.get('/api/version', (req, res) => {
   const version = process.env.VERCEL_GIT_COMMIT_SHA || process.env.RENDER_GIT_COMMIT || Date.now().toString();
