@@ -1,5 +1,4 @@
 services:
-  # Web Service
   - type: web
     name: ventas-e-inventario
     env: node
@@ -9,13 +8,7 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: DATABASE_URL
-        value: ${DATABASE_URL}
-    healthCheckPath: /api
+      - key: GITHUB_TOKEN
+        sync: false
+    healthCheckPath: /api/version
     autoDeploy: true
-
-databases:
-  # PostgreSQL Database
-  - name: ventas-inventario-db
-    databaseName: ventas_inventario
-    user: ventas_user

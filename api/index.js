@@ -6,18 +6,19 @@ let initialized = false;
 let handler;
 
 export default async (req, res) => {
-  if (!initialized) {
-    try {
+  try {
+    if (!initialized) {
       await db.init();
       await initDb();
       await migrateDatabase();
       handler = serverless(app);
       initialized = true;
-    } catch (e) {
-      console.error('[API] Init error:', e.message);
+    }
+    return handler(req, res);
+  } catch (e) {
+    console.error('[API] Init error:', e.message, e.stack);
+    if (!res.headersSent) {
       res.status(500).json({ error: 'Init failed: ' + e.message });
-      return;
     }
   }
-  return handler(req, res);
 };
