@@ -29,9 +29,7 @@ import {
   MapPin,
   Bell,
   Clock,
-  TrendingUp,
-  Database,
-  Archive
+  TrendingUp
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import ExcelJS from 'exceljs';
@@ -2643,10 +2641,6 @@ const ConfigPanel = ({ products, onUpdate }) => {
   const productRows = Array.isArray(products) ? products : [];
   const [editing, setEditing] = useState(null);
   const [formData, setFormData] = useState({ code: '', name: '', category: '', price_per_lb: '' });
-  const [archiveList, setArchiveList] = useState([]);
-  const [dbStats, setDbStats] = useState(null);
-  const [archiveMonth, setArchiveMonth] = useState({ year: new Date().getFullYear(), month: new Date().getMonth() });
-  const [archiving, setArchiving] = useState(false);
 
   const handleEdit = (p) => {
     setEditing(p.id);
@@ -2668,57 +2662,6 @@ const ConfigPanel = ({ products, onUpdate }) => {
       body: JSON.stringify(formData)
     }).then(() => { onUpdate(); setEditing(null); alert('Cambios guardados'); });
   };
-
-  const formatBytes = (bytes) => {
-    if (!bytes || bytes === 0) return '0 B';
-    const units = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(1024));
-    return (bytes / Math.pow(1024, i)).toFixed(1) + ' ' + units[i];
-  };
-
-  const fetchArchives = async () => {
-    try {
-      const r = await fetch(`${API_BASE}/admin/archives`);
-      setArchiveList(await r.json());
-    } catch {}
-  };
-
-  const fetchDbStats = async () => {
-    try {
-      const r = await fetch(`${API_BASE}/admin/db-stats`);
-      setDbStats(await r.json());
-    } catch {}
-  };
-
-  useEffect(() => { fetchArchives(); fetchDbStats(); }, []);
-
-  const handleManualArchive = async () => {
-    setArchiving(true);
-    try {
-      const r = await fetch(`${API_BASE}/admin/archive`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ year: archiveMonth.year, month: archiveMonth.month })
-      });
-      const result = await r.json();
-      if (result.error) { alert('Error: ' + result.error); return; }
-      alert(`Respaldo creado: ${result.filename}`);
-      fetchArchives();
-      fetchDbStats();
-    } catch (e) {
-      alert('Error al archivar: ' + e.message);
-    }
-    setArchiving(false);
-  };
-
-  const handleVacuum = async () => {
-    const r = await fetch(`${API_BASE}/admin/vacuum`, { method: 'POST' });
-    const result = await r.json();
-    alert(result.message);
-    fetchDbStats();
-  };
-
-  const totalRegistros = dbStats ? Object.values(dbStats.tables).reduce((s, t) => s + (t.count || 0), 0) : 0;
 
   return (
     <div>
@@ -2749,102 +2692,6 @@ const ConfigPanel = ({ products, onUpdate }) => {
         </table>
       </div>
 
-      {/* ─── ARCHIVE MANAGER ─── */}
-      <hr style={{ margin: '2rem 0', borderColor: 'var(--border-light)' }} />
-      
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-        <h3 style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: 0 }}>
-          <Download size={20} color="var(--accent)" /> Respaldos por Mes
-        </h3>
-        <button onClick={() => { fetchArchives(); fetchDbStats(); }} className="btn-primary" style={{ width: 'auto', padding: '8px 16px', fontSize: '0.78rem' }}>
-          <RefreshCcw size={14} /> Refrescar
-        </button>
-      </div>
-
-      {/* DB Status */}
-      <div className="form-card" style={{ marginBottom: '1.5rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', textAlign: 'center' }}>
-        <div>
-          <Database size={24} style={{ opacity: 0.5, marginBottom: '8px' }} />
-          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Tamaño BD</div>
-          <div style={{ fontSize: '1.2rem', fontWeight: 800 }}>{dbStats ? formatBytes(dbStats.dbSize) : '...'}</div>
-        </div>
-        <div>
-          <FileText size={24} style={{ opacity: 0.5, marginBottom: '8px' }} />
-          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Registros Activos</div>
-          <div style={{ fontSize: '1.2rem', fontWeight: 800 }}>{dbStats ? totalRegistros.toLocaleString() : '...'}</div>
-        </div>
-        <div>
-          <Archive size={24} style={{ opacity: 0.5, marginBottom: '8px' }} />
-          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Respaldos Generados</div>
-          <div style={{ fontSize: '1.2rem', fontWeight: 800 }}>{archiveList.length}</div>
-        </div>
-        <div>
-          <CheckCircle2 size={24} style={{ opacity: 0.5, marginBottom: '8px' }} />
-          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Datos en BD</div>
-          <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#10b981' }}>Intactos</div>
-        </div>
-      </div>
-
-      {/* Manual Archive */}
-      <div className="form-card" style={{ marginBottom: '1.5rem' }}>
-        <h4 style={{ margin: '0 0 1rem 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Download size={16} /> Generar Respaldo Excel
-        </h4>
-        <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
-          Seleccioná un mes para generar un archivo Excel con todos sus datos como respaldo.
-          Los datos originales permanecen intactos en la base de datos.
-        </p>
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'end', flexWrap: 'wrap' }}>
-          <div className="form-group" style={{ margin: 0, minWidth: '120px' }}>
-            <label style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--text-muted)' }}>Mes</label>
-            <select value={archiveMonth.month} onChange={e => setArchiveMonth({ ...archiveMonth, month: parseInt(e.target.value) })} style={{ padding: '8px', borderRadius: '8px', width: '100%' }}>
-              {Array.from({ length: 12 }, (_, i) => (
-                <option key={i + 1} value={i + 1}>{['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'][i]}</option>
-              ))}
-            </select>
-          </div>
-          <div className="form-group" style={{ margin: 0, minWidth: '100px' }}>
-            <label style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--text-muted)' }}>Año</label>
-            <select value={archiveMonth.year} onChange={e => setArchiveMonth({ ...archiveMonth, year: parseInt(e.target.value) })} style={{ padding: '8px', borderRadius: '8px', width: '100%' }}>
-              {Array.from({ length: 5 }, (_, i) => (
-                <option key={i} value={2025 + i}>{2025 + i}</option>
-              ))}
-            </select>
-          </div>
-          <button onClick={handleManualArchive} disabled={archiving} className="btn-primary" style={{ width: 'auto', padding: '10px 24px', background: '#2563eb' }}>
-            {archiving ? 'Generando...' : 'Generar Respaldo Excel'}
-          </button>
-          <button onClick={handleVacuum} className="btn-primary" style={{ width: 'auto', padding: '10px 24px', background: '#0891b2' }}>
-            Optimizar BD (VACUUM)
-          </button>
-        </div>
-      </div>
-
-      {/* Archives list */}
-      <div className="form-card">
-        <h4 style={{ margin: '0 0 1rem 0' }}>Archivos Generados</h4>
-        {archiveList.length === 0 ? (
-          <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>
-            No hay respaldos generados aún. Los respaldos se generan automáticamente al iniciar el servidor.
-          </p>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {archiveList.map(f => (
-              <div key={f.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: '10px', border: '1px solid var(--border-light)' }}>
-                <div>
-                  <div style={{ fontWeight: 700 }}>{f.name.replace('Archivo_', '').replace('.xlsx', '').replace('_', '/')}</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{formatBytes(f.size)} • {f.date ? new Date(f.date).toLocaleDateString('es-SV') : '—'}</div>
-                </div>
-                <a href={`${API_BASE}/admin/archives/${f.name}`} download style={{ textDecoration: 'none' }}>
-                  <button className="btn-primary" style={{ width: 'auto', padding: '6px 14px', fontSize: '0.75rem' }}>
-                    <Download size={14} /> Descargar
-                  </button>
-                </a>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
     </div>
   );
 };
