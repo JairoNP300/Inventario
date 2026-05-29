@@ -93,6 +93,9 @@ async function main() {
     'index.html',
     'vercel.json',
     'deploy-github.mjs',
+    'deploy.bat',
+    'scripts/watch-deploy.js',
+    'data/data.json',
   ];
 
   for (const f of files) {
