@@ -42,15 +42,13 @@ app.get('/api/version', (req, res) => {
 app.use((req, res, next) => {
   const originalEnd = res.end;
   res.end = function(...args) {
-    const syncResult = db.syncToGitHub();
-    if (syncResult && typeof syncResult.then === 'function') {
-      syncResult.then(() => originalEnd.apply(this, args)).catch(e => {
-        console.warn('Sync error:', e.message);
-        originalEnd.apply(this, args);
-      });
-    } else {
-      return originalEnd.apply(this, args);
-    }
+    const self = this;
+    db.syncToGitHub().then(() => {
+      originalEnd.apply(self, args);
+    }).catch(e => {
+      console.warn('Sync error:', e.message);
+      originalEnd.apply(self, args);
+    });
   };
   next();
 });

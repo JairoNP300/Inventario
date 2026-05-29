@@ -90,7 +90,7 @@ export async function exec(sql) {
 export async function syncToGitHub() {
   if (!dirty) return;
   dirty = false;
-  syncPromise = doSync();
+  syncPromise = doSync(true);
   try { await syncPromise; } finally { syncPromise = null; }
 }
 
