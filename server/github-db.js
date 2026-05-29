@@ -42,7 +42,10 @@ async function gh(method, path, body = null) {
   return res.json();
 }
 
+let ready = false;
+
 export async function init() {
+  // First load local file for fast startup
   try {
     const localRaw = await readFile(LOCAL_DATA_PATH, 'utf-8');
     const localData = JSON.parse(localRaw);
@@ -51,7 +54,14 @@ export async function init() {
   } catch (e) {
     console.log('No hay data.json local, BD vacía');
   }
-  syncFromGitHub().catch(e => console.warn('GitHub sync error:', e.message));
+
+  // Then sync from GitHub (latest data) — WAIT for it
+  try {
+    await syncFromGitHub();
+  } catch (e) {
+    console.warn('GitHub sync on init failed:', e.message);
+  }
+  ready = true;
 }
 
 async function syncFromGitHub() {
@@ -61,8 +71,8 @@ async function syncFromGitHub() {
   const raw = Buffer.from(file.content, 'base64').toString('utf-8');
   const data = JSON.parse(raw);
   jdb.loadData(data);
+  dirty = false;
   console.log('Datos sincronizados desde GitHub');
-  await doSync(true);
 }
 
 export async function query(sql, params = []) {
