@@ -1,36 +1,298 @@
 {
   "products": [
-    {"id":529,"code":"1618","name":"Posta Negra / Nalga de Adentro","category":"Cortes","price_per_lb":"4.25","price_per_kg":"9.37","price_per_box":"85.00"},
-    {"id":530,"code":"1619","name":"Cajas Tortuguita","category":"Cortes","price_per_lb":"4.65","price_per_kg":"10.25","price_per_box":"90.00"},
-    {"id":531,"code":"1620","name":"HUESO DE YUGO / COGOTE CON HUESO","category":"Cortes","price_per_lb":"2.00","price_per_kg":"4.41","price_per_box":"40.00"},
-    {"id":532,"code":"1621","name":"NEW YORK / BIEF ANGOSTO","category":"Prime","price_per_lb":"6.75","price_per_kg":"14.88","price_per_box":"130.00"},
-    {"id":533,"code":"1622","name":"TRIMING 80/20 especial","category":"Industrial","price_per_lb":"3.10","price_per_kg":"6.83","price_per_box":"60.00"},
-    {"id":534,"code":"1623","name":"cajas de triming 50/50 popular","category":"Industrial","price_per_lb":"2.75","price_per_kg":"6.06","price_per_box":"55.00"},
-    {"id":535,"code":"1624","name":"cajas de Aguja/chuck","category":"Cortes","price_per_lb":"4.25","price_per_kg":"9.37","price_per_box":"85.00"},
-    {"id":536,"code":"1625","name":"ANGELINA / CORAZON DE CUADRIL","category":"Cortes","price_per_lb":"4.75","price_per_kg":"10.47","price_per_box":"95.00"},
-    {"id":537,"code":"1626","name":"CARNE BOVINA CONGELADA SIN HUESO DELANTERO","category":"Cortes","price_per_lb":"3.95","price_per_kg":"8.71","price_per_box":"75.00"},
-    {"id":538,"code":"1627","name":"CARNE BOVINA CONGELADA SIN HUESO TAPA CUADRIL / PICAÑA","category":"Prime","price_per_lb":"9.20","price_per_kg":"20.28","price_per_box":"180.00"},
-    {"id":539,"code":"1628","name":"CARNE BOVINA CONGELADA SIN HUESO RECORTE DE CARNE 90 VL premium","category":"Industrial","price_per_lb":"4.65","price_per_kg":"10.25","price_per_box":"90.00"}
+    {
+      "id": 529,
+      "code": "1618",
+      "name": "Posta Negra / Nalga de Adentro",
+      "category": "Cortes",
+      "price_per_lb": 4.25,
+      "price_per_kg": 9.37,
+      "price_per_box": 85
+    },
+    {
+      "id": 530,
+      "code": "1619",
+      "name": "Cajas Tortuguita",
+      "category": "Cortes",
+      "price_per_lb": 4.65,
+      "price_per_kg": 10.25,
+      "price_per_box": 90
+    },
+    {
+      "id": 531,
+      "code": "1620",
+      "name": "HUESO DE YUGO / COGOTE CON HUESO",
+      "category": "Cortes",
+      "price_per_lb": 2,
+      "price_per_kg": 4.41,
+      "price_per_box": 40
+    },
+    {
+      "id": 532,
+      "code": "1621",
+      "name": "NEW YORK / BIEF ANGOSTO",
+      "category": "Prime",
+      "price_per_lb": 6.75,
+      "price_per_kg": 14.88,
+      "price_per_box": 130
+    },
+    {
+      "id": 533,
+      "code": "1622",
+      "name": "TRIMING 80/20 especial",
+      "category": "Industrial",
+      "price_per_lb": 3.1,
+      "price_per_kg": 6.83,
+      "price_per_box": 60
+    },
+    {
+      "id": 534,
+      "code": "1623",
+      "name": "cajas de triming 50/50 popular",
+      "category": "Industrial",
+      "price_per_lb": 2.75,
+      "price_per_kg": 6.06,
+      "price_per_box": 55
+    },
+    {
+      "id": 535,
+      "code": "1624",
+      "name": "cajas de Aguja/chuck",
+      "category": "Cortes",
+      "price_per_lb": 4.25,
+      "price_per_kg": 9.37,
+      "price_per_box": 85
+    },
+    {
+      "id": 536,
+      "code": "1625",
+      "name": "ANGELINA / CORAZON DE CUADRIL",
+      "category": "Cortes",
+      "price_per_lb": 4.75,
+      "price_per_kg": 10.47,
+      "price_per_box": 95
+    },
+    {
+      "id": 537,
+      "code": "1626",
+      "name": "CARNE BOVINA CONGELADA SIN HUESO DELANTERO",
+      "category": "Cortes",
+      "price_per_lb": 3.95,
+      "price_per_kg": 8.71,
+      "price_per_box": 75
+    },
+    {
+      "id": 538,
+      "code": "1627",
+      "name": "CARNE BOVINA CONGELADA SIN HUESO TAPA CUADRIL / PICAÑA",
+      "category": "Prime",
+      "price_per_lb": 9.2,
+      "price_per_kg": 20.28,
+      "price_per_box": 180
+    },
+    {
+      "id": 539,
+      "code": "1628",
+      "name": "CARNE BOVINA CONGELADA SIN HUESO RECORTE DE CARNE 90 VL premium",
+      "category": "Industrial",
+      "price_per_lb": 4.65,
+      "price_per_kg": 10.25,
+      "price_per_box": 90
+    }
   ],
   "agros": [
-    {"id":1,"name":"Soyapango - Puesto"},{"id":2,"name":"Usulután - Puesto"},
-    {"id":1506,"name":"Agro Quezaltepeque"},{"id":1507,"name":"Agro Aguilares"},
-    {"id":1508,"name":"Agro Opico"},{"id":1509,"name":"MAG (Gobierno)"},
-    {"id":1510,"name":"CNR (Gobierno)"},{"id":1511,"name":"Relaciones Exteriores (Gobierno)"},
-    {"id":1512,"name":"Lomas de San Francisco"}
+    {
+      "id": 1,
+      "name": "Soyapango - Puesto"
+    },
+    {
+      "id": 2,
+      "name": "Usulután - Puesto"
+    },
+    {
+      "id": 1506,
+      "name": "Agro Quezaltepeque"
+    },
+    {
+      "id": 1507,
+      "name": "Agro Aguilares"
+    },
+    {
+      "id": 1508,
+      "name": "Agro Opico"
+    },
+    {
+      "id": 1509,
+      "name": "MAG (Gobierno)"
+    },
+    {
+      "id": 1510,
+      "name": "CNR (Gobierno)"
+    },
+    {
+      "id": 1511,
+      "name": "Relaciones Exteriores (Gobierno)"
+    },
+    {
+      "id": 1512,
+      "name": "Lomas de San Francisco"
+    }
   ],
   "inventory": [
-    {"product_id":529,"bodega_1":0,"bodega_2":0,"bodega_3":9468.1,"bodega_4":792.5,"initial_stock":0,"current_stock":0,"sold_stock":0,"final_stock":0,"entradas_cajas":326,"salidas_cajas":325,"cajas":0},
-    {"product_id":530,"bodega_1":0,"bodega_2":0,"bodega_3":5948.9,"bodega_4":641.9,"initial_stock":0,"current_stock":0,"sold_stock":0,"final_stock":0,"entradas_cajas":200,"salidas_cajas":41,"cajas":0},
-    {"product_id":531,"bodega_1":0,"bodega_2":0,"bodega_3":6652.6,"bodega_4":83.4,"initial_stock":0,"current_stock":0,"sold_stock":0,"final_stock":0,"entradas_cajas":114,"salidas_cajas":105,"cajas":0},
-    {"product_id":532,"bodega_1":0,"bodega_2":0,"bodega_3":0,"bodega_4":561.9,"initial_stock":0,"current_stock":0,"sold_stock":0,"final_stock":0,"entradas_cajas":45,"salidas_cajas":32,"cajas":0},
-    {"product_id":533,"bodega_1":0,"bodega_2":0,"bodega_3":0,"bodega_4":627.3,"initial_stock":0,"current_stock":0,"sold_stock":0,"final_stock":0,"entradas_cajas":43,"salidas_cajas":20,"cajas":0},
-    {"product_id":534,"bodega_1":0,"bodega_2":0,"bodega_3":569.4,"bodega_4":195.0,"initial_stock":0,"current_stock":0,"sold_stock":0,"final_stock":0,"entradas_cajas":45,"salidas_cajas":34,"cajas":0},
-    {"product_id":535,"bodega_1":0,"bodega_2":0,"bodega_3":4808.9,"bodega_4":0,"initial_stock":0,"current_stock":0,"sold_stock":0,"final_stock":0,"entradas_cajas":105,"salidas_cajas":1,"cajas":0},
-    {"product_id":536,"bodega_1":0,"bodega_2":0,"bodega_3":539.4,"bodega_4":357.9,"initial_stock":0,"current_stock":0,"sold_stock":0,"final_stock":0,"entradas_cajas":55,"salidas_cajas":55,"cajas":0},
-    {"product_id":537,"bodega_1":0,"bodega_2":0,"bodega_3":392.7,"bodega_4":168.4,"initial_stock":0,"current_stock":0,"sold_stock":0,"final_stock":0,"entradas_cajas":46,"salidas_cajas":2,"cajas":0},
-    {"product_id":538,"bodega_1":0,"bodega_2":0,"bodega_3":673.9,"bodega_4":667.6,"initial_stock":0,"current_stock":0,"sold_stock":0,"final_stock":0,"entradas_cajas":53,"salidas_cajas":21,"cajas":0},
-    {"product_id":539,"bodega_1":0,"bodega_2":0,"bodega_3":5595.4,"bodega_4":352.9,"initial_stock":0,"current_stock":0,"sold_stock":0,"final_stock":0,"entradas_cajas":186,"salidas_cajas":33,"cajas":0}
+    {
+      "product_id": 529,
+      "bodega_1": 0,
+      "bodega_2": 0,
+      "bodega_3": 9468.1,
+      "bodega_4": 792.5,
+      "initial_stock": 0,
+      "current_stock": 0,
+      "sold_stock": 0,
+      "final_stock": 0,
+      "cajas": 0,
+      "entradas_cajas": 326,
+      "salidas_cajas": 325
+    },
+    {
+      "product_id": 530,
+      "bodega_1": 0,
+      "bodega_2": 0,
+      "bodega_3": 5948.9,
+      "bodega_4": 641.9,
+      "initial_stock": 0,
+      "current_stock": 0,
+      "sold_stock": 0,
+      "final_stock": 0,
+      "cajas": 0,
+      "entradas_cajas": 200,
+      "salidas_cajas": 41
+    },
+    {
+      "product_id": 531,
+      "bodega_1": 0,
+      "bodega_2": 0,
+      "bodega_3": 6652.6,
+      "bodega_4": 83.4,
+      "initial_stock": 0,
+      "current_stock": 0,
+      "sold_stock": 0,
+      "final_stock": 0,
+      "cajas": 0,
+      "entradas_cajas": 114,
+      "salidas_cajas": 105
+    },
+    {
+      "product_id": 532,
+      "bodega_1": 0,
+      "bodega_2": 0,
+      "bodega_3": 0,
+      "bodega_4": 561.9,
+      "initial_stock": 0,
+      "current_stock": 0,
+      "sold_stock": 0,
+      "final_stock": 0,
+      "cajas": 0,
+      "entradas_cajas": 45,
+      "salidas_cajas": 32
+    },
+    {
+      "product_id": 533,
+      "bodega_1": 0,
+      "bodega_2": 0,
+      "bodega_3": 0,
+      "bodega_4": 627.3,
+      "initial_stock": 0,
+      "current_stock": 0,
+      "sold_stock": 0,
+      "final_stock": 0,
+      "cajas": 0,
+      "entradas_cajas": 43,
+      "salidas_cajas": 20
+    },
+    {
+      "product_id": 534,
+      "bodega_1": 0,
+      "bodega_2": 0,
+      "bodega_3": 569.4,
+      "bodega_4": 195,
+      "initial_stock": 0,
+      "current_stock": 0,
+      "sold_stock": 0,
+      "final_stock": 0,
+      "cajas": 0,
+      "entradas_cajas": 45,
+      "salidas_cajas": 34
+    },
+    {
+      "product_id": 535,
+      "bodega_1": 0,
+      "bodega_2": 0,
+      "bodega_3": 4808.9,
+      "bodega_4": 0,
+      "initial_stock": 0,
+      "current_stock": 0,
+      "sold_stock": 0,
+      "final_stock": 0,
+      "cajas": 0,
+      "entradas_cajas": 105,
+      "salidas_cajas": 1
+    },
+    {
+      "product_id": 536,
+      "bodega_1": 0,
+      "bodega_2": 0,
+      "bodega_3": 539.4,
+      "bodega_4": 357.9,
+      "initial_stock": 0,
+      "current_stock": 0,
+      "sold_stock": 0,
+      "final_stock": 0,
+      "cajas": 0,
+      "entradas_cajas": 55,
+      "salidas_cajas": 55
+    },
+    {
+      "product_id": 537,
+      "bodega_1": 0,
+      "bodega_2": 0,
+      "bodega_3": 392.7,
+      "bodega_4": 168.4,
+      "initial_stock": 0,
+      "current_stock": 0,
+      "sold_stock": 0,
+      "final_stock": 0,
+      "cajas": 0,
+      "entradas_cajas": 46,
+      "salidas_cajas": 2
+    },
+    {
+      "product_id": 538,
+      "bodega_1": 0,
+      "bodega_2": 0,
+      "bodega_3": 673.9,
+      "bodega_4": 667.6,
+      "initial_stock": 0,
+      "current_stock": 0,
+      "sold_stock": 0,
+      "final_stock": 0,
+      "cajas": 0,
+      "entradas_cajas": 53,
+      "salidas_cajas": 21
+    },
+    {
+      "product_id": 539,
+      "bodega_1": 0,
+      "bodega_2": 0,
+      "bodega_3": 5595.4,
+      "bodega_4": 352.9,
+      "initial_stock": 0,
+      "current_stock": 0,
+      "sold_stock": 0,
+      "final_stock": 0,
+      "cajas": 0,
+      "entradas_cajas": 186,
+      "salidas_cajas": 33
+    }
   ],
   "movements": [],
   "activity_log": [],
