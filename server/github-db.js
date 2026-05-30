@@ -144,9 +144,15 @@ export async function exec(rawSql) {
   return { rows: [] };
 }
 
+let lastSyncTime = 0;
+const SYNC_COOLDOWN_MS = 30000;
+
 export async function syncToGitHub() {
   if (!dirty || syncPromise) return syncPromise;
+  const now = Date.now();
+  if (now - lastSyncTime < SYNC_COOLDOWN_MS) return syncPromise;
   dirty = false;
+  lastSyncTime = now;
   syncPromise = doSync();
   try { await syncPromise; } finally { syncPromise = null; }
 }
@@ -168,11 +174,16 @@ async function doSync() {
     } catch (e) { data[table] = []; }
   }
 
-  // Update data.json
+  // Update data.json — only if content changed
   const json = JSON.stringify(data, null, 2);
   const jsonB64 = Buffer.from(json, 'utf-8').toString('base64');
+  const crypto = await import('crypto');
+  const newJsonSha = crypto.createHash('sha1').update(json).digest('hex');
 
   let js = await gh('GET', DATA_PATH);
+  if (js && js.sha === newJsonSha) {
+    return;
+  }
   await gh('PUT', DATA_PATH, {
     message: `Auto-sync: ${new Date().toISOString().slice(0,16)}`,
     content: jsonB64,
@@ -277,7 +288,9 @@ async function doSync() {
 
     const buf = await wb.xlsx.writeBuffer();
     const exB64 = Buffer.from(buf).toString('base64');
+    const exSha = crypto.createHash('sha1').update(buf).digest('hex');
     let ex = await gh('GET', EXCEL_PATH);
+    if (ex && ex.sha === exSha) return;
     await gh('PUT', EXCEL_PATH, {
       message: `Auto-sync Excel: ${new Date().toISOString().slice(0,16)}`,
       content: exB64,
