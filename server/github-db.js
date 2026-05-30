@@ -1,6 +1,5 @@
 /// <reference types="sql.js" />
 import initSqlJs from 'sql.js';
-import ExcelJS from 'exceljs';
 import { readFile } from 'fs/promises';
 import { Buffer } from 'buffer';
 
@@ -8,7 +7,6 @@ const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const OWNER = 'JairoNP300';
 const REPO = 'Inventario';
 const DATA_PATH = 'data/data.json';
-const EXCEL_PATH = 'data/sistema.xlsx';
 
 let db = null;
 let dirty = false;
@@ -177,12 +175,13 @@ async function doSync() {
   // Update data.json — only if content changed
   const json = JSON.stringify(data, null, 2);
   const jsonB64 = Buffer.from(json, 'utf-8').toString('base64');
-  const crypto = await import('crypto');
-  const newJsonSha = crypto.createHash('sha1').update(json).digest('hex');
 
   let js = await gh('GET', DATA_PATH);
-  if (js && js.sha === newJsonSha) {
-    return;
+  if (js && js.content) {
+    const remoteContent = Buffer.from(js.content, 'base64').toString('utf-8');
+    if (remoteContent.trim() === json.trim()) {
+      return;
+    }
   }
   await gh('PUT', DATA_PATH, {
     message: `Auto-sync: ${new Date().toISOString().slice(0,16)}`,
@@ -190,113 +189,5 @@ async function doSync() {
     sha: js ? js.sha : null
   });
 
-  // Generate and save Excel with structured formatting
-  try {
-    const wb = new ExcelJS.Workbook();
-    wb.creator = 'Sistema Ventas e Inventario';
-    wb.created = new Date();
-
-    // ─── Sheet 1: Resumen de Inventario ───
-    const invSheet = wb.addWorksheet('Resumen Inventario', { views: [{ state: 'frozen', ySplit: 1 }] });
-    const invColumns = [
-      { header: 'Código', key: 'code', width: 12 },
-      { header: 'Producto', key: 'name', width: 45 },
-      { header: 'Ransa (KG)', key: 'bodega_1', width: 14 },
-      { header: 'Soyapango (Lbs)', key: 'bodega_2', width: 18 },
-      { header: 'Usulután (Lbs)', key: 'bodega_3', width: 18 },
-      { header: 'Lomas (Lbs)', key: 'bodega_4', width: 14 },
-      { header: 'Stock Total (Lbs)', key: 'total_lbs', width: 18 },
-      { header: 'Cajas Entradas', key: 'cajas_in', width: 15 },
-      { header: 'Cajas Salidas', key: 'cajas_out', width: 14 },
-      { header: 'Stock Cajas', key: 'stock_cajas', width: 13 }
-    ];
-    invSheet.columns = invColumns;
-
-    const prods = data.products || [];
-    const inv = data.inventory || [];
-    const invRows = [];
-    for (const p of prods) {
-      const invRow = inv.find(i => i.product_id === p.id) || {};
-      const b1 = parseFloat(invRow.bodega_1) || 0;
-      const b2 = parseFloat(invRow.bodega_2) || 0;
-      const b3 = parseFloat(invRow.bodega_3) || 0;
-      const b4 = parseFloat(invRow.bodega_4) || 0;
-      const totalLbs = b1 * 2.20462 + b2 + b3 + b4;
-      const cajasIn = parseFloat(invRow.entradas_cajas) || 0;
-      const cajasOut = parseFloat(invRow.salidas_cajas) || 0;
-      invRows.push({
-        code: p.code,
-        name: p.name,
-        bodega_1: parseFloat(b1.toFixed(2)),
-        bodega_2: parseFloat(b2.toFixed(2)),
-        bodega_3: parseFloat(b3.toFixed(2)),
-        bodega_4: parseFloat(b4.toFixed(2)),
-        total_lbs: parseFloat(totalLbs.toFixed(2)),
-        cajas_in: cajasIn,
-        cajas_out: cajasOut,
-        stock_cajas: cajasIn - cajasOut
-      });
-    }
-    invRows.sort((a, b) => (a.code || '').localeCompare(b.code, undefined, { numeric: true }));
-    invRows.forEach(r => invSheet.addRow(r));
-
-    // Header style
-    const headerStyle = {
-      font: { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 },
-      fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A5F' } },
-      alignment: { horizontal: 'center', vertical: 'middle' },
-      border: { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } }
-    };
-    invSheet.getRow(1).eachCell(cell => { cell.style = headerStyle; });
-    invSheet.getRow(1).height = 22;
-
-    // Data rows style
-    const dataStyle = { alignment: { horizontal: 'center', vertical: 'middle' } };
-    invSheet.eachRow((row, rowNum) => {
-      if (rowNum > 1) {
-        row.eachCell(cell => { cell.style = { ...cell.style, ...dataStyle }; });
-      }
-    });
-
-    // ─── Raw data sheets ───
-    const tableLabels = {
-      products: 'Productos',
-      agros: 'Agros',
-      inventory: 'Inventario Raw',
-      movements: 'Movimientos',
-      activity_log: 'Actividad',
-      production_logs: 'Produccion',
-      ransa_requests: 'Recepciones',
-      dispatches: 'Despachos',
-      sales: 'Ventas',
-      orders: 'Pedidos',
-      food_costing: 'Comidas',
-      stock_adjustments: 'Ajustes Stock'
-    };
-
-    for (const table of TABLE_NAMES) {
-      const rows = data[table] || [];
-      if (rows.length === 0) continue;
-      const label = tableLabels[table] || table.slice(0, 31);
-      const ws = wb.addWorksheet(label, { views: [{ state: 'frozen', ySplit: 1 }] });
-      const keys = Object.keys(rows[0]);
-      ws.columns = keys.map(k => ({ header: k, key: k, width: Math.min(Math.max(k.length * 2, 12), 35) }));
-      ws.addRows(rows);
-      ws.getRow(1).eachCell(cell => { cell.style = headerStyle; });
-      ws.getRow(1).height = 20;
-    }
-
-    const buf = await wb.xlsx.writeBuffer();
-    const exB64 = Buffer.from(buf).toString('base64');
-    const exSha = crypto.createHash('sha1').update(buf).digest('hex');
-    let ex = await gh('GET', EXCEL_PATH);
-    if (ex && ex.sha === exSha) return;
-    await gh('PUT', EXCEL_PATH, {
-      message: `Auto-sync Excel: ${new Date().toISOString().slice(0,16)}`,
-      content: exB64,
-      sha: ex ? ex.sha : null
-    });
-  } catch (e) {
-    console.warn('Excel sync error:', e.message);
-  }
+  console.log(`[SYNC] data.json actualizado (${new Date().toLocaleTimeString()})`);
 }
