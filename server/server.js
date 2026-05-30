@@ -38,11 +38,11 @@ app.get('/api/version', (req, res) => {
   res.send(version);
 });
 
-// Sync in-memory DB to GitHub after every response
+// Sync in-memory DB to GitHub after every response (no-op if not dirty)
 app.use((req, res, next) => {
   const originalEnd = res.end;
   res.end = function(...args) {
-    db.syncToGitHub().catch(e => console.warn('[SYNC] Error:', e.message));
+    db.syncToGitHub().catch(e => console.warn('Sync error:', e.message));
     return originalEnd.apply(this, args);
   };
   next();
@@ -124,8 +124,8 @@ const migrateDatabase = async () => {
     const seed = JSON.parse(await readFile(seedPath, 'utf8'));
     const { rows: allProds } = await query('SELECT id, code FROM products');
 
-    const { rows: check } = await query('SELECT COUNT(*) as cnt FROM inventory');
-    const total = check[0]?.cnt || 0;
+    const { rows: check } = await query(`SELECT COALESCE(SUM(COALESCE(bodega_1,0)+COALESCE(bodega_2,0)+COALESCE(bodega_3,0)+COALESCE(bodega_4,0)+COALESCE(entradas_cajas,0)+COALESCE(salidas_cajas,0)),0) as total FROM inventory`);
+    const total = parseFloat(check[0]?.total || 0);
     console.log(`[SEED] Total inventario actual: ${total}`);
 
     if (total === 0) {
@@ -150,47 +150,33 @@ const migrateDatabase = async () => {
     console.warn('[SEED] Error:', e.message);
   }
 
-  // --- Dedup: clean duplicate product codes ---
+  // --- One-time dedup: clean duplicate product codes ---
   try {
-    const { rows: allProducts } = await query('SELECT id, code FROM products WHERE code IS NOT NULL AND code != \'\'');
-    const codeMap = {};
-    for (const p of allProducts) {
-      if (!codeMap[p.code]) codeMap[p.code] = [];
-      codeMap[p.code].push(p.id);
-    }
-    for (const [code, ids] of Object.entries(codeMap)) {
-      if (ids.length > 1) {
-        console.log(`[DEDUP] Code ${code} has ${ids.length} duplicates, removing extras`);
-        for (let j = 1; j < ids.length; j++) {
-          await query('DELETE FROM inventory WHERE product_id = ?', [ids[j]]);
-          await query('DELETE FROM products WHERE id = ?', [ids[j]]);
-          console.log(`[DEDUP] Eliminado duplicado ID ${ids[j]}`);
+    const { rows: dupGroups } = await query(`
+      SELECT code FROM products 
+      WHERE code IS NOT NULL AND code != ''
+      GROUP BY code HAVING COUNT(*) > 1
+    `);
+    if (dupGroups && dupGroups.length > 0) {
+      console.log(`[DEDUP] Encontrados ${dupGroups.length} grupo(s) duplicados`);
+      for (const group of dupGroups) {
+        const { rows: dups } = await query(
+          'SELECT p.id, p.name, COALESCE(i.bodega_1,0)+COALESCE(i.bodega_2,0)+COALESCE(i.bodega_3,0)+COALESCE(i.bodega_4,0) as total_stock FROM products p LEFT JOIN inventory i ON p.id = i.product_id WHERE p.code = ? ORDER BY total_stock DESC, p.id ASC',
+          [group.code]
+        );
+        const keep = dups[0];
+        for (let j = 1; j < dups.length; j++) {
+          const delId = dups[j].id;
+          await query('DELETE FROM inventory WHERE product_id = ?', [delId]);
+          await query('DELETE FROM products WHERE id = ?', [delId]);
+          console.log(`[DEDUP] Eliminado duplicado ID ${delId}`);
         }
       }
     }
   } catch (e) { console.warn('[DEDUP] Error:', e.message); }
 
-  // --- Dedup: remove duplicate inventory rows for same product_id ---
-  try {
-    const { rows: allInv } = await query('SELECT product_id FROM inventory');
-    const invMap = {};
-    for (const r of allInv) {
-      if (!invMap[r.product_id]) invMap[r.product_id] = 0;
-      invMap[r.product_id]++;
-    }
-    for (const [pid, count] of Object.entries(invMap)) {
-      if (count > 1) {
-        console.log(`[DEDUP INV] Product ${pid} has ${count} inventory rows, keeping first`);
-        const { rows: dups } = await query('SELECT * FROM inventory WHERE product_id = ?', [parseInt(pid)]);
-        for (let j = 1; j < dups.length; j++) {
-          await query('DELETE FROM inventory WHERE product_id = ? AND entradas_cajas = ? AND salidas_cajas = ?', [parseInt(pid), dups[j].entradas_cajas, dups[j].salidas_cajas]);
-        }
-      }
-    }
-  } catch (e) { console.warn('[DEDUP INV] Error:', e.message); }
-
-  // NOTE: syncToGitHub not called here intentionally.
-  // The post-response middleware handles sync after each response.
+  // Sync to GitHub after migration
+  await db.syncToGitHub();
 };
 
 // --- INITIALIZATION ---
@@ -805,15 +791,22 @@ app.use((err, req, res, next) => {
 app.get('/api/reports/inventory-status', async (req, res) => {
   try {
     const { rows } = await query(`
-      SELECT p.code, p.name, i.initial_stock, i.sold_stock, i.bodega_1, i.bodega_2, i.bodega_3, i.bodega_4, i.entradas_cajas, i.salidas_cajas
-      FROM products p
+      SELECT p.code, p.name, i.initial_stock, i.sold_stock, i.bodega_1, i.bodega_2, i.bodega_3, i.bodega_4, i.entradas_cajas, i.salidas_cajas,
+             (i.bodega_1 + i.bodega_2 + i.bodega_3 + i.bodega_4) as final_stock,
+             (i.entradas_cajas - i.salidas_cajas) as stock_cajas
+      FROM (
+        SELECT id, code, name,
+          ROW_NUMBER() OVER (PARTITION BY code ORDER BY id) as rn
+        FROM products
+        WHERE code IS NOT NULL AND code != ''
+        UNION ALL
+        SELECT id, code, name,
+          1 as rn FROM products WHERE code IS NULL OR code = ''
+      ) p
       JOIN inventory i ON p.id = i.product_id
+      WHERE p.rn = 1
       ORDER BY CAST(p.code AS INTEGER) ASC
     `);
-    for (const r of rows) {
-      r.final_stock = (r.bodega_1 || 0) + (r.bodega_2 || 0) + (r.bodega_3 || 0) + (r.bodega_4 || 0);
-      r.stock_cajas = (r.entradas_cajas || 0) - (r.salidas_cajas || 0);
-    }
     res.json(rows);
   } catch (err) {
     console.error('Error fetching inventory status:', err.message);
@@ -822,26 +815,19 @@ app.get('/api/reports/inventory-status', async (req, res) => {
 });
 
 app.get('/api/reports/agro-sales', async (req, res) => {
-  try {
-    const { rows: sales } = await query(`
-      SELECT a.name as agro_name, s.amount_received, s.date
-      FROM sales s
-      JOIN agros a ON s.agro_id = a.id
-    `);
-    const agg = {};
-    for (const s of sales) {
-      const key = s.agro_name;
-      if (!agg[key]) agg[key] = { agro_name: key, total_sales: 0 };
-      agg[key].total_sales += parseFloat(s.amount_received) || 0;
-    }
-    res.json(Object.values(agg));
-  } catch (err) {
-    console.error('Error fetching agro sales:', err.message);
-    res.json([]);
-  }
+  const { rows } = await query(`
+    SELECT a.name as agro_name, 
+           SUM(s.amount_received) as total_sales,
+           strftime('%Y-%m', s.date) as month
+    FROM sales s
+    JOIN agros a ON s.agro_id = a.id
+    GROUP BY a.id, a.name, month
+  `);
+  res.json(rows);
 });
 
 app.get('/api/products', async (req, res) => {
+  // Use subquery to deduplicate by code (keep lowest ID per code)
   const { rows } = await query(`
     SELECT p.*, 
            i.bodega_1 as stock_kg,
@@ -849,14 +835,21 @@ app.get('/api/products', async (req, res) => {
            i.bodega_2 as stock_b2,
            i.bodega_3 as stock_b3,
            i.entradas_cajas,
-           i.salidas_cajas
-    FROM products p
+           i.salidas_cajas,
+           (i.entradas_cajas - i.salidas_cajas) as stock_cajas
+    FROM (
+      SELECT id, code, name, category, price_per_lb, price_per_kg, price_per_box,
+        ROW_NUMBER() OVER (PARTITION BY code ORDER BY id) as rn
+      FROM products
+      WHERE code IS NOT NULL AND code != ''
+      UNION ALL
+      SELECT id, code, name, category, price_per_lb, price_per_kg, price_per_box,
+        1 as rn FROM products WHERE code IS NULL OR code = ''
+    ) p
     LEFT JOIN inventory i ON p.id = i.product_id
+    WHERE p.rn = 1
     ORDER BY CAST(p.code AS INTEGER) ASC
   `);
-  for (const r of rows) {
-    r.stock_cajas = (r.entradas_cajas || 0) - (r.salidas_cajas || 0);
-  }
   res.json(rows);
 });
 
